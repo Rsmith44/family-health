@@ -565,10 +565,13 @@ async function createFamilyGroup() {
 
   if (error) {
     btn.textContent = 'Create Family Group'; btn.disabled = false;
-    errEl.textContent = 'Error: ' + error.message; errEl.style.display = 'block';
+    errEl.textContent = 'Error: ' + error.message + ' (code: ' + error.code + ')'; 
+    errEl.style.display = 'block';
+    console.error('Full error:', JSON.stringify(error));
     return;
   }
 
+  console.log('Group created, id:', data);
   currentFamilyGroupId = data;
   btn.textContent = 'Create Family Group'; btn.disabled = false;
   showApp();
