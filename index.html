@@ -559,7 +559,7 @@ async function createFamilyGroup() {
   const errEl = document.getElementById('onboarding-error');
   btn.textContent = 'Creating...'; btn.disabled = true;
   errEl.style.display = 'none';
-  const { data: { user } } } = await sb.auth.getUser();
+  const { data: { user } } = await sb.auth.getUser();
 
   // Step 1: Create family group
   const { data: group, error: groupError } = await sb.from('family_groups')
