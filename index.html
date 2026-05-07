@@ -351,7 +351,40 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <div class="field"><label>Date & Time *</label><input type="datetime-local" id="visit-datetime"></div>
       <div class="field"><label>Family Member</label><select id="visit-person"><option value="">Select person...</option></select></div>
       <div class="field"><label>Doctor</label><select id="visit-doctor"><option value="">Select doctor...</option></select></div>
-      <div class="field"><label>Notes</label><textarea id="visit-notes" placeholder="Reason for visit, outcomes..."></textarea></div>
+      <div class="field">
+        <label>Pre-Appointment Notes</label>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Reason for visit, questions to ask, things to remember</div>
+        <div id="pre-notes-editor" contenteditable="true" style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;min-height:80px;line-height:1.6;text-align:left;" oninput="syncNotes('pre')" onkeydown="handleNoteKey(event,'pre')" placeholder="Type notes here..."></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button type="button" onclick="addBullet('pre')" style="background:var(--surface);border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:var(--text-2);cursor:pointer;">• Add bullet</button>
+        </div>
+        <textarea id="visit-pre-notes" style="display:none"></textarea>
+      </div>
+      <div class="field">
+        <label>Post-Appointment Notes</label>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Outcomes, diagnoses, follow-up actions</div>
+        <div id="post-notes-editor" contenteditable="true" style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;min-height:80px;line-height:1.6;text-align:left;" oninput="syncNotes('post')" onkeydown="handleNoteKey(event,'post')" placeholder="Type notes here..."></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button type="button" onclick="addBullet('post')" style="background:var(--surface);border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:var(--text-2);cursor:pointer;">• Add bullet</button>
+        </div>
+        <textarea id="visit-post-notes" style="display:none"></textarea>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div class="field" style="flex:1">
+          <label>Total Cost</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:15px;">$</span>
+            <input type="number" id="visit-total-cost" placeholder="0.00" step="0.01" min="0" style="padding-left:28px;">
+          </div>
+        </div>
+        <div class="field" style="flex:1">
+          <label>Out of Pocket</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:15px;">$</span>
+            <input type="number" id="visit-oop-cost" placeholder="0.00" step="0.01" min="0" style="padding-left:28px;">
+          </div>
+        </div>
+      </div>
       <button class="cal-btn" onclick="addToCalendar()">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Add to Google / iOS Calendar
@@ -753,7 +786,7 @@ async function loadMeds() {
   renderMeds(data.medications);
 }
 async function loadVisits() {
-  const {data:rows} = await sb.from('visits').select('*, people(name), doctors(name)').order('visit_date',{ascending:false});
+  const {data:rows} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
   data.visits = rows || [];
   renderVisits(data.visits, visitFilter);
 }
@@ -983,7 +1016,13 @@ function openVisit(id, from='visits') {
   showScreen('visit-detail','forward');
   const v = currentVisit;
   const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=new Date();
-  const fields = [['Date & Time',fmtDateTime(v.visit_date)],['Person',v.people?.name],['Doctor',v.doctors?.name],['Notes',v.notes]].filter(([,val])=>val);
+  const costStr = v.total_cost ? `$${parseFloat(v.total_cost).toFixed(2)} total${v.out_of_pocket?' · $'+parseFloat(v.out_of_pocket).toFixed(2)+' out of pocket':''}` : null;
+  const fields = [
+    ['Date & Time', fmtDateTime(v.visit_date)],
+    ['Person', v.people?.name],
+    ['Doctor', v.doctors?.name],
+    ['Cost', costStr],
+  ].filter(([,val])=>val);
   document.getElementById('visit-detail-content').innerHTML = `
     <div class="detail-hero">
       <div class="list-icon" style="background:${isUpcoming?'var(--green-bg)':'var(--surface)'};width:62px;height:62px;font-size:28px;border-radius:16px">📅</div>
@@ -991,6 +1030,8 @@ function openVisit(id, from='visits') {
     </div>
     <div class="section-label">Details</div>
     <div class="prop-card">${fields.map(([l,val])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${val}</span></div>`).join('')}</div>
+    ${(v.pre_notes||v.notes)?`<div class="section-label">Pre-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${(v.pre_notes||v.notes||'').replace(/</g,'&lt;')}</span></div></div>`:''}
+    ${v.post_notes?`<div class="section-label">Post-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${v.post_notes.replace(/</g,'&lt;')}</span></div></div>`:''}
     <div style="padding:4px 0 8px">
       <button class="cal-btn" onclick="addToCalendarFromVisit('${v.id}')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -1093,6 +1134,11 @@ function clearForm(modal) {
   document.querySelectorAll(`#${modal} input:not([type=hidden]), #${modal} select, #${modal} textarea`).forEach(el=>{
     if (el.tagName==='SELECT') el.selectedIndex=0; else el.value='';
   });
+  // Clear rich text editors
+  if (modal==='modal-visit') {
+    setNoteContent('pre', '');
+    setNoteContent('post', '');
+  }
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1116,7 +1162,19 @@ async function saveVisit() {
   const id=document.getElementById('visit-id').value;
   const title=document.getElementById('visit-title').value.trim();
   if(!title){toast('Please enter a title');return;}
-  const payload={title,visit_date:toSydneyISO(document.getElementById('visit-datetime').value),person_id:document.getElementById('visit-person').value||null,doctor_id:document.getElementById('visit-doctor').value||null,notes:document.getElementById('visit-notes').value||null,family_group_id:currentFamilyGroupId};
+  syncNotes('pre'); syncNotes('post');
+  const payload={
+    title,
+    visit_date:toSydneyISO(document.getElementById('visit-datetime').value),
+    person_id:document.getElementById('visit-person').value||null,
+    doctor_id:document.getElementById('visit-doctor').value||null,
+    pre_notes:document.getElementById('visit-pre-notes').value||null,
+    post_notes:document.getElementById('visit-post-notes').value||null,
+    notes:document.getElementById('visit-pre-notes').value||null,
+    total_cost:document.getElementById('visit-total-cost').value||null,
+    out_of_pocket:document.getElementById('visit-oop-cost').value||null,
+    family_group_id:currentFamilyGroupId
+  };
   const {error}=id?await sb.from('visits').update(payload).eq('id',id):await sb.from('visits').insert(payload);
   if(error){toast('Error saving visit');return;}
   closeModal('modal-visit'); toast(id?'Visit updated ✓':'Visit added ✓');
@@ -1137,7 +1195,10 @@ function editVisit(id) {
   document.getElementById('visit-datetime').value=v.visit_date?toLocalInput(v.visit_date):'';
   document.getElementById('visit-person').value=v.person_id||'';
   document.getElementById('visit-doctor').value=v.doctor_id||'';
-  document.getElementById('visit-notes').value=v.notes||'';
+  setNoteContent('pre', v.pre_notes||v.notes||'');
+  setNoteContent('post', v.post_notes||'');
+  document.getElementById('visit-total-cost').value=v.total_cost||'';
+  document.getElementById('visit-oop-cost').value=v.out_of_pocket||'';
   document.getElementById('delete-visit-btn').style.display='block';
   openModal('modal-visit');
 }
