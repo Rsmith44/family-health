@@ -352,7 +352,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       <span class="nav-label">Doctors</span>
     </button>
-    <button class="nav-item" onclick="showTab('visits',this)">
+    <button id="nav-visits-btn" class="nav-item" onclick="showTab('visits',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span class="nav-label">Visits</span>
     </button>
@@ -2102,7 +2102,7 @@ function renderDashboard() {
     const col = isActive ? 'white' : 'var(--text)';
     const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    pillsHtml += '<button onclick="setDashboardFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    pillsHtml += '<button onclick="setDashboardFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   pillsHtml += '</div>';
 
@@ -2121,7 +2121,7 @@ function renderDashboard() {
     upcoming.slice(0,6).forEach(v => {
       const person = data.people.find(p => p.id === v.person_id);
       const doctor = data.doctors.find(d => d.id === v.doctor_id);
-      visitsHtml += '<div class="visit-card" onclick="openVisitFromDashboard(' + JSON.stringify(v.id) + ')"><div class="visit-top"><div class="visit-title">' + v.title + '</div>' + daysUntil(v.visit_date) + '</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;">' + (person ? '<span class="chip chip-teal">&#128100; ' + person.name.split(' ')[0] + '</span>' : '') + (doctor ? '<span class="chip chip-blue">&#129338; ' + doctor.name + '</span>' : '') + '</div></div>';
+      visitsHtml += '<div class="visit-card" onclick="openVisitFromDashboard(\'' + v.id + '\')"><div class="visit-top"><div class="visit-title">' + v.title + '</div>' + daysUntil(v.visit_date) + '</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;">' + (person ? '<span class="chip chip-teal">&#128100; ' + person.name.split(' ')[0] + '</span>' : '') + (doctor ? '<span class="chip chip-blue">&#129338; ' + doctor.name + '</span>' : '') + '</div></div>';
     });
   } else {
     visitsHtml = '<div class="empty-state"><div class="empty-icon">&#128197;</div>No upcoming visits' + (filteredPerson ? ' for ' + filteredPerson.name.split(' ')[0] : '') + '</div>';
@@ -2148,8 +2148,7 @@ function setDashboardFilter(personId) {
 
 function openVisitFromDashboard(id) {
   // Navigate to visits tab then open visit
-  const visitsBtn = document.querySelector('.nav-item:nth-child(4)');
-  showTab('visits', visitsBtn);
+  showTab('visits', document.getElementById('nav-visits-btn'));
   setTimeout(() => openVisit(id), 300);
 }
 
