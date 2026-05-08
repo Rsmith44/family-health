@@ -1415,6 +1415,19 @@ async function openAddModal() {
     document.getElementById('upload-progress').style.display='none';
     populateDocSelects();
   }
+  if (modal==='modal-todo') {
+    document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
+    document.getElementById('todo-id').value = '';
+    document.getElementById('todo-title').value = '';
+    document.getElementById('todo-notes').value = '';
+    document.getElementById('todo-due-date').value = '';
+    document.getElementById('delete-todo-btn').style.display = 'none';
+    // Ensure data loaded then populate
+    if (!data.people.length || !data.doctors.length) {
+      await loadAll();
+    }
+    populateTodoSelects(null, null, null);
+  }
   openModal(modal);
 }
 function clearForm(modal) {
@@ -2303,8 +2316,8 @@ function renderTodos() {
   // Filter by status
   if (todoFilter === 'active') rows = rows.filter(t => !t.completed);
   else if (todoFilter === 'completed') rows = rows.filter(t => t.completed);
-  // 'all' shows everything - toggle button hides/shows completed within 'all' view
-  else if (todoFilter === 'all' && !showCompleted) rows = rows.filter(t => !t.completed);
+  // 'all' - toggle button controls whether completed are shown
+  else if (!showCompleted) rows = rows.filter(t => !t.completed);
 
   // Sort: by person name first, then by due_date
   rows = [...rows].sort((a, b) => {
