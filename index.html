@@ -1086,6 +1086,30 @@ async function openPerson(id) {
       }).join('') + '</div>';
   }
 
+  // Person todos
+  const { data: personTodos } = await sb.from('todos').select('*, doctors(name), visits(title)').eq('person_id', id).order('due_date', {ascending: true, nullsFirst: false});
+  if (personTodos?.length) {
+    const activeTodos = personTodos.filter(t => !t.completed);
+    const doneTodos = personTodos.filter(t => t.completed);
+    if (activeTodos.length) {
+      html += `<div class="section-label">Follow-ups (${activeTodos.length})</div>`;
+      activeTodos.forEach(t => {
+        const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+        html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">${t.title}</div>
+              ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
+              ${t.doctors?.name ? `<span class="chip chip-blue" style="margin-top:4px;display:inline-block;">🩺 ${t.doctors.name}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+    if (doneTodos.length) html += `<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ${doneTodos.length} completed follow-up${doneTodos.length!==1?'s':''}</div>`;
+  }
+
   html += `<div style="padding:8px 0 4px;display:flex;gap:8px;">
     <button onclick="openAddSection('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;">
       <span style="font-size:18px">+</span> Add Section
@@ -1157,6 +1181,26 @@ async function openDoctor(id, from='doctors') {
         ${v.people?.name?`<div class="visit-meta">👤 ${v.people.name}</div>`:''}
       </div>`).join('');
   }
+
+  // Doctor todos
+  const { data: docTodos } = await sb.from('todos').select('*, people(name), visits(title)').eq('doctor_id', id).eq('completed', false).order('due_date', {ascending: true, nullsFirst: false});
+  if (docTodos?.length) {
+    html += `<div class="section-label">Follow-ups (${docTodos.length})</div>`;
+    docTodos.forEach(t => {
+      const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+      html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;">${t.title}</div>
+            ${t.people?.name ? `<div style="font-size:12px;color:var(--text-3);">👤 ${t.people.name}</div>` : ''}
+            ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
   document.getElementById('doctor-detail-content').innerHTML = html;
 }
 
@@ -1229,7 +1273,7 @@ function setVisitFilter(f,btn) {
   renderVisits(data.visits,f);
 }
 
-function openVisit(id, from='visits') {
+async function openVisit(id, from='visits') {
   currentVisit = data.visits.find(v=>v.id===id);
   if (!currentVisit) return;
   const backBtn = document.getElementById('back-from-visit');
@@ -1245,6 +1289,22 @@ function openVisit(id, from='visits') {
     ['Doctor', v.doctors?.name],
     ['Cost', costStr],
   ].filter(([,val])=>val);
+  // Load todos for this visit
+  const { data: vTodos } = await sb.from('todos').select('*, people(name)').eq('visit_id', id).order('due_date', {ascending: true, nullsFirst: false});
+  let visitTodosHtml = '';
+  if (vTodos?.length) {
+    const active = vTodos.filter(t => !t.completed);
+    const done = vTodos.filter(t => t.completed);
+    if (active.length) {
+      visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
+        active.map(t => {
+          const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+        }).join('');
+    }
+    if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
+  }
+
   document.getElementById('visit-detail-content').innerHTML = `
     <div class="detail-hero">
       <div class="list-icon" style="background:${isUpcoming?'var(--green-bg)':'var(--surface)'};width:62px;height:62px;font-size:28px;border-radius:16px">📅</div>
@@ -2273,7 +2333,7 @@ async function saveGroupName() {
 let todosData = [];
 let todoPersonFilter = null;
 let todoFilter = 'all';
-let showCompleted = false;
+let showCompleted = true;
 
 async function loadTodos() {
   const el = document.getElementById('todos-list');
