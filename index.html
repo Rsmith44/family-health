@@ -9,54 +9,6 @@
 <title>Family Health</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── RICH TEXT NOTE HELPERS ──
-function syncNotes(type) {
-  const editor = document.getElementById(type+'-notes-editor');
-  const hidden = document.getElementById('visit-'+type+'-notes');
-  if (editor && hidden) hidden.value = editor.innerText;
-}
-
-function setNoteContent(type, text) {
-  const editor = document.getElementById(type+'-notes-editor');
-  const hidden = document.getElementById('visit-'+type+'-notes');
-  if (!editor) return;
-  const lines = (text||'').split('
-');
-  editor.innerHTML = lines.map(l => {
-    if (l.startsWith('• ') || l.startsWith('- ')) return '<div>'+l+'</div>';
-    return l ? '<div>'+l+'</div>' : '<div><br></div>';
-  }).join('');
-  if (hidden) hidden.value = text||'';
-}
-
-function addBullet(type) {
-  const editor = document.getElementById(type+'-notes-editor');
-  if (!editor) return;
-  editor.focus();
-  const newDiv = document.createElement('div');
-  newDiv.textContent = '• ';
-  editor.appendChild(newDiv);
-  const range = document.createRange();
-  range.setStartAfter(newDiv);
-  range.collapse(true);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  syncNotes(type);
-}
-
-function handleNoteKey(e, type) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const editor = document.getElementById(type+'-notes-editor');
-    const sel = window.getSelection();
-    const anchor = sel.anchorNode;
-    const parentDiv = anchor?.nodeType === 3 ? anchor.parentElement : anchor;
-    const text = parentDiv?.textContent || '';
-    const isBullet = text.trimStart().startsWith('• ');
-    document.execCommand('insertHTML', false, isBullet ? '<div>• </div>' : '<div><br></div>');
-    syncNotes(type);
-  }
 }
 </script>
 <style>
@@ -1167,6 +1119,56 @@ function addToCalendarFromVisit(id) {
   const v = data.visits.find(x=>x.id===id);
   if (!v||!v.visit_date) { toast('No date set for this visit'); return; }
   downloadICS(v.title, v.visit_date, v.notes, v.doctors?.name, v.people?.name);
+}
+
+
+// ── RICH TEXT NOTE HELPERS ──
+function syncNotes(type) {
+  const editor = document.getElementById(type+'-notes-editor');
+  const hidden = document.getElementById('visit-'+type+'-notes');
+  if (editor && hidden) hidden.value = editor.innerText;
+}
+
+function setNoteContent(type, text) {
+  const editor = document.getElementById(type+'-notes-editor');
+  const hidden = document.getElementById('visit-'+type+'-notes');
+  if (!editor) return;
+  const lines = (text||'').split('\n');
+  editor.innerHTML = lines.map(l => {
+    if (l.startsWith('• ') || l.startsWith('- ')) return '<div>'+l+'</div>';
+    return l ? '<div>'+l+'</div>' : '<div><br></div>';
+  }).join('');
+  if (hidden) hidden.value = text||'';
+}
+
+function addBullet(type) {
+  const editor = document.getElementById(type+'-notes-editor');
+  if (!editor) return;
+  editor.focus();
+  const newDiv = document.createElement('div');
+  newDiv.textContent = '• ';
+  editor.appendChild(newDiv);
+  const range = document.createRange();
+  range.setStartAfter(newDiv);
+  range.collapse(true);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  syncNotes(type);
+}
+
+function handleNoteKey(e, type) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const editor = document.getElementById(type+'-notes-editor');
+    const sel = window.getSelection();
+    const anchor = sel.anchorNode;
+    const parentDiv = anchor?.nodeType === 3 ? anchor.parentElement : anchor;
+    const text = parentDiv?.textContent || '';
+    const isBullet = text.trimStart().startsWith('• ');
+    document.execCommand('insertHTML', false, isBullet ? '<div>• </div>' : '<div><br></div>');
+    syncNotes(type);
+  }
 }
 
 function openAddModal() {
