@@ -2057,12 +2057,9 @@ async function loadDashboard() {
   const el = document.getElementById('dashboard-content');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  sb.auth.getUser().then(({data:{user}}) => {
-    if (user) {
-      const raw = user.email.split('@')[0].split('.')[0];
-      const name = raw.charAt(0).toUpperCase() + raw.slice(1);
-      document.getElementById('dashboard-greeting').textContent = greeting + ', ' + name;
-    }
+  sb.from('family_groups').select('name').limit(1).single().then(({data:fg}) => {
+    const name = fg?.name || '';
+    document.getElementById('dashboard-greeting').textContent = greeting + (name ? ', ' + name : '');
   });
   document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   if (!data.people.length) await loadAll();
