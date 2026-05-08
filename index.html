@@ -10,6 +10,163 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 }
+
+// ── EXPORT ──
+function openExportModal() {
+  // Populate selects
+  const personSel = document.getElementById('export-person');
+  const doctorSel = document.getElementById('export-doctor');
+  personSel.innerHTML = '<option value="">Select person...</option>' +
+    data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  doctorSel.innerHTML = '<option value="">All doctors</option>' +
+    data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('export-from').value = '';
+  document.getElementById('export-to').value = '';
+  openModal('modal-export');
+}
+
+function escapeCSV(val) {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function downloadCSV(filename, rows) {
+  const csv = rows.map(row => row.map(escapeCSV).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Downloaded ' + filename);
+}
+
+async function exportAll() {
+  const btn = event.target;
+  btn.textContent = 'Preparing...'; btn.disabled = true;
+
+  // Fetch fresh full data with all relations
+  const [peopleRes, doctorsRes, medsRes, visitsRes] = await Promise.all([
+    sb.from('people').select('*').order('name'),
+    sb.from('doctors').select('*').order('name'),
+    sb.from('medications').select('*, people(name), doctors(name)').order('name'),
+    sb.from('visits').select('*, people(name), doctors(name)').order('visit_date', {ascending: false})
+  ]);
+
+  const allRows = [];
+
+  // ── PEOPLE SECTION ──
+  allRows.push(['FAMILY MEMBERS']);
+  allRows.push(['Name', 'Date of Birth', 'Notes']);
+  (peopleRes.data || []).forEach(p => {
+    allRows.push([p.name, p.dob || '', p.notes || '']);
+  });
+  allRows.push([]);
+
+  // ── DOCTORS SECTION ──
+  allRows.push(['DOCTORS']);
+  allRows.push(['Name', 'Type', 'Address', 'Phone', 'Email', 'Notes']);
+  (doctorsRes.data || []).forEach(d => {
+    allRows.push([d.name, d.type || '', d.address || '', d.phone || '', d.email || '', d.notes || '']);
+  });
+  allRows.push([]);
+
+  // ── MEDICATIONS SECTION ──
+  allRows.push(['MEDICATIONS']);
+  allRows.push(['Name', 'Person', 'Dosage', 'Frequency', 'Reason', 'Status', 'Start Date', 'End Date', 'Prescribed By', 'Notes']);
+  (medsRes.data || []).forEach(m => {
+    allRows.push([
+      m.name, m.people?.name || '', m.dosage || '', m.frequency || '',
+      m.reason || '', m.status || '', m.start_date || '', m.end_date || '',
+      m.doctors?.name || '', m.notes || ''
+    ]);
+  });
+  allRows.push([]);
+
+  // ── VISITS SECTION ──
+  allRows.push(['VISITS']);
+  allRows.push(['Title', 'Person', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
+  (visitsRes.data || []).forEach(v => {
+    allRows.push([
+      v.title, v.people?.name || '', v.doctors?.name || '',
+      fmtDateTime(v.visit_date),
+      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
+      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
+      v.pre_notes || v.notes || '', v.post_notes || ''
+    ]);
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV('family-health-export-' + today + '.csv', allRows);
+  btn.textContent = 'Download Full Export (CSV)'; btn.disabled = false;
+  closeModal('modal-export');
+}
+
+async function exportVisits() {
+  const personId = document.getElementById('export-person').value;
+  if (!personId) { toast('Please select a person'); return; }
+  const doctorId = document.getElementById('export-doctor').value;
+  const fromDate = document.getElementById('export-from').value;
+  const toDate = document.getElementById('export-to').value;
+  const btn = event.target;
+  btn.textContent = 'Preparing...'; btn.disabled = true;
+
+  let query = sb.from('visits')
+    .select('*, people(name), doctors(name)')
+    .eq('person_id', personId)
+    .order('visit_date', {ascending: false});
+
+  if (doctorId) query = query.eq('doctor_id', doctorId);
+  if (fromDate) query = query.gte('visit_date', fromDate);
+  if (toDate) query = query.lte('visit_date', toDate + 'T23:59:59');
+
+  const { data: visits, error } = await query;
+  if (error) { toast('Error fetching visits'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
+  if (!visits?.length) { toast('No visits found for this selection'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
+
+  const person = data.people.find(p => p.id === personId);
+  const rows = [];
+  rows.push(['Visit Report: ' + (person?.name || '')]);
+  if (doctorId) {
+    const doctor = data.doctors.find(d => d.id === doctorId);
+    rows.push(['Doctor: ' + (doctor?.name || '')]);
+  }
+  rows.push(['Exported: ' + new Date().toLocaleDateString('en-AU')]);
+  rows.push([]);
+  rows.push(['Title', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
+
+  visits.forEach(v => {
+    rows.push([
+      v.title,
+      v.doctors?.name || '',
+      fmtDateTime(v.visit_date),
+      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
+      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
+      v.pre_notes || v.notes || '',
+      v.post_notes || ''
+    ]);
+  });
+
+  // Summary row
+  const totalCost = visits.reduce((sum, v) => sum + (parseFloat(v.total_cost) || 0), 0);
+  const totalOOP = visits.reduce((sum, v) => sum + (parseFloat(v.out_of_pocket) || 0), 0);
+  rows.push([]);
+  rows.push(['TOTALS', '', '', '$' + totalCost.toFixed(2), '$' + totalOOP.toFixed(2), '', '']);
+
+  const personName = (person?.name || 'visits').replace(/\s+/g, '-').toLowerCase();
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV('visits-' + personName + '-' + today + '.csv', rows);
+  btn.textContent = 'Download Visits (CSV)'; btn.disabled = false;
+  closeModal('modal-export');
+}
+
 </script>
 <style>
 :root {
@@ -212,6 +369,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="header">
       <div class="header-left"><div class="header-title">Family</div><div class="header-sub" id="home-sub">Loading...</div></div>
       <div class="header-actions">
+        <button class="icon-btn" onclick="openExportModal()" title="Export">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
         <button class="icon-btn" onclick="openInviteModal()" title="Invite">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
         </button>
@@ -412,6 +572,51 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <div class="field"><label>Notes</label><textarea id="person-notes" placeholder="Any relevant notes..."></textarea></div>
       <button class="btn-primary" onclick="savePerson()">Save</button>
       <button class="btn-danger" id="delete-person-btn" style="display:none" onclick="deletePerson()">Delete Person</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Export Data</div>
+      <button class="modal-close" onclick="closeModal('modal-export')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:4px;font-weight:600;">FULL EXPORT</div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:14px;color:var(--text-2);margin-bottom:12px;line-height:1.5;">Exports everything — all people, doctors, medications and visits — as a CSV file.</div>
+        <button class="btn-primary" onclick="exportAll()">
+          Download Full Export (CSV)
+        </button>
+      </div>
+
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:8px;font-weight:600;">VISITS EXPORT</div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:14px;color:var(--text-2);line-height:1.5;">Export visits for a specific person, optionally filtered by doctor.</div>
+        <div class="field">
+          <label>Person *</label>
+          <select id="export-person"><option value="">Select person...</option></select>
+        </div>
+        <div class="field">
+          <label>Doctor (optional)</label>
+          <select id="export-doctor"><option value="">All doctors</option></select>
+        </div>
+        <div class="field">
+          <label>Date Range (optional)</label>
+          <div style="display:flex;gap:8px;">
+            <input type="date" id="export-from" placeholder="From" style="flex:1">
+            <input type="date" id="export-to" placeholder="To" style="flex:1">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="exportVisits()">
+          Download Visits (CSV)
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
