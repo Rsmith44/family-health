@@ -1139,7 +1139,7 @@ async function openPerson(id) {
           </div>
         </div>`;
       });
-    }
+      html += '</div>';
     }
     if (activeTodos.length) html += '</div>';
     if (doneTodos.length) html += `<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ${doneTodos.length} completed follow-up${doneTodos.length!==1?'s':''}</div>`;
