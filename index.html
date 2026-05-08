@@ -327,6 +327,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input class="search-input" type="search" placeholder="Search documents..." oninput="filterDocs(this.value)">
     </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="setDocsFilter('all',this)">All</button>
+      <button class="tab-btn" onclick="setDocsFilter('visible',this)">Visible</button>
+      <button class="tab-btn" onclick="setDocsFilter('hidden',this)">Hidden</button>
+    </div>
     <div class="scroll" id="docs-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
@@ -1775,11 +1780,32 @@ async function loadDocs() {
   renderDocs(data.documents);
 }
 
+let docsFilter = 'all';
+
+function setDocsFilter(f, btn) {
+  docsFilter = f;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyDocsFilter();
+}
+
+function applyDocsFilter() {
+  let rows = data.documents;
+  if (docsFilter === 'visible') rows = rows.filter(d => !d.hidden);
+  if (docsFilter === 'hidden') rows = rows.filter(d => d.hidden);
+  const q = document.querySelector('#screen-documents .search-input')?.value || '';
+  if (q) rows = rows.filter(d => d.name.toLowerCase().includes(q.toLowerCase()));
+  renderDocs(rows);
+}
+
 function renderDocs(rows) {
   const el = document.getElementById('docs-list');
-  document.getElementById('docs-sub').textContent = `${rows.length} document${rows.length !== 1 ? 's' : ''}`;
+  const total = data.documents.length;
+  const hidden = data.documents.filter(d => d.hidden).length;
+  document.getElementById('docs-sub').textContent = `${total} document${total !== 1 ? 's' : ''}${hidden ? ' · ' + hidden + ' hidden' : ''}`;
   if (!rows.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>No documents yet<br><span style="font-size:12px">Tap + to upload a file</span></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>' + 
+      (docsFilter === 'hidden' ? 'No hidden documents' : docsFilter === 'visible' ? 'No visible documents' : 'No documents yet<br><span style="font-size:12px">Tap + to upload a file</span>') + '</div>';
     return;
   }
   const grouped = {};
@@ -1793,20 +1819,32 @@ function renderDocs(rows) {
     docs.map(d => {
       const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') || d.file_type?.includes('heic') ? '🖼️' : '📝';
       const size = d.file_size ? (d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+'MB' : Math.round(d.file_size/1024)+'KB') : '';
-      return `<div class="list-item" onclick="openDocument('${d.id}')">
-        <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
-        <div class="list-info">
-          <div class="list-title">${d.name}</div>
+      const isHidden = d.hidden;
+      return `<div class="list-item" style="${isHidden ? 'opacity:0.45;' : ''}">
+        <div class="list-icon" style="background:var(--blue-bg);font-size:20px;cursor:pointer" onclick="openDocument('${d.id}')">${icon}</div>
+        <div class="list-info" style="cursor:pointer" onclick="openDocument('${d.id}')">
+          <div class="list-title">${d.name}${isHidden ? ' <span style="font-size:10px;background:var(--surface);color:var(--text-3);padding:2px 6px;border-radius:10px;margin-left:4px">hidden</span>' : ''}</div>
           <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
         </div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        <button onclick="toggleDocVisibility('${d.id}', ${isHidden})" style="background:${isHidden ? 'var(--green-bg)' : 'var(--surface)'};border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;color:${isHidden ? 'var(--green)' : 'var(--text-3)'};cursor:pointer;white-space:nowrap;margin-left:4px;">
+          ${isHidden ? 'Show' : 'Hide'}
+        </button>
       </div>`;
     }).join('') + '</div>'
   ).join('');
 }
 
+async function toggleDocVisibility(id, currentlyHidden) {
+  const { error } = await sb.from('documents').update({ hidden: !currentlyHidden }).eq('id', id);
+  if (error) { toast('Error updating'); return; }
+  const doc = data.documents.find(d => d.id === id);
+  if (doc) doc.hidden = !currentlyHidden;
+  applyDocsFilter();
+  toast(currentlyHidden ? 'Document visible ✓' : 'Document hidden');
+}
+
 function filterDocs(q) {
-  renderDocs(q ? data.documents.filter(d => d.name.toLowerCase().includes(q.toLowerCase())) : data.documents);
+  applyDocsFilter();
 }
 
 async function openDocument(id) {
