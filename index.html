@@ -8,165 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Family Health">
 <title>Family Health</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-}
-
-// ── EXPORT ──
-function openExportModal() {
-  // Populate selects
-  const personSel = document.getElementById('export-person');
-  const doctorSel = document.getElementById('export-doctor');
-  personSel.innerHTML = '<option value="">Select person...</option>' +
-    data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  doctorSel.innerHTML = '<option value="">All doctors</option>' +
-    data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-  document.getElementById('export-from').value = '';
-  document.getElementById('export-to').value = '';
-  openModal('modal-export');
-}
-
-function escapeCSV(val) {
-  if (val === null || val === undefined) return '';
-  const str = String(val);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
-}
-
-function downloadCSV(filename, rows) {
-  const csv = rows.map(row => row.map(escapeCSV).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('Downloaded ' + filename);
-}
-
-async function exportAll() {
-  const btn = event.target;
-  btn.textContent = 'Preparing...'; btn.disabled = true;
-
-  // Fetch fresh full data with all relations
-  const [peopleRes, doctorsRes, medsRes, visitsRes] = await Promise.all([
-    sb.from('people').select('*').order('name'),
-    sb.from('doctors').select('*').order('name'),
-    sb.from('medications').select('*, people(name), doctors(name)').order('name'),
-    sb.from('visits').select('*, people(name), doctors(name)').order('visit_date', {ascending: false})
-  ]);
-
-  const allRows = [];
-
-  // ── PEOPLE SECTION ──
-  allRows.push(['FAMILY MEMBERS']);
-  allRows.push(['Name', 'Date of Birth', 'Notes']);
-  (peopleRes.data || []).forEach(p => {
-    allRows.push([p.name, p.dob || '', p.notes || '']);
-  });
-  allRows.push([]);
-
-  // ── DOCTORS SECTION ──
-  allRows.push(['DOCTORS']);
-  allRows.push(['Name', 'Type', 'Address', 'Phone', 'Email', 'Notes']);
-  (doctorsRes.data || []).forEach(d => {
-    allRows.push([d.name, d.type || '', d.address || '', d.phone || '', d.email || '', d.notes || '']);
-  });
-  allRows.push([]);
-
-  // ── MEDICATIONS SECTION ──
-  allRows.push(['MEDICATIONS']);
-  allRows.push(['Name', 'Person', 'Dosage', 'Frequency', 'Reason', 'Status', 'Start Date', 'End Date', 'Prescribed By', 'Notes']);
-  (medsRes.data || []).forEach(m => {
-    allRows.push([
-      m.name, m.people?.name || '', m.dosage || '', m.frequency || '',
-      m.reason || '', m.status || '', m.start_date || '', m.end_date || '',
-      m.doctors?.name || '', m.notes || ''
-    ]);
-  });
-  allRows.push([]);
-
-  // ── VISITS SECTION ──
-  allRows.push(['VISITS']);
-  allRows.push(['Title', 'Person', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
-  (visitsRes.data || []).forEach(v => {
-    allRows.push([
-      v.title, v.people?.name || '', v.doctors?.name || '',
-      fmtDateTime(v.visit_date),
-      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
-      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
-      v.pre_notes || v.notes || '', v.post_notes || ''
-    ]);
-  });
-
-  const today = new Date().toISOString().split('T')[0];
-  downloadCSV('family-health-export-' + today + '.csv', allRows);
-  btn.textContent = 'Download Full Export (CSV)'; btn.disabled = false;
-  closeModal('modal-export');
-}
-
-async function exportVisits() {
-  const personId = document.getElementById('export-person').value;
-  if (!personId) { toast('Please select a person'); return; }
-  const doctorId = document.getElementById('export-doctor').value;
-  const fromDate = document.getElementById('export-from').value;
-  const toDate = document.getElementById('export-to').value;
-  const btn = event.target;
-  btn.textContent = 'Preparing...'; btn.disabled = true;
-
-  let query = sb.from('visits')
-    .select('*, people(name), doctors(name)')
-    .eq('person_id', personId)
-    .order('visit_date', {ascending: false});
-
-  if (doctorId) query = query.eq('doctor_id', doctorId);
-  if (fromDate) query = query.gte('visit_date', fromDate);
-  if (toDate) query = query.lte('visit_date', toDate + 'T23:59:59');
-
-  const { data: visits, error } = await query;
-  if (error) { toast('Error fetching visits'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
-  if (!visits?.length) { toast('No visits found for this selection'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
-
-  const person = data.people.find(p => p.id === personId);
-  const rows = [];
-  rows.push(['Visit Report: ' + (person?.name || '')]);
-  if (doctorId) {
-    const doctor = data.doctors.find(d => d.id === doctorId);
-    rows.push(['Doctor: ' + (doctor?.name || '')]);
-  }
-  rows.push(['Exported: ' + new Date().toLocaleDateString('en-AU')]);
-  rows.push([]);
-  rows.push(['Title', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
-
-  visits.forEach(v => {
-    rows.push([
-      v.title,
-      v.doctors?.name || '',
-      fmtDateTime(v.visit_date),
-      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
-      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
-      v.pre_notes || v.notes || '',
-      v.post_notes || ''
-    ]);
-  });
-
-  // Summary row
-  const totalCost = visits.reduce((sum, v) => sum + (parseFloat(v.total_cost) || 0), 0);
-  const totalOOP = visits.reduce((sum, v) => sum + (parseFloat(v.out_of_pocket) || 0), 0);
-  rows.push([]);
-  rows.push(['TOTALS', '', '', '$' + totalCost.toFixed(2), '$' + totalOOP.toFixed(2), '', '']);
-
-  const personName = (person?.name || 'visits').replace(/\s+/g, '-').toLowerCase();
-  const today = new Date().toISOString().split('T')[0];
-  downloadCSV('visits-' + personName + '-' + today + '.csv', rows);
-  btn.textContent = 'Download Visits (CSV)'; btn.disabled = false;
-  closeModal('modal-export');
-}
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </script>
 <style>
 :root {
@@ -1677,6 +1519,162 @@ async function deleteSection() {
 
 loadDoctorTypes();
 
+
+// ── EXPORT ──
+function openExportModal() {
+  // Populate selects
+  const personSel = document.getElementById('export-person');
+  const doctorSel = document.getElementById('export-doctor');
+  personSel.innerHTML = '<option value="">Select person...</option>' +
+    data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  doctorSel.innerHTML = '<option value="">All doctors</option>' +
+    data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('export-from').value = '';
+  document.getElementById('export-to').value = '';
+  openModal('modal-export');
+}
+
+function escapeCSV(val) {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function downloadCSV(filename, rows) {
+  const csv = rows.map(row => row.map(escapeCSV).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Downloaded ' + filename);
+}
+
+async function exportAll() {
+  const btn = event.target;
+  btn.textContent = 'Preparing...'; btn.disabled = true;
+
+  // Fetch fresh full data with all relations
+  const [peopleRes, doctorsRes, medsRes, visitsRes] = await Promise.all([
+    sb.from('people').select('*').order('name'),
+    sb.from('doctors').select('*').order('name'),
+    sb.from('medications').select('*, people(name), doctors(name)').order('name'),
+    sb.from('visits').select('*, people(name), doctors(name)').order('visit_date', {ascending: false})
+  ]);
+
+  const allRows = [];
+
+  // ── PEOPLE SECTION ──
+  allRows.push(['FAMILY MEMBERS']);
+  allRows.push(['Name', 'Date of Birth', 'Notes']);
+  (peopleRes.data || []).forEach(p => {
+    allRows.push([p.name, p.dob || '', p.notes || '']);
+  });
+  allRows.push([]);
+
+  // ── DOCTORS SECTION ──
+  allRows.push(['DOCTORS']);
+  allRows.push(['Name', 'Type', 'Address', 'Phone', 'Email', 'Notes']);
+  (doctorsRes.data || []).forEach(d => {
+    allRows.push([d.name, d.type || '', d.address || '', d.phone || '', d.email || '', d.notes || '']);
+  });
+  allRows.push([]);
+
+  // ── MEDICATIONS SECTION ──
+  allRows.push(['MEDICATIONS']);
+  allRows.push(['Name', 'Person', 'Dosage', 'Frequency', 'Reason', 'Status', 'Start Date', 'End Date', 'Prescribed By', 'Notes']);
+  (medsRes.data || []).forEach(m => {
+    allRows.push([
+      m.name, m.people?.name || '', m.dosage || '', m.frequency || '',
+      m.reason || '', m.status || '', m.start_date || '', m.end_date || '',
+      m.doctors?.name || '', m.notes || ''
+    ]);
+  });
+  allRows.push([]);
+
+  // ── VISITS SECTION ──
+  allRows.push(['VISITS']);
+  allRows.push(['Title', 'Person', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
+  (visitsRes.data || []).forEach(v => {
+    allRows.push([
+      v.title, v.people?.name || '', v.doctors?.name || '',
+      fmtDateTime(v.visit_date),
+      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
+      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
+      v.pre_notes || v.notes || '', v.post_notes || ''
+    ]);
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV('family-health-export-' + today + '.csv', allRows);
+  btn.textContent = 'Download Full Export (CSV)'; btn.disabled = false;
+  closeModal('modal-export');
+}
+
+async function exportVisits() {
+  const personId = document.getElementById('export-person').value;
+  if (!personId) { toast('Please select a person'); return; }
+  const doctorId = document.getElementById('export-doctor').value;
+  const fromDate = document.getElementById('export-from').value;
+  const toDate = document.getElementById('export-to').value;
+  const btn = event.target;
+  btn.textContent = 'Preparing...'; btn.disabled = true;
+
+  let query = sb.from('visits')
+    .select('*, people(name), doctors(name)')
+    .eq('person_id', personId)
+    .order('visit_date', {ascending: false});
+
+  if (doctorId) query = query.eq('doctor_id', doctorId);
+  if (fromDate) query = query.gte('visit_date', fromDate);
+  if (toDate) query = query.lte('visit_date', toDate + 'T23:59:59');
+
+  const { data: visits, error } = await query;
+  if (error) { toast('Error fetching visits'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
+  if (!visits?.length) { toast('No visits found for this selection'); btn.textContent = 'Download Visits (CSV)'; btn.disabled = false; return; }
+
+  const person = data.people.find(p => p.id === personId);
+  const rows = [];
+  rows.push(['Visit Report: ' + (person?.name || '')]);
+  if (doctorId) {
+    const doctor = data.doctors.find(d => d.id === doctorId);
+    rows.push(['Doctor: ' + (doctor?.name || '')]);
+  }
+  rows.push(['Exported: ' + new Date().toLocaleDateString('en-AU')]);
+  rows.push([]);
+  rows.push(['Title', 'Doctor', 'Date', 'Total Cost', 'Out of Pocket', 'Pre-Appointment Notes', 'Post-Appointment Notes']);
+
+  visits.forEach(v => {
+    rows.push([
+      v.title,
+      v.doctors?.name || '',
+      fmtDateTime(v.visit_date),
+      v.total_cost ? '$' + parseFloat(v.total_cost).toFixed(2) : '',
+      v.out_of_pocket ? '$' + parseFloat(v.out_of_pocket).toFixed(2) : '',
+      v.pre_notes || v.notes || '',
+      v.post_notes || ''
+    ]);
+  });
+
+  // Summary row
+  const totalCost = visits.reduce((sum, v) => sum + (parseFloat(v.total_cost) || 0), 0);
+  const totalOOP = visits.reduce((sum, v) => sum + (parseFloat(v.out_of_pocket) || 0), 0);
+  rows.push([]);
+  rows.push(['TOTALS', '', '', '$' + totalCost.toFixed(2), '$' + totalOOP.toFixed(2), '', '']);
+
+  const personName = (person?.name || 'visits').replace(/\s+/g, '-').toLowerCase();
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV('visits-' + personName + '-' + today + '.csv', rows);
+  btn.textContent = 'Download Visits (CSV)'; btn.disabled = false;
+  closeModal('modal-export');
+}
 </script>
 </body>
 </html>
