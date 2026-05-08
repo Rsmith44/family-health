@@ -1397,7 +1397,7 @@ function handleNoteKey(e, type) {
   }
 }
 
-function openAddModal() {
+async function openAddModal() {
   const map = {dashboard:'modal-visit',home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo'};
   const modal = map[currentTab];
   if (!modal) return;
@@ -2302,10 +2302,9 @@ function renderTodos() {
 
   // Filter by status
   if (todoFilter === 'active') rows = rows.filter(t => !t.completed);
-  if (todoFilter === 'completed') rows = rows.filter(t => t.completed);
-
-  // Hide completed unless showCompleted
-  if (todoFilter === 'all' && !showCompleted) rows = rows.filter(t => !t.completed);
+  else if (todoFilter === 'completed') rows = rows.filter(t => t.completed);
+  // 'all' shows everything - toggle button hides/shows completed within 'all' view
+  else if (todoFilter === 'all' && !showCompleted) rows = rows.filter(t => !t.completed);
 
   // Sort: by person name first, then by due_date
   rows = [...rows].sort((a, b) => {
@@ -2358,7 +2357,7 @@ function renderTodos() {
         const isDueToday = t.due_date && !t.completed && new Date(t.due_date).toDateString() === new Date().toDateString();
         return '<div class="visit-card" style="' + (t.completed ? 'opacity:0.5;' : '') + 'margin-bottom:8px;" onclick="editTodo(\'' + t.id + '\')">' +
           '<div style="display:flex;align-items:flex-start;gap:12px;">' +
-          '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (t.completed ? 'var(--green)' : 'var(--border)') + ';background:' + (t.completed ? 'var(--green)' : 'white') + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;">' +
+          '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" title="' + (t.completed ? 'Mark as active' : 'Mark as complete') + '" style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (t.completed ? 'var(--green)' : 'var(--border)') + ';background:' + (t.completed ? 'var(--green)' : 'white') + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all 0.15s;">' +
           (t.completed ? '<svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : '') +
           '</div>' +
           '<div style="flex:1;min-width:0;">' +
