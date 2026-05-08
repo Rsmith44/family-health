@@ -1068,7 +1068,7 @@ async function openPerson(id) {
         <div class="list-icon" style="background:var(--amber-bg)">💊</div>
         <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
         <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div>';
+      </div>`).join('') + '</div></div>';
   }
   if (myVisits.length) {
     html += `<div class="collapsible-header" onclick="toggleSection('${id}','visits')" style="margin:22px 4px 8px;">
@@ -1079,7 +1079,7 @@ async function openPerson(id) {
       myVisits.slice(0,5).map(v=>`<div class="visit-card" onclick="openVisit('${v.id}','person')">
         <div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>
         ${v.doctors?.name?`<div class="visit-meta">🩺 ${v.doctors.name}</div>`:''}
-      </div>`).join('');
+      </div>`).join('') + '</div>';
   }
   // Custom sections
   const person = data.people.find(p=>p.id===id);
@@ -1207,7 +1207,7 @@ async function openDoctor(id, from='doctors') {
       myMeds.map(m=>`<div class="list-item" onclick="openMed('${m.id}','doctor')">
         <div class="list-icon" style="background:var(--amber-bg)">💊</div>
         <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
-      </div>`).join('') + '</div>';
+      </div>`).join('') + '</div></div>';
   }
   if (myVisits.length) {
     html += `<div class="section-label">Visits</div>` +
