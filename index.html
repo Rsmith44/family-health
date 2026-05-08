@@ -1162,7 +1162,7 @@ function openVisit(id, from='visits') {
       <span style="font-size:18px">📎</span> Add Document
     </button>`;
   // Auto-load existing docs for this visit
-  setTimeout(() => autoLoadVisitDocs('${v.id}'), 100);
+  document.getElementById('visit-detail-content').innerHTML && setTimeout(() => autoLoadVisitDocs(v.id), 200);
 }
 
 function makeICS(title, datetime, notes, doctorName, personName) {
