@@ -8,193 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Family Health">
 <title>Family Health</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// ── DOCUMENTS ──
-let selectedDocFile = null;
-
-async function loadDocs() {
-  const el = document.getElementById('docs-list');
-  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-  const { data: rows, error } = await sb.from('documents')
-    .select('*, people(name), doctors(name), visits(title)')
-    .order('uploaded_at', { ascending: false });
-  if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
-  data.documents = rows || [];
-  renderDocs(data.documents);
-}
-
-function renderDocs(rows) {
-  const el = document.getElementById('docs-list');
-  document.getElementById('docs-sub').textContent = `${rows.length} document${rows.length !== 1 ? 's' : ''}`;
-  if (!rows.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>No documents yet<br><span style="font-size:12px">Tap + to upload a file</span></div>';
-    return;
-  }
-  const grouped = {};
-  rows.forEach(d => {
-    const key = d.people?.name || 'General';
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(d);
-  });
-  el.innerHTML = Object.entries(grouped).map(([person, docs]) =>
-    `<div class="section-label">${person}</div><div class="list-card">` +
-    docs.map(d => {
-      const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') || d.file_type?.includes('heic') ? '🖼️' : '📝';
-      const size = d.file_size ? (d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+'MB' : Math.round(d.file_size/1024)+'KB') : '';
-      return `<div class="list-item" onclick="openDocument('${d.id}')">
-        <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
-        <div class="list-info">
-          <div class="list-title">${d.name}</div>
-          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
-        </div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`;
-    }).join('') + '</div>'
-  ).join('');
-}
-
-function filterDocs(q) {
-  renderDocs(q ? data.documents.filter(d => d.name.toLowerCase().includes(q.toLowerCase())) : data.documents);
-}
-
-async function openDocument(id) {
-  const doc = data.documents.find(d => d.id === id);
-  if (!doc) return;
-  // Get signed URL and open
-  const { data: urlData, error } = await sb.storage.from('Documents').createSignedUrl(doc.file_path, 60);
-  if (error) { toast('Error opening file'); return; }
-  window.open(urlData.signedUrl, '_blank');
-}
-
-function populateDocSelects() {
-  const personSel = document.getElementById('doc-person');
-  const doctorSel = document.getElementById('doc-doctor');
-  const visitSel = document.getElementById('doc-visit');
-  personSel.innerHTML = '<option value="">Select person...</option>' + data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  doctorSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-  visitSel.innerHTML = '<option value="">Select visit...</option>' + data.visits.slice(0, 50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
-  // When person changes, filter visits
-  personSel.onchange = () => {
-    const pid = personSel.value;
-    const filtered = pid ? data.visits.filter(v => v.person_id === pid) : data.visits;
-    visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
-  };
-}
-
-function handleFileSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  selectedDocFile = file;
-  const nameEl = document.getElementById('selected-file-name');
-  nameEl.textContent = '✓ ' + file.name;
-  nameEl.style.display = 'block';
-  // Auto-fill name if empty
-  if (!document.getElementById('doc-name').value) {
-    document.getElementById('doc-name').value = file.name.replace(/\.[^/.]+$/, '');
-  }
-}
-
-async function uploadDocument() {
-  if (!selectedDocFile) { toast('Please select a file'); return; }
-  const name = document.getElementById('doc-name').value.trim() || selectedDocFile.name;
-  const personId = document.getElementById('doc-person').value || null;
-  const doctorId = document.getElementById('doc-doctor').value || null;
-  const visitId = document.getElementById('doc-visit').value || null;
-  const btn = document.getElementById('upload-btn');
-  const progress = document.getElementById('upload-progress');
-  const progressBar = document.getElementById('upload-progress-bar');
-
-  btn.textContent = 'Uploading...'; btn.disabled = true;
-  progress.style.display = 'block';
-  progressBar.style.width = '30%';
-
-  // Generate unique file path
-  const ext = selectedDocFile.name.split('.').pop();
-  const filePath = `${currentFamilyGroupId}/${Date.now()}-${name.replace(/[^a-z0-9]/gi,'_')}.${ext}`;
-
-  // Upload to Supabase Storage
-  const { error: uploadError } = await sb.storage.from('Documents').upload(filePath, selectedDocFile);
-  if (uploadError) {
-    toast('Upload failed: ' + uploadError.message);
-    btn.textContent = 'Upload Document'; btn.disabled = false;
-    progress.style.display = 'none';
-    return;
-  }
-
-  progressBar.style.width = '70%';
-
-  // Save metadata to documents table
-  const { error: dbError } = await sb.from('documents').insert({
-    name,
-    file_path: filePath,
-    file_type: selectedDocFile.type || ext,
-    file_size: selectedDocFile.size,
-    person_id: personId,
-    doctor_id: doctorId,
-    visit_id: visitId,
-    family_group_id: currentFamilyGroupId
-  });
-
-  if (dbError) {
-    toast('Error saving document: ' + dbError.message);
-    btn.textContent = 'Upload Document'; btn.disabled = false;
-    progress.style.display = 'none';
-    return;
-  }
-
-  progressBar.style.width = '100%';
-  setTimeout(() => {
-    closeModal('modal-document');
-    selectedDocFile = null;
-    btn.textContent = 'Upload Document'; btn.disabled = false;
-    progress.style.display = 'none';
-    toast('Document uploaded ✓');
-    loadDocs();
-  }, 400);
-}
-
-// Add document button to person detail view
-function addDocumentForPerson(personId) {
-  populateDocSelects();
-  document.getElementById('doc-person').value = personId;
-  // Filter visits for this person
-  const filtered = data.visits.filter(v => v.person_id === personId);
-  const visitSel = document.getElementById('doc-visit');
-  visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
-  document.getElementById('doc-id').value = '';
-  document.getElementById('doc-name').value = '';
-  document.getElementById('doc-file-input').value = '';
-  document.getElementById('selected-file-name').style.display = 'none';
-  document.getElementById('upload-progress').style.display = 'none';
-  openModal('modal-document');
-}
-
-
-
-async function loadVisitDocs(visitId, personId) {
-  const { data: docs } = await sb.from('documents').select('*').eq('visit_id', visitId).order('uploaded_at', {ascending: false});
-  const el = document.getElementById('visit-docs-' + visitId);
-  if (el && docs?.length) {
-    el.innerHTML = '<div class="section-label">Documents</div><div class="list-card">' +
-      docs.map(d => {
-        const icon = d.file_type?.includes("pdf") ? "📄" : d.file_type?.includes("image") || d.file_type?.includes("jpg") || d.file_type?.includes("png") ? "🖼️" : "📝";
-        return "<div class="list-item" onclick="openDocument('" + d.id + "')"><div class="list-icon" style="background:var(--blue-bg);font-size:20px">" + icon + "</div><div class="list-info"><div class="list-title">" + d.name + "</div><div class="list-sub">" + fmtDate(d.uploaded_at) + "</div></div></div>";
-      }).join("") + "</div>";
-  }
-  // Open upload modal pre-filled with this visit
-  populateDocSelects();
-  if (personId) document.getElementById("doc-person").value = personId;
-  document.getElementById("doc-visit").value = visitId;
-  document.getElementById("doc-id").value = "";
-  document.getElementById("doc-name").value = "";
-  document.getElementById("doc-file-input").value = "";
-  document.getElementById("selected-file-name").style.display = "none";
-  document.getElementById("upload-progress").style.display = "none";
-  openModal("modal-document");
-}
-
-</script>
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #F7F5F0;
@@ -1943,6 +1757,193 @@ async function exportVisits() {
   downloadCSV('visits-' + personName + '-' + today + '.csv', rows);
   btn.textContent = 'Download Visits (CSV)'; btn.disabled = false;
   closeModal('modal-export');
+}
+
+// ── DOCUMENTS ──
+let selectedDocFile = null;
+
+async function loadDocs() {
+  const el = document.getElementById('docs-list');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  const { data: rows, error } = await sb.from('documents')
+    .select('*, people(name), doctors(name), visits(title)')
+    .order('uploaded_at', { ascending: false });
+  if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
+  data.documents = rows || [];
+  renderDocs(data.documents);
+}
+
+function renderDocs(rows) {
+  const el = document.getElementById('docs-list');
+  document.getElementById('docs-sub').textContent = `${rows.length} document${rows.length !== 1 ? 's' : ''}`;
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>No documents yet<br><span style="font-size:12px">Tap + to upload a file</span></div>';
+    return;
+  }
+  const grouped = {};
+  rows.forEach(d => {
+    const key = d.people?.name || 'General';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(d);
+  });
+  el.innerHTML = Object.entries(grouped).map(([person, docs]) =>
+    `<div class="section-label">${person}</div><div class="list-card">` +
+    docs.map(d => {
+      const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') || d.file_type?.includes('heic') ? '🖼️' : '📝';
+      const size = d.file_size ? (d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+'MB' : Math.round(d.file_size/1024)+'KB') : '';
+      return `<div class="list-item" onclick="openDocument('${d.id}')">
+        <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
+        <div class="list-info">
+          <div class="list-title">${d.name}</div>
+          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
+        </div>
+        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`;
+    }).join('') + '</div>'
+  ).join('');
+}
+
+function filterDocs(q) {
+  renderDocs(q ? data.documents.filter(d => d.name.toLowerCase().includes(q.toLowerCase())) : data.documents);
+}
+
+async function openDocument(id) {
+  const doc = data.documents.find(d => d.id === id);
+  if (!doc) return;
+  // Get signed URL and open
+  const { data: urlData, error } = await sb.storage.from('Documents').createSignedUrl(doc.file_path, 60);
+  if (error) { toast('Error opening file'); return; }
+  window.open(urlData.signedUrl, '_blank');
+}
+
+function populateDocSelects() {
+  const personSel = document.getElementById('doc-person');
+  const doctorSel = document.getElementById('doc-doctor');
+  const visitSel = document.getElementById('doc-visit');
+  personSel.innerHTML = '<option value="">Select person...</option>' + data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  doctorSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  visitSel.innerHTML = '<option value="">Select visit...</option>' + data.visits.slice(0, 50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  // When person changes, filter visits
+  personSel.onchange = () => {
+    const pid = personSel.value;
+    const filtered = pid ? data.visits.filter(v => v.person_id === pid) : data.visits;
+    visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  };
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedDocFile = file;
+  const nameEl = document.getElementById('selected-file-name');
+  nameEl.textContent = '✓ ' + file.name;
+  nameEl.style.display = 'block';
+  // Auto-fill name if empty
+  if (!document.getElementById('doc-name').value) {
+    document.getElementById('doc-name').value = file.name.replace(/\.[^/.]+$/, '');
+  }
+}
+
+async function uploadDocument() {
+  if (!selectedDocFile) { toast('Please select a file'); return; }
+  const name = document.getElementById('doc-name').value.trim() || selectedDocFile.name;
+  const personId = document.getElementById('doc-person').value || null;
+  const doctorId = document.getElementById('doc-doctor').value || null;
+  const visitId = document.getElementById('doc-visit').value || null;
+  const btn = document.getElementById('upload-btn');
+  const progress = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('upload-progress-bar');
+
+  btn.textContent = 'Uploading...'; btn.disabled = true;
+  progress.style.display = 'block';
+  progressBar.style.width = '30%';
+
+  // Generate unique file path
+  const ext = selectedDocFile.name.split('.').pop();
+  const filePath = `${currentFamilyGroupId}/${Date.now()}-${name.replace(/[^a-z0-9]/gi,'_')}.${ext}`;
+
+  // Upload to Supabase Storage
+  const { error: uploadError } = await sb.storage.from('Documents').upload(filePath, selectedDocFile);
+  if (uploadError) {
+    toast('Upload failed: ' + uploadError.message);
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    return;
+  }
+
+  progressBar.style.width = '70%';
+
+  // Save metadata to documents table
+  const { error: dbError } = await sb.from('documents').insert({
+    name,
+    file_path: filePath,
+    file_type: selectedDocFile.type || ext,
+    file_size: selectedDocFile.size,
+    person_id: personId,
+    doctor_id: doctorId,
+    visit_id: visitId,
+    family_group_id: currentFamilyGroupId
+  });
+
+  if (dbError) {
+    toast('Error saving document: ' + dbError.message);
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    return;
+  }
+
+  progressBar.style.width = '100%';
+  setTimeout(() => {
+    closeModal('modal-document');
+    selectedDocFile = null;
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    toast('Document uploaded ✓');
+    loadDocs();
+  }, 400);
+}
+
+// Add document button to person detail view
+function addDocumentForPerson(personId) {
+  populateDocSelects();
+  document.getElementById('doc-person').value = personId;
+  // Filter visits for this person
+  const filtered = data.visits.filter(v => v.person_id === personId);
+  const visitSel = document.getElementById('doc-visit');
+  visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  document.getElementById('doc-id').value = '';
+  document.getElementById('doc-name').value = '';
+  document.getElementById('doc-file-input').value = '';
+  document.getElementById('selected-file-name').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  openModal('modal-document');
+}
+
+
+
+async function loadVisitDocs(visitId, personId) {
+  const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("uploaded_at", {ascending: false});
+  const el = document.getElementById("visit-docs-" + visitId);
+  if (el && docs && docs.length) {
+    function docIcon(d) {
+      if (d.file_type && d.file_type.includes("pdf")) return "📄";
+      if (d.file_type && (d.file_type.includes("image") || d.file_type.includes("jpg") || d.file_type.includes("png"))) return "🖼️";
+      return "📝";
+    }
+    var rows = docs.map(function(d) {
+      return "<div class=\"list-item\" onclick=\"openDocument(" + JSON.stringify(d.id) + ")\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + fmtDate(d.uploaded_at) + "</div></div></div>";
+    });
+    el.innerHTML = "<div class=\"section-label\">Documents (" + docs.length + ")</div><div class=\"list-card\">" + rows.join("") + "</div>";
+  }
+  populateDocSelects();
+  if (personId) document.getElementById("doc-person").value = personId;
+  document.getElementById("doc-visit").value = visitId;
+  document.getElementById("doc-id").value = "";
+  document.getElementById("doc-name").value = "";
+  document.getElementById("doc-file-input").value = "";
+  document.getElementById("selected-file-name").style.display = "none";
+  document.getElementById("upload-progress").style.display = "none";
+  openModal("modal-document");
 }
 </script>
 </body>
