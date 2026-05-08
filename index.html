@@ -1056,7 +1056,7 @@ async function openPerson(id) {
         <div class="list-icon" style="background:var(--blue-bg)">🩺</div>
         <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.type,d.address].filter(Boolean).join(' · ')}</div></div>
         <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div>';
+      </div>`).join('') + '</div></div>';
   }
   if (myMeds.length) {
     html += `<div class="collapsible-header" onclick="toggleSection('${id}','meds')" style="margin:22px 4px 8px;">
@@ -1200,7 +1200,7 @@ async function openDoctor(id, from='doctors') {
         <div class="avatar avatar-sq" style="background:${avatarColor(p.name)};width:40px;height:40px;font-size:15px">${initials(p.name)}</div>
         <div class="list-info"><div class="list-title">${p.name}</div><div class="list-sub">${p.dob?age(p.dob)+' old':''}</div></div>
         <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div>';
+      </div>`).join('') + '</div></div>';
   }
   if (myMeds.length) {
     html += `<div class="section-label">Prescribed Medications</div><div class="list-card">` +
@@ -2626,16 +2626,10 @@ const collapsedSections = {};
 function toggleSection(personId, key) {
   const sectionKey = personId + '_' + key;
   collapsedSections[sectionKey] = !collapsedSections[sectionKey];
-  const content = document.getElementById('section_' + sectionKey);
+  const el = document.getElementById('section_' + sectionKey);
   const arrow = document.getElementById('arrow_' + sectionKey);
-  if (content) {
-    if (collapsedSections[sectionKey]) {
-      content.style.maxHeight = '0px';
-      content.style.overflow = 'hidden';
-    } else {
-      content.style.maxHeight = content.scrollHeight + 'px';
-      content.style.overflow = 'visible';
-    }
+  if (el) {
+    el.style.display = collapsedSections[sectionKey] ? 'none' : 'block';
   }
   if (arrow) arrow.classList.toggle('collapsed', collapsedSections[sectionKey]);
 }
@@ -2645,15 +2639,7 @@ function toggleDashboardVisits() {
   dashVisitsCollapsed = !dashVisitsCollapsed;
   const el = document.getElementById('dash-visits-content');
   const arrow = document.getElementById('dash-visits-arrow');
-  if (el) {
-    if (dashVisitsCollapsed) {
-      el.style.maxHeight = '0px';
-      el.style.overflow = 'hidden';
-    } else {
-      el.style.maxHeight = el.scrollHeight + 5000 + 'px';
-      el.style.overflow = 'visible';
-    }
-  }
+  if (el) el.style.display = dashVisitsCollapsed ? 'none' : 'block';
   if (arrow) arrow.classList.toggle('collapsed', dashVisitsCollapsed);
 }
 
