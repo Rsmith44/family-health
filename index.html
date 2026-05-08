@@ -1215,7 +1215,7 @@ async function saveVisit() {
   const title=document.getElementById('visit-title').value.trim();
   if(!title){toast('Please enter a title');return;}
   syncNotes('pre'); syncNotes('post');
-  const payload={
+  const basePayload={
     title,
     visit_date:toSydneyISO(document.getElementById('visit-datetime').value),
     person_id:document.getElementById('visit-person').value||null,
@@ -1225,8 +1225,9 @@ async function saveVisit() {
     notes:document.getElementById('visit-pre-notes').value||null,
     total_cost:document.getElementById('visit-total-cost').value||null,
     out_of_pocket:document.getElementById('visit-oop-cost').value||null,
-    family_group_id:currentFamilyGroupId
   };
+  // Only include family_group_id on insert, not update
+  const payload = id ? basePayload : {...basePayload, family_group_id:currentFamilyGroupId};
   const {error}=id?await sb.from('visits').update(payload).eq('id',id):await sb.from('visits').insert(payload);
   if(error){toast('Error: '+error.message);console.error(error);return;}
   closeModal('modal-visit'); toast(id?'Visit updated ✓':'Visit added ✓');
@@ -1259,7 +1260,7 @@ async function savePerson() {
   const id=document.getElementById('person-id').value;
   const name=document.getElementById('person-name').value.trim();
   if(!name){toast('Please enter a name');return;}
-  const payload={name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null,family_group_id:currentFamilyGroupId};
+  const payload=id?{name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null}:{name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null,family_group_id:currentFamilyGroupId};
   const {error}=id?await sb.from('people').update(payload).eq('id',id):await sb.from('people').insert(payload);
   if(error){toast('Error saving');return;}
   closeModal('modal-person'); toast(id?'Updated ✓':'Added ✓'); await loadAll();
@@ -1285,7 +1286,7 @@ async function saveDoctor() {
   const id=document.getElementById('doctor-id').value;
   const name=document.getElementById('doctor-name').value.trim();
   if(!name){toast('Please enter a name');return;}
-  const payload={name,type:document.getElementById('doctor-type').value||null,address:document.getElementById('doctor-address').value||null,phone:document.getElementById('doctor-phone').value||null,email:document.getElementById('doctor-email').value||null,notes:document.getElementById('doctor-notes').value||null,family_group_id:currentFamilyGroupId};
+  const baseDocPayload={name,type:document.getElementById('doctor-type').value||null,address:document.getElementById('doctor-address').value||null,phone:document.getElementById('doctor-phone').value||null,email:document.getElementById('doctor-email').value||null,notes:document.getElementById('doctor-notes').value||null}; const payload=id?baseDocPayload:{...baseDocPayload,family_group_id:currentFamilyGroupId};
   let docId = id;
   if(id) {
     const {error}=await sb.from('doctors').update(payload).eq('id',id);
@@ -1332,7 +1333,7 @@ async function saveMed() {
   const id=document.getElementById('med-id').value;
   const name=document.getElementById('med-name').value.trim();
   if(!name){toast('Please enter a name');return;}
-  const payload={name,dosage:document.getElementById('med-dosage').value||null,frequency:document.getElementById('med-frequency').value||null,reason:document.getElementById('med-reason').value||null,status:document.getElementById('med-status').value,start_date:document.getElementById('med-start').value||null,end_date:document.getElementById('med-end').value||null,person_id:document.getElementById('med-person').value||null,prescribed_by:document.getElementById('med-doctor').value||null,notes:document.getElementById('med-notes').value||null,family_group_id:currentFamilyGroupId};
+  const baseMedPayload={name,dosage:document.getElementById('med-dosage').value||null,frequency:document.getElementById('med-frequency').value||null,reason:document.getElementById('med-reason').value||null,status:document.getElementById('med-status').value,start_date:document.getElementById('med-start').value||null,end_date:document.getElementById('med-end').value||null,person_id:document.getElementById('med-person').value||null,prescribed_by:document.getElementById('med-doctor').value||null,notes:document.getElementById('med-notes').value||null}; const payload=id?baseMedPayload:{...baseMedPayload,family_group_id:currentFamilyGroupId};
   const {error}=id?await sb.from('medications').update(payload).eq('id',id):await sb.from('medications').insert(payload);
   if(error){toast('Error saving');return;}
   closeModal('modal-med'); toast(id?'Updated ✓':'Medication added ✓'); await loadMeds();
