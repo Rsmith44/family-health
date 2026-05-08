@@ -8,7 +8,192 @@
 <meta name="apple-mobile-web-app-title" content="Family Health">
 <title>Family Health</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── DOCUMENTS ──
+let selectedDocFile = null;
+
+async function loadDocs() {
+  const el = document.getElementById('docs-list');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  const { data: rows, error } = await sb.from('documents')
+    .select('*, people(name), doctors(name), visits(title)')
+    .order('uploaded_at', { ascending: false });
+  if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
+  data.documents = rows || [];
+  renderDocs(data.documents);
+}
+
+function renderDocs(rows) {
+  const el = document.getElementById('docs-list');
+  document.getElementById('docs-sub').textContent = `${rows.length} document${rows.length !== 1 ? 's' : ''}`;
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>No documents yet<br><span style="font-size:12px">Tap + to upload a file</span></div>';
+    return;
+  }
+  const grouped = {};
+  rows.forEach(d => {
+    const key = d.people?.name || 'General';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(d);
+  });
+  el.innerHTML = Object.entries(grouped).map(([person, docs]) =>
+    `<div class="section-label">${person}</div><div class="list-card">` +
+    docs.map(d => {
+      const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') || d.file_type?.includes('heic') ? '🖼️' : '📝';
+      const size = d.file_size ? (d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+'MB' : Math.round(d.file_size/1024)+'KB') : '';
+      return `<div class="list-item" onclick="openDocument('${d.id}')">
+        <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
+        <div class="list-info">
+          <div class="list-title">${d.name}</div>
+          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
+        </div>
+        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`;
+    }).join('') + '</div>'
+  ).join('');
+}
+
+function filterDocs(q) {
+  renderDocs(q ? data.documents.filter(d => d.name.toLowerCase().includes(q.toLowerCase())) : data.documents);
+}
+
+async function openDocument(id) {
+  const doc = data.documents.find(d => d.id === id);
+  if (!doc) return;
+  // Get signed URL and open
+  const { data: urlData, error } = await sb.storage.from('Documents').createSignedUrl(doc.file_path, 60);
+  if (error) { toast('Error opening file'); return; }
+  window.open(urlData.signedUrl, '_blank');
+}
+
+function populateDocSelects() {
+  const personSel = document.getElementById('doc-person');
+  const doctorSel = document.getElementById('doc-doctor');
+  const visitSel = document.getElementById('doc-visit');
+  personSel.innerHTML = '<option value="">Select person...</option>' + data.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  doctorSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+  visitSel.innerHTML = '<option value="">Select visit...</option>' + data.visits.slice(0, 50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  // When person changes, filter visits
+  personSel.onchange = () => {
+    const pid = personSel.value;
+    const filtered = pid ? data.visits.filter(v => v.person_id === pid) : data.visits;
+    visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  };
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedDocFile = file;
+  const nameEl = document.getElementById('selected-file-name');
+  nameEl.textContent = '✓ ' + file.name;
+  nameEl.style.display = 'block';
+  // Auto-fill name if empty
+  if (!document.getElementById('doc-name').value) {
+    document.getElementById('doc-name').value = file.name.replace(/\.[^/.]+$/, '');
+  }
+}
+
+async function uploadDocument() {
+  if (!selectedDocFile) { toast('Please select a file'); return; }
+  const name = document.getElementById('doc-name').value.trim() || selectedDocFile.name;
+  const personId = document.getElementById('doc-person').value || null;
+  const doctorId = document.getElementById('doc-doctor').value || null;
+  const visitId = document.getElementById('doc-visit').value || null;
+  const btn = document.getElementById('upload-btn');
+  const progress = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('upload-progress-bar');
+
+  btn.textContent = 'Uploading...'; btn.disabled = true;
+  progress.style.display = 'block';
+  progressBar.style.width = '30%';
+
+  // Generate unique file path
+  const ext = selectedDocFile.name.split('.').pop();
+  const filePath = `${currentFamilyGroupId}/${Date.now()}-${name.replace(/[^a-z0-9]/gi,'_')}.${ext}`;
+
+  // Upload to Supabase Storage
+  const { error: uploadError } = await sb.storage.from('Documents').upload(filePath, selectedDocFile);
+  if (uploadError) {
+    toast('Upload failed: ' + uploadError.message);
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    return;
+  }
+
+  progressBar.style.width = '70%';
+
+  // Save metadata to documents table
+  const { error: dbError } = await sb.from('documents').insert({
+    name,
+    file_path: filePath,
+    file_type: selectedDocFile.type || ext,
+    file_size: selectedDocFile.size,
+    person_id: personId,
+    doctor_id: doctorId,
+    visit_id: visitId,
+    family_group_id: currentFamilyGroupId
+  });
+
+  if (dbError) {
+    toast('Error saving document: ' + dbError.message);
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    return;
+  }
+
+  progressBar.style.width = '100%';
+  setTimeout(() => {
+    closeModal('modal-document');
+    selectedDocFile = null;
+    btn.textContent = 'Upload Document'; btn.disabled = false;
+    progress.style.display = 'none';
+    toast('Document uploaded ✓');
+    loadDocs();
+  }, 400);
+}
+
+// Add document button to person detail view
+function addDocumentForPerson(personId) {
+  populateDocSelects();
+  document.getElementById('doc-person').value = personId;
+  // Filter visits for this person
+  const filtered = data.visits.filter(v => v.person_id === personId);
+  const visitSel = document.getElementById('doc-visit');
+  visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => `<option value="${v.id}">${v.title} - ${fmtDate(v.visit_date)}</option>`).join('');
+  document.getElementById('doc-id').value = '';
+  document.getElementById('doc-name').value = '';
+  document.getElementById('doc-file-input').value = '';
+  document.getElementById('selected-file-name').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  openModal('modal-document');
+}
+
+
+
+async function loadVisitDocs(visitId, personId) {
+  const { data: docs } = await sb.from('documents').select('*').eq('visit_id', visitId).order('uploaded_at', {ascending: false});
+  const el = document.getElementById('visit-docs-' + visitId);
+  if (el && docs?.length) {
+    el.innerHTML = '<div class="section-label">Documents</div><div class="list-card">' +
+      docs.map(d => {
+        const icon = d.file_type?.includes("pdf") ? "📄" : d.file_type?.includes("image") || d.file_type?.includes("jpg") || d.file_type?.includes("png") ? "🖼️" : "📝";
+        return "<div class="list-item" onclick="openDocument('" + d.id + "')"><div class="list-icon" style="background:var(--blue-bg);font-size:20px">" + icon + "</div><div class="list-info"><div class="list-title">" + d.name + "</div><div class="list-sub">" + fmtDate(d.uploaded_at) + "</div></div></div>";
+      }).join("") + "</div>";
+  }
+  // Open upload modal pre-filled with this visit
+  populateDocSelects();
+  if (personId) document.getElementById("doc-person").value = personId;
+  document.getElementById("doc-visit").value = visitId;
+  document.getElementById("doc-id").value = "";
+  document.getElementById("doc-name").value = "";
+  document.getElementById("doc-file-input").value = "";
+  document.getElementById("selected-file-name").style.display = "none";
+  document.getElementById("upload-progress").style.display = "none";
+  openModal("modal-document");
+}
+
+</script>
 </script>
 <style>
 :root {
@@ -319,6 +504,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="scroll-full" id="visit-detail-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- ══ DOCUMENTS SCREEN ══ -->
+  <div class="screen" id="screen-documents">
+    <div class="header">
+      <div class="header-left"><div class="header-title">Documents</div><div class="header-sub" id="docs-sub">Files & records</div></div>
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="search-input" type="search" placeholder="Search documents..." oninput="filterDocs(this.value)">
+    </div>
+    <div class="scroll" id="docs-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="showTab('home',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
@@ -335,6 +532,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <button class="nav-item" onclick="showTab('visits',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span class="nav-label">Visits</span>
+    </button>
+    <button class="nav-item" onclick="showTab('documents',this)">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span class="nav-label">Docs</span>
     </button>
   </nav>
 </div>
@@ -574,6 +775,42 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   </div>
 </div>
 
+<!-- UPLOAD DOCUMENT MODAL -->
+<div class="modal-overlay" id="modal-document">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-doc-title">Add Document</div>
+      <button class="modal-close" onclick="closeModal('modal-document')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="doc-id">
+      <div class="field">
+        <label>File *</label>
+        <div id="upload-area" onclick="document.getElementById('doc-file-input').click()"
+          style="background:var(--surface);border:2px dashed var(--border);border-radius:var(--r-sm);padding:24px;text-align:center;cursor:pointer;">
+          <div style="font-size:28px;margin-bottom:6px;">📎</div>
+          <div style="font-size:14px;font-weight:500;color:var(--text-2)">Tap to choose file</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:4px">PDF, Word, Image</div>
+        </div>
+        <input type="file" id="doc-file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic" style="display:none" onchange="handleFileSelect(this)">
+        <div id="selected-file-name" style="font-size:13px;color:var(--green);margin-top:6px;display:none;text-align:center;font-weight:500;"></div>
+      </div>
+      <div class="field"><label>Document Name</label><input type="text" id="doc-name" placeholder="e.g. Blood Test Results May 2026"></div>
+      <div class="field"><label>Person</label><select id="doc-person"><option value="">Select person...</option></select></div>
+      <div class="field"><label>Doctor (optional)</label><select id="doc-doctor"><option value="">Select doctor...</option></select></div>
+      <div class="field"><label>Visit (optional)</label><select id="doc-visit"><option value="">Select visit...</option></select></div>
+      <div id="upload-progress" style="display:none">
+        <div style="background:var(--surface);border-radius:20px;height:6px;overflow:hidden;">
+          <div id="upload-progress-bar" style="background:var(--green);height:100%;width:0%;transition:width 0.3s;border-radius:20px;"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-3);text-align:center;margin-top:6px;">Uploading...</div>
+      </div>
+      <button class="btn-primary" id="upload-btn" onclick="uploadDocument()">Upload Document</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -730,7 +967,7 @@ async function sendInvite() {
   resultEl.style.display = 'block';
 }
 
-let data = { people: [], doctors: [], medications: [], visits: [] };
+let data = { people: [], doctors: [], medications: [], visits: [], documents: [] };
 let currentTab = 'home';
 let currentPerson = null, currentDoctor = null, currentMed = null, currentVisit = null;
 let visitFilter = 'all';
@@ -794,7 +1031,7 @@ function showScreen(id, dir='forward') {
   next.classList.add('active');
   if (dir==='forward') next.classList.add('slide-in');
   else if (dir==='back') next.classList.add('slide-back');
-  const fabScreens = ['home','doctors','medications','visits'];
+  const fabScreens = ['home','doctors','medications','visits','documents'];
   document.getElementById('fab').style.display = fabScreens.includes(id) ? 'flex' : 'none';
 }
 function goBack(to) { showScreen(to,'back'); }
@@ -807,6 +1044,7 @@ function showTab(tab, btn) {
   if (tab==='doctors' && !data.doctors.length) loadDoctors();
   if (tab==='medications' && !data.medications.length) loadMeds();
   if (tab==='visits' && !data.visits.length) loadVisits();
+  if (tab==='documents') loadDocs();
 }
 
 function toast(msg, dur=2500) {
@@ -917,11 +1155,29 @@ async function openPerson(id) {
   if (!myDocs.length && !myMeds.length && !myVisits.length && !currentSections.length) html += `<div class="empty-state" style="margin-top:20px"><div class="empty-icon">📋</div>No records yet</div>`;
 
   // Add section button
-  html += `<div style="padding:8px 0 16px">
-    <button onclick="openAddSection('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;">
+  // Load documents for this person
+  const { data: personDocs } = await sb.from('documents').select('*, doctors(name), visits(title)').eq('person_id', id).order('uploaded_at', {ascending: false});
+  if (personDocs?.length) {
+    html += `<div class="section-label">Documents (${personDocs.length})</div><div class="list-card">` +
+      personDocs.map(d => {
+        const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') ? '🖼️' : '📝';
+        return `<div class="list-item" onclick="openDocument('${d.id}')">
+          <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
+          <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.doctors?.name, d.visits?.title, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div></div>
+          <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </div>`;
+      }).join('') + '</div>';
+  }
+
+  html += `<div style="padding:8px 0 4px;display:flex;gap:8px;">
+    <button onclick="openAddSection('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;">
       <span style="font-size:18px">+</span> Add Section
     </button>
-  </div>`;
+    <button onclick="addDocumentForPerson('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;">
+      <span style="font-size:18px">📎</span> Add Doc
+    </button>
+  </div>
+  <div style="height:16px"></div>`;
 
   document.getElementById('person-detail').innerHTML = html;
 }
@@ -1086,7 +1342,11 @@ function openVisit(id, from='visits') {
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Add to Google / iOS Calendar
       </button>
-    </div>`;
+    </div>
+    <div id="visit-docs-${v.id}" style="margin-bottom:8px"></div>
+    <button onclick="loadVisitDocs('${v.id}', '${v.person_id||''}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:16px;">
+      <span style="font-size:18px">📎</span> Add / View Documents
+    </button>`;
 }
 
 function makeICS(title, datetime, notes, doctorName, personName) {
@@ -1219,7 +1479,7 @@ function handleNoteKey(e, type) {
 }
 
 function openAddModal() {
-  const map = {home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit'};
+  const map = {home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document'};
   const modal = map[currentTab];
   if (!modal) return;
   clearForm(modal);
@@ -1227,6 +1487,15 @@ function openAddModal() {
   if (modal==='modal-person') { document.getElementById('modal-person-title').textContent='New Person'; document.getElementById('delete-person-btn').style.display='none'; }
   if (modal==='modal-doctor') { document.getElementById('modal-doctor-title').textContent='New Doctor'; document.getElementById('delete-doctor-btn').style.display='none'; selectedPatients=[]; renderDoctorTypeSelect(); renderDoctorPatientsList(); }
   if (modal==='modal-med') { document.getElementById('modal-med-title').textContent='New Medication'; document.getElementById('delete-med-btn').style.display='none'; populateSelects(); }
+  if (modal==='modal-document') { 
+    document.getElementById('modal-doc-title').textContent='Add Document';
+    document.getElementById('doc-id').value='';
+    document.getElementById('doc-name').value='';
+    document.getElementById('doc-file-input').value='';
+    document.getElementById('selected-file-name').style.display='none';
+    document.getElementById('upload-progress').style.display='none';
+    populateDocSelects();
+  }
   openModal(modal);
 }
 function clearForm(modal) {
