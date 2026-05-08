@@ -1157,10 +1157,12 @@ function openVisit(id, from='visits') {
         Add to Google / iOS Calendar
       </button>
     </div>
-    <div id="visit-docs-${v.id}" style="margin-bottom:8px"></div>
-    <button onclick="loadVisitDocs('${v.id}', '${v.person_id||''}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:16px;">
-      <span style="font-size:18px">📎</span> Add / View Documents
+    <div id="visit-docs-${v.id}"></div>
+    <button onclick="openUploadForVisit('${v.id}', '${v.person_id||''}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:16px;">
+      <span style="font-size:18px">📎</span> Add Document
     </button>`;
+  // Auto-load existing docs for this visit
+  setTimeout(() => autoLoadVisitDocs('${v.id}'), 100);
 }
 
 function makeICS(title, datetime, notes, doctorName, personName) {
@@ -1900,6 +1902,9 @@ async function uploadDocument() {
     progress.style.display = 'none';
     toast('Document uploaded ✓');
     loadDocs();
+    // Refresh visit docs if we're viewing a visit
+    const visitId = document.getElementById('doc-visit').value;
+    if (visitId) autoLoadVisitDocs(visitId);
   }, 400);
 }
 
@@ -1921,22 +1926,35 @@ function addDocumentForPerson(personId) {
 
 
 
-async function loadVisitDocs(visitId, personId) {
+async function autoLoadVisitDocs(visitId) {
   const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("uploaded_at", {ascending: false});
   const el = document.getElementById("visit-docs-" + visitId);
-  if (el && docs && docs.length) {
-    function docIcon(d) {
-      if (d.file_type && d.file_type.includes("pdf")) return "📄";
-      if (d.file_type && (d.file_type.includes("image") || d.file_type.includes("jpg") || d.file_type.includes("png"))) return "🖼️";
-      return "📝";
-    }
-    var rows = docs.map(function(d) {
-      return "<div class=\"list-item\" onclick=\"openDocument(" + JSON.stringify(d.id) + ")\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + fmtDate(d.uploaded_at) + "</div></div></div>";
-    });
-    el.innerHTML = "<div class=\"section-label\">Documents (" + docs.length + ")</div><div class=\"list-card\">" + rows.join("") + "</div>";
+  if (!el) return;
+  if (!docs || !docs.length) { el.innerHTML = ""; return; }
+  function docIcon(d) {
+    if (d.file_type && d.file_type.includes("pdf")) return "📄";
+    if (d.file_type && (d.file_type.includes("image") || d.file_type.includes("jpg") || d.file_type.includes("png"))) return "🖼️";
+    return "📝";
   }
+  function docSize(d) {
+    if (!d.file_size) return "";
+    return d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+"MB" : Math.round(d.file_size/1024)+"KB";
+  }
+  var rows = docs.map(function(d) {
+    return "<div class=\"list-item\" onclick=\"openDocument('" + d.id + "')\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + [docSize(d), fmtDate(d.uploaded_at)].filter(Boolean).join(" · ") + "</div></div><svg class=\"chevron\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" viewBox=\"0 0 24 24\"><path d=\"M9 18l6-6-6-6\"/></svg></div>";
+  });
+  el.innerHTML = "<div class=\"section-label\">Documents (" + docs.length + ")</div><div class=\"list-card\">" + rows.join("") + "</div>";
+}
+
+function openUploadForVisit(visitId, personId) {
   populateDocSelects();
-  if (personId) document.getElementById("doc-person").value = personId;
+  if (personId) {
+    document.getElementById("doc-person").value = personId;
+    // Filter visits for this person
+    const filtered = data.visits.filter(v => v.person_id === personId);
+    const visitSel = document.getElementById("doc-visit");
+    visitSel.innerHTML = "<option value=\"\">Select visit...</option>" + filtered.slice(0,50).map(v => "<option value=\"" + v.id + "\">" + v.title + " - " + fmtDate(v.visit_date) + "</option>").join("");
+  }
   document.getElementById("doc-visit").value = visitId;
   document.getElementById("doc-id").value = "";
   document.getElementById("doc-name").value = "";
