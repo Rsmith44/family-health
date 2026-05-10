@@ -305,6 +305,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Visits</div><div class="header-sub" id="visits-sub">Appointments &amp; history</div></div>
     </div>
+    <div style="padding:0 16px 8px;overflow-x:auto;display:flex;gap:7px;" id="visits-person-pills"></div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="setVisitFilter('all',this)">All</button>
       <button class="tab-btn" onclick="setVisitFilter('upcoming',this)">Upcoming</button>
@@ -363,6 +364,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="tab-btn" onclick="setTodoFilter('completed',this)">Completed</button>
     </div>
     <div class="scroll" id="todos-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ══ NOTES SCREEN ══ -->
+  <div class="screen" id="screen-notes">
+    <div class="header">
+      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div><div class="header-sub" id="notes-sub">All notes</div></div>
+    </div>
+    <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="notes-person-pills"></div>
+    <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
   <nav class="bottom-nav">
@@ -537,6 +548,24 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   </div>
 </div>
 
+<!-- NOTES MODAL -->
+<div class="modal-overlay" id="modal-note">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-note-title">Add Note</div>
+      <button class="modal-close" onclick="closeModal('modal-note')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="note-id">
+      <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
+      <div class="field"><label>Person</label><select id="note-person"><option value="">General (no specific person)</option></select></div>
+      <button class="btn-primary" onclick="saveNote()">Save Note</button>
+      <button class="btn-danger" id="delete-note-btn" style="display:none" onclick="deleteNote()">Delete Note</button>
+    </div>
+  </div>
+</div>
+
 <!-- CUSTOM SECTION MODAL -->
 <div class="modal-overlay" id="modal-section">
   <div class="modal-sheet">
@@ -671,7 +700,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div id="hamburger-user" style="font-size:12px;color:var(--text-3);margin-top:3px;"></div>
   </div>
   <div style="flex:1;overflow-y:auto;padding:8px 0;">
-    <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Health Records</div>
+    <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Navigate</div>
+    <button class="ham-item" onclick="navToFamily()"><div class="ham-icon" style="background:var(--green-bg)"><svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><span>Family</span></button>
+    <button class="ham-item" onclick="navToDoctors()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span>Doctors</span></button>
+    <button class="ham-item" onclick="navToVisits()"><div class="ham-icon" style="background:var(--teal-bg)"><svg width="18" height="18" fill="none" stroke="var(--teal)" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span>Visits</span></button>
     <button class="ham-item" onclick="navToMeds()"><div class="ham-icon" style="background:var(--amber-bg)"><svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.5 20H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v3"/><circle cx="17" cy="17" r="5"/><path d="M17 15v4M15 17h4"/></svg></div><span>Medications</span></button>
     <button class="ham-item" onclick="navToDocs()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span>Documents</span></button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
@@ -948,7 +980,7 @@ function showScreen(id, dir='forward') {
   next.classList.add('active');
   if (dir==='forward') next.classList.add('slide-in');
   else if (dir==='back') next.classList.add('slide-back');
-  const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos'];
+  const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos','notes'];
   document.getElementById('fab').style.display = fabScreens.includes(id) ? 'flex' : 'none';
 }
 function goBack(to) { showScreen(to,'back'); }
@@ -959,9 +991,10 @@ function showTab(tab, btn) {
   currentTab = tab;
   showScreen(tab,'none');
   if (tab==='dashboard') { loadDashboard(); if (!todosData.length) loadTodos().then(renderDashboard); }
+  if (tab==='notes') loadNotes();
   if (tab==='doctors' && !data.doctors.length) loadDoctors();
   if (tab==='medications' && !data.medications.length) loadMeds();
-  if (tab==='visits' && !data.visits.length) loadVisits();
+  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(visitsPersonFilter ? data.visits.filter(v=>v.person_id==visitsPersonFilter) : data.visits, visitFilter); } }
   if (tab==='documents') loadDocs();
   if (tab==='todos') loadTodos();
 }
@@ -969,6 +1002,10 @@ function navToMeds() { closeHamburger(); currentTab='medications'; showScreen('m
 function navToDocs() { closeHamburger(); currentTab='documents'; showScreen('documents','forward'); loadDocs(); }
 function navToVisits() { const btn = document.getElementById('nav-visits-btn'); showTab('visits', btn); }
 function navToTodos() { const btn = document.getElementById('nav-todo-btn'); showTab('todos', btn); }
+function navToNotes() { const btn = document.getElementById('nav-notes-btn'); showTab('notes', btn); }
+function navToFamily() { closeHamburger(); currentTab='home'; showScreen('home','forward'); if (!data.people.length) loadPeople(); }
+function navToDoctors() { closeHamburger(); currentTab='doctors'; showScreen('doctors','forward'); if (!data.doctors.length) loadDoctors(); }
+function navToVisits() { const btn = document.getElementById('nav-visits-btn'); if (btn) { showTab('visits', btn); } else { closeHamburger(); currentTab='visits'; showScreen('visits','forward'); if (!data.visits.length) loadVisits(); } }
 
 function toast(msg, dur=2500) {
   const t = document.getElementById('toast');
@@ -1305,7 +1342,8 @@ function setVisitFilter(f,btn) {
   visitFilter=f;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderVisits(data.visits,f);
+  const filtered = visitsPersonFilter ? data.visits.filter(v=>v.person_id==visitsPersonFilter) : data.visits;
+  renderVisits(filtered,f);
 }
 
 async function openVisit(id, from='visits') {
@@ -1493,7 +1531,7 @@ function handleNoteKey(e, type) {
 }
 
 async function openAddModal() {
-  const map = {dashboard:'modal-visit',home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo'};
+  const map = {dashboard:'modal-visit',home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo',notes:'modal-note'};
   const modal = map[currentTab];
   if (!modal) return;
   clearForm(modal);
@@ -1517,11 +1555,18 @@ async function openAddModal() {
     document.getElementById('todo-notes').value = '';
     document.getElementById('todo-due-date').value = '';
     document.getElementById('delete-todo-btn').style.display = 'none';
-    // Ensure data loaded then populate
-    if (!data.people.length || !data.doctors.length) {
-      await loadAll();
-    }
+    if (!data.people.length || !data.doctors.length) await loadAll();
     populateTodoSelects(null, null, null);
+  }
+  if (modal==='modal-note') {
+    document.getElementById('modal-note-title').textContent = 'Add Note';
+    document.getElementById('note-id').value = '';
+    document.getElementById('note-content').value = '';
+    document.getElementById('delete-note-btn').style.display = 'none';
+    if (!data.people.length) await loadAll();
+    populateNotePersonSelect();
+    // Pre-select person filter if active
+    if (notesPersonFilter) document.getElementById('note-person').value = notesPersonFilter;
   }
   openModal(modal);
 }
@@ -2252,73 +2297,148 @@ function renderDashboard() {
   const el = document.getElementById('dashboard-content');
   if (!el) return;
   const today = new Date();
-  const upcoming = data.visits
-    .filter(v => v.visit_date && new Date(v.visit_date) >= today)
-    .filter(v => !dashboardPersonFilter || v.person_id == dashboardPersonFilter)
-    .sort((a,b) => new Date(a.visit_date) - new Date(b.visit_date));
-  const activeMeds = data.medications
-    .filter(m => m.status === 'Active')
-    .filter(m => !dashboardPersonFilter || m.person_id == dashboardPersonFilter);
-  const activeTodos = todosData
-    .filter(t => !t.completed)
-    .filter(t => !dashboardPersonFilter || t.person_id == dashboardPersonFilter).length;
-  const filteredPerson = dashboardPersonFilter ? data.people.find(p => p.id == dashboardPersonFilter) : null;
 
-  function daysUntil(d) {
-    const diff = Math.ceil((new Date(d) - today) / (1000*60*60*24));
-    if (diff <= 0) return '<span style="background:var(--green);color:white;font-size:9px;font-weight:600;padding:2px 7px;border-radius:8px;">Today</span>';
-    if (diff === 1) return '<span style="background:var(--green-bg);color:var(--green);font-size:9px;font-weight:600;padding:2px 7px;border-radius:8px;">Tomorrow</span>';
-    if (diff <= 7) return '<span style="background:#FEF3C7;color:#92400E;font-size:9px;font-weight:600;padding:2px 7px;border-radius:8px;">' + diff + ' days</span>';
-    return '<span style="font-size:10px;color:var(--text-3)">' + fmtDate(d) + '</span>';
-  }
+  if (dashboardPersonFilter) {
+    // ── PERSON SELECTED VIEW ──
+    const p = data.people.find(x => x.id == dashboardPersonFilter);
+    if (!p) return;
 
-  const evBg = !dashboardPersonFilter ? 'var(--green)' : 'var(--card)';
-  const evCol = !dashboardPersonFilter ? 'white' : 'var(--text-3)';
-  const evBorder = !dashboardPersonFilter ? 'var(--green)' : 'var(--border)';
+    const myVisits = data.visits.filter(v => v.person_id === p.id).sort((a,b)=>new Date(b.visit_date)-new Date(a.visit_date));
+    const myMeds = data.medications.filter(m => m.person_id === p.id);
+    const myActiveMeds = myMeds.filter(m => m.status === 'Active');
+    const myUpcoming = myVisits.filter(v => v.visit_date && new Date(v.visit_date) >= today);
+    const myTodos = todosData.filter(t => t.person_id === p.id && !t.completed);
 
-  let pillsHtml = '<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;">';
-  pillsHtml += '<button onclick="setDashboardFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBorder + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;">Everyone</button>';
-  data.people.forEach(p => {
-    const isActive = dashboardPersonFilter == p.id;
-    const bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    const col = isActive ? 'white' : 'var(--text)';
-    const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    pillsHtml += '<button onclick="setDashboardFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
-  });
-  pillsHtml += '</div>';
+    let html = '';
+    // Hero card
+    html += '<div class="detail-hero" style="margin:0 0 4px;">' +
+      '<div class="avatar" style="background:' + avatarColor(p.name) + '">' + initials(p.name) + '</div>' +
+      '<div><div class="detail-name">' + p.name + '</div>' +
+      '<div class="detail-sub">' + (p.dob ? fmtDate(p.dob) + ' · ' + age(p.dob) + ' old' : 'No DOB recorded') + '</div>' +
+      '<div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">' +
+      (myActiveMeds.length ? '<span class="chip chip-amber">💊 ' + myActiveMeds.length + ' med' + (myActiveMeds.length!==1?'s':'') + '</span>' : '') +
+      (myUpcoming.length ? '<span class="chip chip-blue">📅 ' + myUpcoming.length + ' upcoming</span>' : '') +
+      (myTodos.length ? '<span class="chip chip-teal">✓ ' + myTodos.length + ' to do</span>' : '') +
+      '</div></div></div>';
 
-  const statsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-    '<div onclick="navToVisits()" style="background:var(--card);border-radius:var(--r);padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;">' +
-    '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Upcoming visits</div>' +
-    '<div style="font-size:28px;font-weight:600;line-height:1">' + upcoming.length + '</div>' +
-    '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">next 30 days</div></div>' +
-    '<div onclick="navToTodos()" style="background:var(--card);border-radius:var(--r);padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;">' +
-    '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">To Do items</div>' +
-    '<div style="font-size:28px;font-weight:600;line-height:1">' + activeTodos + '</div>' +
-    '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + (filteredPerson ? filteredPerson.name.split(' ')[0] : 'across family') + '</div></div></div>';
+    // Upcoming visits
+    if (myUpcoming.length) {
+      html += '<div class="collapsible-header" onclick="toggleSection('dash','visits')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Upcoming Visits (' + myUpcoming.length + ')</div><svg id="arrow_dash_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div id="section_dash_visits">';
+      myUpcoming.slice(0,3).forEach(v => {
+        const doc = data.doctors.find(d=>d.id===v.doctor_id);
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard(' + JSON.stringify(v.id) + ')"><div class="visit-top"><div class="visit-title">' + v.title + '</div><div class="visit-date">' + fmtDateTime(v.visit_date) + '</div></div>' + (doc ? '<div class="visit-meta">🩺 ' + doc.name + '</div>' : '') + '</div>';
+      });
+      html += '</div>';
+    }
 
-  let visitsHtml = '';
-  if (upcoming.length) {
-    upcoming.slice(0,6).forEach(v => {
-      const person = data.people.find(p => p.id === v.person_id);
-      const doctor = data.doctors.find(d => d.id === v.doctor_id);
-      visitsHtml += '<div class="visit-card" onclick="openVisitFromDashboard(\'' + v.id + '\')"><div class="visit-top"><div class="visit-title">' + v.title + '</div>' + daysUntil(v.visit_date) + '</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;">' + (person ? '<span class="chip chip-teal">&#128100; ' + person.name.split(' ')[0] + '</span>' : '') + (doctor ? '<span class="chip chip-blue">&#129338; ' + doctor.name + '</span>' : '') + '</div></div>';
-    });
+    // Active meds
+    if (myActiveMeds.length) {
+      html += '<div class="collapsible-header" onclick="toggleSection('dash','meds')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Medications (' + myActiveMeds.length + ')</div><svg id="arrow_dash_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div id="section_dash_meds"><div class="list-card">';
+      myActiveMeds.forEach(m => {
+        html += '<div class="list-item" onclick="openMed(' + JSON.stringify(m.id) + ')"><div class="list-icon" style="background:var(--amber-bg)">💊</div><div class="list-info"><div class="list-title">' + m.name + '</div><div class="list-sub">' + [m.dosage,m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    // To Do
+    if (myTodos.length) {
+      html += '<div class="collapsible-header" onclick="toggleSection('dash','todos')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Follow-ups (' + myTodos.length + ')</div><svg id="arrow_dash_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div id="section_dash_todos">';
+      myTodos.slice(0,5).forEach(t => {
+        const isOverdue = t.due_date && new Date(t.due_date) < today;
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:center;gap:10px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:11px;color:' + (isOverdue?'#C0392B':'var(--text-3)') + ';">' + (isOverdue?'⚠ ':'📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+      });
+      html += '</div>';
+    }
+
+    if (!myUpcoming.length && !myActiveMeds.length && !myTodos.length) {
+      html += '<div class="empty-state" style="margin-top:20px;"><div class="empty-icon">📋</div>No records yet</div>';
+    }
+
+    el.innerHTML = '<div style="padding:0 16px 16px;">' + html + '</div>';
+
   } else {
-    visitsHtml = '<div class="empty-state"><div class="empty-icon">&#128197;</div>No upcoming visits' + (filteredPerson ? ' for ' + filteredPerson.name.split(' ')[0] : '') + '</div>';
-  }
+    // ── OVERVIEW MODE ──
+    const upcoming = data.visits
+      .filter(v => v.visit_date && new Date(v.visit_date) >= today && new Date(v.visit_date) <= new Date(today.getTime() + 14*24*60*60*1000))
+      .sort((a,b) => new Date(a.visit_date) - new Date(b.visit_date));
+    const allUpcoming = data.visits.filter(v => v.visit_date && new Date(v.visit_date) >= today).sort((a,b) => new Date(a.visit_date) - new Date(b.visit_date));
+    const activeTodos = todosData.filter(t => !t.completed);
 
-  let medsHtml = '';
-  if (filteredPerson && activeMeds.length) {
-    medsHtml = '<div class="section-label">' + filteredPerson.name.split(' ')[0] + String.fromCharCode(39) + 's medications</div><div class="list-card">';
-    activeMeds.forEach(m => {
-      medsHtml += '<div class="list-item" onclick="openMed(' + JSON.stringify(m.id) + ')"><div class="list-icon" style="background:var(--amber-bg)">&#128138;</div><div class="list-info"><div class="list-title">' + m.name + '</div><div class="list-sub">' + [m.dosage, m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
-    });
-    medsHtml += '</div>';
-  }
+    function daysUntil(d) {
+      const diff = Math.ceil((new Date(d) - today) / (1000*60*60*24));
+      if (diff <= 0) return '<span style="background:var(--green);color:white;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Today</span>';
+      if (diff === 1) return '<span style="background:var(--green-bg);color:var(--green);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Tomorrow</span>';
+      if (diff <= 7) return '<span style="background:#FEF3C7;color:#92400E;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">' + diff + ' days</span>';
+      return '<span style="font-size:10px;color:var(--text-3);">' + fmtDate(d) + '</span>';
+    }
 
-  el.innerHTML = '<div style="padding:0 0 10px;">' + pillsHtml + '</div><div class="section-label">Overview</div>' + statsHtml + '<div class="section-label">Upcoming visits</div>' + visitsHtml + medsHtml + '<div style="height:8px;"></div>';
+    // Quick actions
+    const qaHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">' +
+      '<button onclick="quickAdd('visit')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📅</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></div></button>' +
+      '<button onclick="quickAdd('medication')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💊</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Medication</div></div></button>' +
+      '<button onclick="quickAdd('todo')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✓</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></div></button>' +
+      '<button onclick="quickAdd('note')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📝</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Note</div></div></button>' +
+      '</div>';
+
+    // Mini tab state
+    const activeOverviewTab = window._overviewTab || 'upcoming';
+
+    // Upcoming visits (next 2 weeks)
+    const upcomingHtml = upcoming.length ?
+      upcoming.map(v => {
+        const person = data.people.find(p=>p.id===v.person_id);
+        const doctor = data.doctors.find(d=>d.id===v.doctor_id);
+        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard(' + JSON.stringify(v.id) + ')">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text);">' + v.title + '</div>' +
+          daysUntil(v.visit_date) +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-3);margin-top:3px;">' +
+          [person?.name.split(' ')[0], doctor?.name, doctor?.type].filter(Boolean).join(' · ') +
+          '</div></div>';
+      }).join('') +
+      (allUpcoming.length > upcoming.length ? '<div onclick="navToVisits()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ' + allUpcoming.length + ' visits →</div>' : '')
+      : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">📅</div>No upcoming visits in the next 2 weeks</div>';
+
+    // To Do items
+    const todosHtml = activeTodos.length ?
+      activeTodos.slice(0,5).map(t => {
+        const person = data.people.find(p=>p.id===t.person_id);
+        const isOverdue = t.due_date && new Date(t.due_date) < today;
+        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo(' + JSON.stringify(t.id) + ')">' +
+          '<div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
+          '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.title + '</div>' +
+          '<div style="font-size:11px;color:var(--text-3);">' + (person?person.name.split(' ')[0]:'') + (t.due_date ? (person?' · ':'') + (isOverdue?'⚠ ':'') + fmtDate(t.due_date) : '') + '</div>' +
+          '</div></div>';
+      }).join('') +
+      (activeTodos.length > 5 ? '<div onclick="navToTodos()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ' + activeTodos.length + ' items →</div>' : '')
+      : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">✓</div>All caught up!</div>';
+
+    el.innerHTML = '<div style="padding:0 16px 16px;">' +
+      '<div class="section-label">Quick Actions</div>' + qaHtml +
+      '<div style="display:flex;gap:8px;margin:14px 0 10px;">' +
+      '<button onclick="setOverviewTab('upcoming',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='upcoming'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='upcoming'?'white':'var(--text-3)') + ';">Upcoming</button>' +
+      '<button onclick="setOverviewTab('todos',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='todos'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='todos'?'white':'var(--text-3)') + ';">To Do</button>' +
+      '</div>' +
+      '<div id="overview-tab-content">' + (activeOverviewTab==='upcoming' ? upcomingHtml : todosHtml) + '</div>' +
+      '</div>';
+  }
+}
+
+function setOverviewTab(tab, btn) {
+  window._overviewTab = tab;
+  renderDashboard();
+}
+
+function quickAdd(type) {
+  const map = { visit: 'modal-visit', medication: 'modal-med', todo: 'modal-todo', note: 'modal-note' };
+  const prevTab = currentTab;
+  currentTab = type === 'visit' ? 'visits' : type === 'medication' ? 'medications' : type === 'todo' ? 'todos' : 'notes';
+  openAddModal().then(() => { currentTab = prevTab; });
 }
 
 function setDashboardFilter(personId) {
@@ -2642,5 +2762,155 @@ function toggleDashboardVisits() {
   if (el) el.style.display = dashVisitsCollapsed ? 'none' : 'block';
   if (arrow) arrow.classList.toggle('collapsed', dashVisitsCollapsed);
 }
+
+
+// ── NOTES ──
+let notesData = [];
+let notesPersonFilter = null;
+
+async function loadNotes() {
+  const el = document.getElementById('notes-list');
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  const { data: rows } = await sb.from('notes')
+    .select('*, people(name)')
+    .order('created_at', { ascending: false });
+  notesData = rows || [];
+  renderNotesPersonPills();
+  renderNotes();
+}
+
+function renderNotesPersonPills() {
+  const el = document.getElementById('notes-person-pills');
+  if (!el) return;
+  const evBg = !notesPersonFilter ? 'var(--green)' : 'var(--card)';
+  const evCol = !notesPersonFilter ? 'white' : 'var(--text-3)';
+  const evBdr = !notesPersonFilter ? 'var(--green)' : 'var(--border)';
+  let html = '<button onclick="setNotesPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  data.people.forEach(p => {
+    const isActive = notesPersonFilter == p.id;
+    const bg = isActive ? avatarColor(p.name) : 'var(--card)';
+    const col = isActive ? 'white' : 'var(--text)';
+    const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
+    const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
+    html += '<button onclick="setNotesPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+  });
+  el.innerHTML = html;
+}
+
+function renderNotes() {
+  const el = document.getElementById('notes-list');
+  if (!el) return;
+  let rows = notesData;
+  if (notesPersonFilter) rows = rows.filter(n => n.person_id == notesPersonFilter);
+  const sub = document.getElementById('notes-sub');
+  if (sub) sub.textContent = rows.length + ' note' + (rows.length !== 1 ? 's' : '');
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add one</span></div>';
+    return;
+  }
+  // Group by month
+  const grouped = {};
+  rows.forEach(n => {
+    const d = new Date(n.created_at);
+    const key = d.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(n);
+  });
+  el.innerHTML = Object.entries(grouped).map(([month, notes]) =>
+    '<div class="section-label">' + month + '</div>' +
+    notes.map(n => {
+      const person = n.people?.name;
+      const color = person ? avatarColor(person) : 'var(--text-3)';
+      return '<div class="visit-card" style="margin-bottom:8px;" onclick="editNote(\'' + n.id + '\')">' +
+        '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">' + fmtDateTime(n.created_at) + '</div>' +
+        '<div style="font-size:14px;color:var(--text);line-height:1.5;">' + (n.content || '').replace(/\n/g, '<br>') + '</div>' +
+        (person ? '<div style="margin-top:6px;display:flex;align-items:center;gap:5px;"><span style="width:16px;height:16px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">' + initials(person) + '</span><span style="font-size:11px;font-weight:600;color:' + color + ';">' + person + '</span></div>' : '') +
+        '</div>';
+    }).join('')
+  ).join('');
+}
+
+function setNotesPersonFilter(personId) {
+  notesPersonFilter = personId || null;
+  renderNotesPersonPills();
+  renderNotes();
+}
+
+function populateNotePersonSelect() {
+  const sel = document.getElementById('note-person');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">General (no specific person)</option>' +
+    data.people.map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+}
+
+async function saveNote() {
+  const id = document.getElementById('note-id').value;
+  const content = document.getElementById('note-content').value.trim();
+  if (!content) { toast('Please enter a note'); return; }
+  const personId = document.getElementById('note-person').value || null;
+  const payload = { content, person_id: personId };
+  if (!id) payload.family_group_id = currentFamilyGroupId;
+  const { error } = id ?
+    await sb.from('notes').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', id) :
+    await sb.from('notes').insert(payload);
+  if (error) { toast('Error: ' + error.message); return; }
+  closeModal('modal-note');
+  toast(id ? 'Note updated ✓' : 'Note saved ✓');
+  await loadNotes();
+  // Also refresh person detail if open
+  if (currentPerson) await openPerson(currentPerson.id);
+}
+
+async function deleteNote() {
+  const id = document.getElementById('note-id').value;
+  if (!confirm('Delete this note?')) return;
+  await sb.from('notes').delete().eq('id', id);
+  closeModal('modal-note');
+  toast('Note deleted');
+  await loadNotes();
+}
+
+function editNote(id) {
+  const n = notesData.find(x => x.id === id);
+  if (!n) return;
+  document.getElementById('modal-note-title').textContent = 'Edit Note';
+  document.getElementById('note-id').value = n.id;
+  document.getElementById('note-content').value = n.content || '';
+  populateNotePersonSelect();
+  document.getElementById('note-person').value = n.person_id || '';
+  document.getElementById('delete-note-btn').style.display = 'block';
+  openModal('modal-note');
+}
+
+// ── VISITS PERSON FILTER ──
+let visitsPersonFilter = null;
+
+function renderVisitsPersonPills() {
+  const el = document.getElementById('visits-person-pills');
+  if (!el) return;
+  const evBg = !visitsPersonFilter ? 'var(--green)' : 'var(--card)';
+  const evCol = !visitsPersonFilter ? 'white' : 'var(--text-3)';
+  const evBdr = !visitsPersonFilter ? 'var(--green)' : 'var(--border)';
+  let html = '<button onclick="setVisitsPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  data.people.forEach(p => {
+    const isActive = visitsPersonFilter == p.id;
+    const bg = isActive ? avatarColor(p.name) : 'var(--card)';
+    const col = isActive ? 'white' : 'var(--text)';
+    const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
+    const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
+    html += '<button onclick="setVisitsPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+  });
+  el.innerHTML = html;
+}
+
+function setVisitsPersonFilter(personId) {
+  visitsPersonFilter = personId || null;
+  renderVisitsPersonPills();
+  // Re-render visits with person filter applied
+  let filtered = data.visits;
+  if (visitsPersonFilter) filtered = data.visits.filter(v => v.person_id == visitsPersonFilter);
+  renderVisits(filtered, visitFilter);
+}
+
 
 </script>
