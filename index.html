@@ -377,25 +377,17 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   </div>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showTab('dashboard',this)">
+    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span class="nav-label">Home</span>
-    </button>
-    <button class="nav-item" onclick="showTab('home',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      <span class="nav-label">Family</span>
-    </button>
-    <button class="nav-item" onclick="showTab('doctors',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      <span class="nav-label">Doctors</span>
-    </button>
-    <button id="nav-visits-btn" class="nav-item" onclick="showTab('visits',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <span class="nav-label">Visits</span>
     </button>
     <button class="nav-item" id="nav-todo-btn" onclick="showTab('todos',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       <span class="nav-label">To Do</span>
+    </button>
+    <button class="nav-item" id="nav-notes-btn" onclick="showTab('notes',this)">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="nav-label">Notes</span>
     </button>
   </nav>
 </div>
@@ -1033,9 +1025,13 @@ async function loadMeds() {
   renderMeds(data.medications);
 }
 async function loadVisits() {
+  const el = document.getElementById('visits-list');
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   const {data:rows} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
   data.visits = rows || [];
-  renderVisits(data.visits, visitFilter);
+  renderVisitsPersonPills();
+  const filtered = visitsPersonFilter ? data.visits.filter(v=>v.person_id==visitsPersonFilter) : data.visits;
+  renderVisits(filtered, visitFilter);
 }
 
 function renderPeople(rows) {
@@ -2323,7 +2319,7 @@ function renderDashboard() {
 
     // Upcoming visits
     if (myUpcoming.length) {
-      html += '<div class="collapsible-header" onclick="toggleSection('dash','visits')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Upcoming Visits (' + myUpcoming.length + ')</div><svg id="arrow_dash_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div class="collapsible-header" onclick="toggleSection(\'dash\',\'visits\')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Upcoming Visits (' + myUpcoming.length + ')</div><svg id="arrow_dash_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
       html += '<div id="section_dash_visits">';
       myUpcoming.slice(0,3).forEach(v => {
         const doc = data.doctors.find(d=>d.id===v.doctor_id);
@@ -2334,7 +2330,7 @@ function renderDashboard() {
 
     // Active meds
     if (myActiveMeds.length) {
-      html += '<div class="collapsible-header" onclick="toggleSection('dash','meds')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Medications (' + myActiveMeds.length + ')</div><svg id="arrow_dash_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div class="collapsible-header" onclick="toggleSection(\'dash\',\'meds\')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Medications (' + myActiveMeds.length + ')</div><svg id="arrow_dash_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
       html += '<div id="section_dash_meds"><div class="list-card">';
       myActiveMeds.forEach(m => {
         html += '<div class="list-item" onclick="openMed(' + JSON.stringify(m.id) + ')"><div class="list-icon" style="background:var(--amber-bg)">💊</div><div class="list-info"><div class="list-title">' + m.name + '</div><div class="list-sub">' + [m.dosage,m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
@@ -2344,7 +2340,7 @@ function renderDashboard() {
 
     // To Do
     if (myTodos.length) {
-      html += '<div class="collapsible-header" onclick="toggleSection('dash','todos')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Follow-ups (' + myTodos.length + ')</div><svg id="arrow_dash_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
+      html += '<div class="collapsible-header" onclick="toggleSection(\'dash\',\'todos\')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Follow-ups (' + myTodos.length + ')</div><svg id="arrow_dash_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
       html += '<div id="section_dash_todos">';
       myTodos.slice(0,5).forEach(t => {
         const isOverdue = t.due_date && new Date(t.due_date) < today;
@@ -2377,10 +2373,10 @@ function renderDashboard() {
 
     // Quick actions
     const qaHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">' +
-      '<button onclick="quickAdd('visit')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📅</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></div></button>' +
-      '<button onclick="quickAdd('medication')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💊</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Medication</div></div></button>' +
-      '<button onclick="quickAdd('todo')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✓</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></div></button>' +
-      '<button onclick="quickAdd('note')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📝</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Note</div></div></button>' +
+      '<button onclick="quickAdd(\'visit\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📅</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></div></button>' +
+      '<button onclick="quickAdd(\'medication\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💊</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Medication</div></div></button>' +
+      '<button onclick="quickAdd(\'todo\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✓</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></div></button>' +
+      '<button onclick="quickAdd(\'note\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📝</div><div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:var(--text);">Add Note</div></div></button>' +
       '</div>';
 
     // Mini tab state
@@ -2421,8 +2417,8 @@ function renderDashboard() {
     el.innerHTML = '<div style="padding:0 16px 16px;">' +
       '<div class="section-label">Quick Actions</div>' + qaHtml +
       '<div style="display:flex;gap:8px;margin:14px 0 10px;">' +
-      '<button onclick="setOverviewTab('upcoming',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='upcoming'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='upcoming'?'white':'var(--text-3)') + ';">Upcoming</button>' +
-      '<button onclick="setOverviewTab('todos',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='todos'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='todos'?'white':'var(--text-3)') + ';">To Do</button>' +
+      '<button onclick="setOverviewTab(\'upcoming\',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='upcoming'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='upcoming'?'white':'var(--text-3)') + ';">Upcoming</button>' +
+      '<button onclick="setOverviewTab(\'todos\',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='todos'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='todos'?'white':'var(--text-3)') + ';">To Do</button>' +
       '</div>' +
       '<div id="overview-tab-content">' + (activeOverviewTab==='upcoming' ? upcomingHtml : todosHtml) + '</div>' +
       '</div>';
