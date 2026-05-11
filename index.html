@@ -221,6 +221,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div style="flex:1;padding-left:8px;"><div class="header-title" id="dashboard-greeting">Good morning</div><div class="header-sub" id="dashboard-date"></div></div>
     </div>
+    <div style="padding:0 16px 8px;overflow-x:auto;display:flex;gap:7px;flex-shrink:0;" id="dashboard-person-pills"></div>
     <div class="scroll" id="dashboard-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
   <div class="screen" id="screen-home">
@@ -2286,6 +2287,7 @@ async function loadDashboard() {
   document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   if (!data.people.length) await loadAll();
   if (!todosData.length) await loadTodos();
+  renderDashboardPills();
   renderDashboard();
 }
 
@@ -2396,7 +2398,7 @@ function renderDashboard() {
           [person?.name.split(' ')[0], doctor?.name, doctor?.type].filter(Boolean).join(' · ') +
           '</div></div>';
       }).join('') +
-      (allUpcoming.length > upcoming.length ? '<div onclick="navToVisits()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ' + allUpcoming.length + ' visits →</div>' : '')
+      ''  // View all now in mini-tab header
       : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">📅</div>No upcoming visits in the next 2 weeks</div>';
 
     // To Do items
@@ -2411,14 +2413,17 @@ function renderDashboard() {
           '<div style="font-size:11px;color:var(--text-3);">' + (person?person.name.split(' ')[0]:'') + (t.due_date ? (person?' · ':'') + (isOverdue?'⚠ ':'') + fmtDate(t.due_date) : '') + '</div>' +
           '</div></div>';
       }).join('') +
-      (activeTodos.length > 5 ? '<div onclick="navToTodos()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ' + activeTodos.length + ' items →</div>' : '')
+      ''  // View all now in mini-tab header
       : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">✓</div>All caught up!</div>';
 
     el.innerHTML = '<div style="padding:0 16px 16px;">' +
       '<div class="section-label">Quick Actions</div>' + qaHtml +
-      '<div style="display:flex;gap:8px;margin:14px 0 10px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;">' +
+      '<div style="display:flex;gap:6px;">' +
       '<button onclick="setOverviewTab(\'upcoming\',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='upcoming'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='upcoming'?'white':'var(--text-3)') + ';">Upcoming</button>' +
       '<button onclick="setOverviewTab(\'todos\',this)" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:' + (activeOverviewTab==='todos'?'var(--green)':'var(--surface)') + ';color:' + (activeOverviewTab==='todos'?'white':'var(--text-3)') + ';">To Do</button>' +
+      '</div>' +
+      (activeOverviewTab==='upcoming' ? '<button onclick="navToVisits()" style="background:none;border:none;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:inherit;">View all →</button>' : '<button onclick="navToTodos()" style="background:none;border:none;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:inherit;">View all →</button>') +
       '</div>' +
       '<div id="overview-tab-content">' + (activeOverviewTab==='upcoming' ? upcomingHtml : todosHtml) + '</div>' +
       '</div>';
@@ -2437,8 +2442,27 @@ function quickAdd(type) {
   openAddModal().then(() => { currentTab = prevTab; });
 }
 
+function renderDashboardPills() {
+  const el = document.getElementById('dashboard-person-pills');
+  if (!el) return;
+  const evBg = !dashboardPersonFilter ? 'var(--green)' : 'var(--card)';
+  const evCol = !dashboardPersonFilter ? 'white' : 'var(--text-3)';
+  const evBdr = !dashboardPersonFilter ? 'var(--green)' : 'var(--border)';
+  let html = '<button onclick="setDashboardFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Overview</button>';
+  data.people.forEach(p => {
+    const isActive = dashboardPersonFilter == p.id;
+    const bg = isActive ? avatarColor(p.name) : 'var(--card)';
+    const col = isActive ? 'white' : 'var(--text)';
+    const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
+    const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
+    html += '<button onclick="setDashboardFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+  });
+  el.innerHTML = html;
+}
+
 function setDashboardFilter(personId) {
   dashboardPersonFilter = personId || null;
+  renderDashboardPills();
   renderDashboard();
   const el = document.getElementById('dashboard-content');
   if (el) el.scrollTop = 0;
