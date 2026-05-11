@@ -278,7 +278,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="screen" id="screen-medications">
     <div class="header">
-      <div class="header-left"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
+      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -332,7 +333,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <!-- ══ DOCUMENTS SCREEN ══ -->
   <div class="screen" id="screen-documents">
     <div class="header">
-      <div class="header-left"><div class="header-title">Documents</div><div class="header-sub" id="docs-sub">Files & records</div></div>
+      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Documents</div><div class="header-sub" id="docs-sub">Files &amp; records</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -1369,7 +1371,7 @@ async function openVisit(id, from='visits') {
       visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
         active.map(t => {
           const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(\\'' + t.id + '\\')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(\\'' + t.id + '\\',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
         }).join('');
     }
     if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
@@ -2325,7 +2327,7 @@ function renderDashboard() {
       html += '<div id="section_dash_visits">';
       myUpcoming.slice(0,3).forEach(v => {
         const doc = data.doctors.find(d=>d.id===v.doctor_id);
-        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard(' + JSON.stringify(v.id) + ')"><div class="visit-top"><div class="visit-title">' + v.title + '</div><div class="visit-date">' + fmtDateTime(v.visit_date) + '</div></div>' + (doc ? '<div class="visit-meta">🩺 ' + doc.name + '</div>' : '') + '</div>';
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard(\\'' + v.id + '\\')"><div class="visit-top"><div class="visit-title">' + v.title + '</div><div class="visit-date">' + fmtDateTime(v.visit_date) + '</div></div>' + (doc ? '<div class="visit-meta">🩺 ' + doc.name + '</div>' : '') + '</div>';
       });
       html += '</div>';
     }
@@ -2335,7 +2337,7 @@ function renderDashboard() {
       html += '<div class="collapsible-header" onclick="toggleSection(\'dash\',\'meds\')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Medications (' + myActiveMeds.length + ')</div><svg id="arrow_dash_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>';
       html += '<div id="section_dash_meds"><div class="list-card">';
       myActiveMeds.forEach(m => {
-        html += '<div class="list-item" onclick="openMed(' + JSON.stringify(m.id) + ')"><div class="list-icon" style="background:var(--amber-bg)">💊</div><div class="list-info"><div class="list-title">' + m.name + '</div><div class="list-sub">' + [m.dosage,m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
+        html += '<div class="list-item" onclick="openMed(\\'' + m.id + '\\')"><div class="list-icon" style="background:var(--amber-bg)">💊</div><div class="list-info"><div class="list-title">' + m.name + '</div><div class="list-sub">' + [m.dosage,m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
       });
       html += '</div></div>';
     }
@@ -2346,7 +2348,7 @@ function renderDashboard() {
       html += '<div id="section_dash_todos">';
       myTodos.slice(0,5).forEach(t => {
         const isOverdue = t.due_date && new Date(t.due_date) < today;
-        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:center;gap:10px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:11px;color:' + (isOverdue?'#C0392B':'var(--text-3)') + ';">' + (isOverdue?'⚠ ':'📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo(\\'' + t.id + '\\')"><div style="display:flex;align-items:center;gap:10px;"><div onclick="event.stopPropagation();toggleTodo(\\'' + t.id + '\\',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:11px;color:' + (isOverdue?'#C0392B':'var(--text-3)') + ';">' + (isOverdue?'⚠ ':'📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
       });
       html += '</div>';
     }
@@ -2389,7 +2391,7 @@ function renderDashboard() {
       upcoming.map(v => {
         const person = data.people.find(p=>p.id===v.person_id);
         const doctor = data.doctors.find(d=>d.id===v.doctor_id);
-        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard(' + JSON.stringify(v.id) + ')">' +
+        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard(\\'' + v.id + '\\')">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
           '<div style="font-size:13px;font-weight:600;color:var(--text);">' + v.title + '</div>' +
           daysUntil(v.visit_date) +
@@ -2406,8 +2408,8 @@ function renderDashboard() {
       activeTodos.slice(0,5).map(t => {
         const person = data.people.find(p=>p.id===t.person_id);
         const isOverdue = t.due_date && new Date(t.due_date) < today;
-        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo(' + JSON.stringify(t.id) + ')">' +
-          '<div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
+        return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo(\\'' + t.id + '\\')">' +
+          '<div onclick="event.stopPropagation();toggleTodo(\\'' + t.id + '\\',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
           '<div style="flex:1;min-width:0;">' +
           '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.title + '</div>' +
           '<div style="font-size:11px;color:var(--text-3);">' + (person?person.name.split(' ')[0]:'') + (t.due_date ? (person?' · ':'') + (isOverdue?'⚠ ':'') + fmtDate(t.due_date) : '') + '</div>' +
@@ -2455,7 +2457,7 @@ function renderDashboardPills() {
     const col = isActive ? 'white' : 'var(--text)';
     const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setDashboardFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setDashboardFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
@@ -2932,5 +2934,60 @@ function setVisitsPersonFilter(personId) {
   renderVisits(filtered, visitFilter);
 }
 
+
+
+// ── SWIPE TO GO BACK ──
+(function() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+
+  // Map of screen -> where to go back to
+  const backMap = {
+    'screen-home':        'dashboard',
+    'screen-doctors':     'dashboard',
+    'screen-visits':      'dashboard',
+    'screen-medications': 'dashboard',
+    'screen-documents':   'dashboard',
+    'screen-notes':       'dashboard',
+    'screen-todos':       'dashboard',
+    'screen-person':      'home',
+    'screen-doctor-detail': 'doctors',
+    'screen-med-detail':  'medications',
+    'screen-visit-detail':'visits',
+  };
+
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+
+    // Must start from left edge (within 30px), swipe right 60px+,
+    // be mostly horizontal, and complete within 400ms
+    if (touchStartX > 30) return;
+    if (dx < 60) return;
+    if (Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    if (dt > 400) return;
+
+    // Find current visible screen
+    const current = document.querySelector('.screen.active');
+    if (!current) return;
+
+    const screenId = current.id;
+    const dest = backMap[screenId];
+    if (!dest) return;
+
+    // Don't swipe back from main nav tabs
+    if (['dashboard','todos','notes'].includes(screenId)) return;
+
+    goBack(dest);
+  }, { passive: true });
+})();
 
 </script>
