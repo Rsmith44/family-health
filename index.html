@@ -985,7 +985,7 @@ function showScreen(id, dir='forward') {
   next.classList.add('active');
   if (dir==='forward') next.classList.add('slide-in');
   else if (dir==='back') next.classList.add('slide-back');
-  const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos'];
+  const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos','notes'];
   document.getElementById('fab').style.display = fabScreens.includes(id) ? 'flex' : 'none';
 }
 function goBack(to) { showScreen(to,'back'); }
