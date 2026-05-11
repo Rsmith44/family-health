@@ -308,10 +308,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Visits</div><div class="header-sub" id="visits-sub">Appointments &amp; history</div></div>
     </div>
     <div style="padding:0 16px 8px;overflow-x:auto;display:flex;gap:7px;" id="visits-person-pills"></div>
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="setVisitFilter('all',this)">All</button>
-      <button class="tab-btn" onclick="setVisitFilter('upcoming',this)">Upcoming</button>
-      <button class="tab-btn" onclick="setVisitFilter('past',this)">Past</button>
+    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
+        <input type="checkbox" id="show-past-visits" onchange="togglePastVisits(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
+        Show past visits
+      </label>
     </div>
     <div class="scroll" id="visits-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
@@ -356,15 +357,15 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
         <div class="header-title">To Do</div>
         <div class="header-sub" id="todos-sub">Follow-ups & tasks</div>
       </div>
-      <button class="icon-btn" id="toggle-completed-btn" onclick="toggleShowCompleted()" title="Show/hide completed" style="font-size:16px;">✓</button>
+
     </div>
     <!-- Person filter pills -->
     <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="todo-person-pills"></div>
-    <!-- Tab filters -->
-    <div class="tab-bar" style="padding-top:0;">
-      <button class="tab-btn active" onclick="setTodoFilter('all',this)">All</button>
-      <button class="tab-btn" onclick="setTodoFilter('active',this)">Active</button>
-      <button class="tab-btn" onclick="setTodoFilter('completed',this)">Completed</button>
+    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
+        <input type="checkbox" id="show-completed-todos" onchange="toggleShowCompleted(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
+        Show completed
+      </label>
     </div>
     <div class="scroll" id="todos-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
@@ -914,7 +915,7 @@ async function sendInvite() {
 let data = { people: [], doctors: [], medications: [], visits: [], documents: [] };
 let currentTab = 'home';
 let currentPerson = null, currentDoctor = null, currentMed = null, currentVisit = null;
-let visitFilter = 'all';
+let visitFilter = 'upcoming';
 
 const COLORS = ['#2A6049','#B56B2A','#2C5282','#9B3A4A','#5B3A8E','#1A6B6B','#7A4A1A'];
 function avatarColor(str) {
@@ -1331,10 +1332,14 @@ function renderVisits(rows, filter) {
 }
 function setVisitFilter(f,btn) {
   visitFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
   const fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits;
   renderVisits(fil,f);
+}
+
+function togglePastVisits(showPast) {
+  visitFilter = showPast ? 'all' : 'upcoming';
+  const fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits;
+  renderVisits(fil, visitFilter);
 }
 
 async function openVisit(id, from='visits') {
@@ -2471,7 +2476,7 @@ async function saveGroupName() {
 // ── TO DO ──
 let todosData = [];
 let todoPersonFilter = null;
-let todoFilter = 'all';
+let todoFilter = 'active';
 let showCompleted = true;
 
 async function loadTodos() {
@@ -2534,13 +2539,7 @@ function renderTodos() {
   const sub = document.getElementById('todos-sub');
   if (sub) sub.textContent = total + ' item' + (total !== 1 ? 's' : '') + (completed ? ' · ' + completed + ' completed' : '');
 
-  // Update toggle button
-  const toggleBtn = document.getElementById('toggle-completed-btn');
-  if (toggleBtn) {
-    toggleBtn.style.background = showCompleted ? 'var(--green-bg)' : 'var(--surface)';
-    toggleBtn.style.color = showCompleted ? 'var(--green)' : 'var(--text-3)';
-    toggleBtn.title = showCompleted ? 'Hide completed' : 'Show completed';
-  }
+
 
   if (!rows.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>' +
@@ -2592,15 +2591,9 @@ function setTodoPersonFilter(personId) {
   renderTodos();
 }
 
-function setTodoFilter(f, btn) {
-  todoFilter = f;
-  document.querySelectorAll('#screen-todos .tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTodos();
-}
-
-function toggleShowCompleted() {
-  showCompleted = !showCompleted;
+function toggleShowCompleted(checked) {
+  showCompleted = checked;
+  todoFilter = checked ? 'all' : 'active';
   renderTodos();
 }
 
@@ -2748,7 +2741,7 @@ function toggleDashboardVisits() {
 // ── NAV HELPERS ──
 function navToFamily() { closeHamburger(); currentTab='home'; showScreen('home','forward'); if (!data.people.length) loadPeople(); }
 function navToDoctors() { closeHamburger(); currentTab='doctors'; showScreen('doctors','forward'); if (!data.doctors.length) loadDoctors(); }
-function navToVisits() { closeHamburger(); currentTab='visits'; showScreen('visits','forward'); if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
+function navToVisits() { closeHamburger(); currentTab='visits'; showScreen('visits','forward'); if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); var fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits; renderVisits(fil, visitFilter); } }
 function navToMeds() { closeHamburger(); currentTab='medications'; showScreen('medications','forward'); if (!data.medications.length) loadMeds(); }
 function navToDocs() { closeHamburger(); currentTab='documents'; showScreen('documents','forward'); loadDocs(); }
 function navToTodos() { var btn = document.getElementById('nav-todo-btn'); showTab('todos', btn); }
