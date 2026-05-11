@@ -992,6 +992,7 @@ function showTab(tab, btn) {
   if (tab==='visits' && !data.visits.length) loadVisits();
   if (tab==='documents') loadDocs();
   if (tab==='todos') loadTodos();
+  if (tab==='notes') loadNotes();
 }
 function navToMeds() { closeHamburger(); currentTab='medications'; showScreen('medications','forward'); if (!data.medications.length) loadMeds(); }
 function navToDocs() { closeHamburger(); currentTab='documents'; showScreen('documents','forward'); loadDocs(); }
