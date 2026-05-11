@@ -2761,14 +2761,17 @@ function renderVisitsPersonPills() {
   var el = document.getElementById('visits-person-pills');
   if (!el || !data.people.length) return;
   var f = window.visitsPersonFilter;
-  var html = '<button onclick="setVisitsFilter(null)" style="background:' + (!f?'var(--green)':'var(--card)') + ';color:' + (!f?'white':'var(--text-3)') + ';border:1px solid ' + (!f?'var(--green)':'var(--border)') + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  var evBg = !f ? 'var(--green)' : 'var(--card)';
+  var evCol = !f ? 'white' : 'var(--text-3)';
+  var evBdr = !f ? 'var(--green)' : 'var(--border)';
+  var html = '<button onclick="setVisitsFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
     var bg = isActive ? avatarColor(p.name) : 'var(--card)';
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setVisitsFilter(' + p.id + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setVisitsFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
@@ -2787,7 +2790,12 @@ var notesPersonFilter = null;
 async function loadNotes() {
   var el = document.getElementById('notes-list');
   if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  if (!data.people.length) await loadAll();
   var res = await sb.from('notes').select('*, people(name)').order('created_at', {ascending: false});
+  if (res.error) {
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not set up yet.<br><span style="font-size:12px">Run notes.sql in Supabase first</span></div>';
+    return;
+  }
   notesData = res.data || [];
   renderNotesPersonPills();
   renderNotes();
@@ -2797,14 +2805,17 @@ function renderNotesPersonPills() {
   var el = document.getElementById('notes-person-pills');
   if (!el) return;
   var f = notesPersonFilter;
-  var html = '<button onclick="setNotesPersonFilter(null)" style="background:' + (!f?'var(--green)':'var(--card)') + ';color:' + (!f?'white':'var(--text-3)') + ';border:1px solid ' + (!f?'var(--green)':'var(--border)') + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  var evBg = !f ? 'var(--green)' : 'var(--card)';
+  var evCol = !f ? 'white' : 'var(--text-3)';
+  var evBdr = !f ? 'var(--green)' : 'var(--border)';
+  var html = '<button onclick="setNotesPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
     var bg = isActive ? avatarColor(p.name) : 'var(--card)';
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setNotesPersonFilter(' + p.id + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setNotesPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
@@ -2897,16 +2908,14 @@ function renderDashboardPills() {
   var evBg = !f ? 'var(--green)' : 'var(--card)';
   var evCol = !f ? 'white' : 'var(--text-3)';
   var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = `<button onclick="setDashboardFilter(null)" style="background:${evBg};color:${evCol};border:1px solid ${evBdr};border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Overview</button>`;
+  var html = '<button onclick="setDashboardFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Overview</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
     var bg = isActive ? avatarColor(p.name) : 'var(--card)';
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    var firstName = p.name.split(' ')[0];
-    var pid = p.id;
-    html += `<button onclick="setDashboardFilter('${pid}')" style="display:flex;align-items:center;gap:5px;background:${bg};color:${col};border:1px solid ${bdr};border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:${dotBg};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">${initials(p.name)}</span>${firstName}</button>`;
+    html += '<button onclick="setDashboardFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
