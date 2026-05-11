@@ -1371,7 +1371,13 @@ async function openVisit(id, from='visits') {
       visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
         active.map(t => {
           const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(\\'' + t.id + '\\')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(\\'' + t.id + '\\',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+          const tid = t.id;
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(\'' + tid + '\')">' +
+            '<div style="display:flex;align-items:flex-start;gap:12px;">' +
+            '<div onclick="event.stopPropagation();toggleTodo(\'' + tid + '\',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>' +
+            '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' +
+            (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') +
+            '</div></div></div>';
         }).join('');
     }
     if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
