@@ -1363,7 +1363,7 @@ async function openVisit(id, from='visits') {
       visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
         active.map(t => {
           const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + t.id + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + t.id + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
         }).join('');
     }
     if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
@@ -2329,7 +2329,7 @@ function renderDashboard() {
       myUpcoming.slice(0,3).forEach(function(v) {
         var doc = data.doctors.find(function(d){return d.id===v.doctor_id;});
         var vid = v.id;
-        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard(' + JSON.stringify(vid) + ')">' +
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard(' + vid + ')">' +
           '<div class="visit-top"><div class="visit-title">' + v.title + '</div><div class="visit-date">' + fmtDateTime(v.visit_date) + '</div></div>' +
           (doc ? '<div class="visit-meta">🩺 ' + doc.name + '</div>' : '') + '</div>';
       });
@@ -2343,7 +2343,7 @@ function renderDashboard() {
       html += '<div id="section_dash_meds"><div class="list-card">';
       myActiveMeds.forEach(function(m) {
         var mid = m.id;
-        html += '<div class="list-item" onclick="openMed(' + JSON.stringify(mid) + ')">' +
+        html += '<div class="list-item" onclick="openMed(' + mid + ')">' +
           '<div class="list-icon" style="background:var(--amber-bg)">💊</div>' +
           '<div class="list-info"><div class="list-title">' + m.name + '</div>' +
           '<div class="list-sub">' + [m.dosage,m.frequency].filter(Boolean).join(' · ') + '</div></div></div>';
@@ -2359,9 +2359,9 @@ function renderDashboard() {
       myTodos.slice(0,5).forEach(function(t) {
         var isOverdue = t.due_date && new Date(t.due_date) < today;
         var ttid = t.id;
-        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo(' + JSON.stringify(ttid) + ')">' +
+        html += '<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo(' + ttid + ')">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
-          '<div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(ttid) + ',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
+          '<div onclick="event.stopPropagation();toggleTodo(' + ttid + ',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
           '<div><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' +
           (t.due_date ? '<div style="font-size:11px;color:' + (isOverdue?'#C0392B':'var(--text-3)') + ';">' + (isOverdue?'⚠ ':'📅 ') + fmtDate(t.due_date) + '</div>' : '') +
           '</div></div></div>';
@@ -2403,7 +2403,7 @@ function renderDashboard() {
       var person = data.people.find(function(p){return p.id===v.person_id;});
       var doctor = data.doctors.find(function(d){return d.id===v.doctor_id;});
       var uvid = v.id;
-      return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard(' + JSON.stringify(uvid) + ')">' +
+      return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard(' + uvid + ')">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
         '<div style="font-size:13px;font-weight:600;color:var(--text);">' + v.title + '</div>' +
         daysUntil(v.visit_date) + '</div>' +
@@ -2416,8 +2416,8 @@ function renderDashboard() {
       var person = data.people.find(function(p){return p.id===t.person_id;});
       var isOverdue = t.due_date && new Date(t.due_date)<today;
       var utid = t.id;
-      return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo(' + JSON.stringify(utid) + ')">' +
-        '<div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(utid) + ',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
+      return '<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo(' + utid + ')">' +
+        '<div onclick="event.stopPropagation();toggleTodo(' + utid + ',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>' +
         '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.title + '</div>' +
         '<div style="font-size:11px;color:var(--text-3);">' + (person?person.name.split(' ')[0]:'') + (t.due_date?(person?' · ':'')+(isOverdue?'⚠ ':'')+fmtDate(t.due_date):'') + '</div></div></div>';
     }).join('') + (activeTodos.length>5?'<div onclick="navToTodos()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all '+activeTodos.length+' items →</div>':'')
@@ -2805,7 +2805,7 @@ function renderVisitsPersonPills() {
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setVisitsFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setVisitsFilter(' + p.id + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
@@ -2841,7 +2841,7 @@ function renderNotesPersonPills() {
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setNotesPersonFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setNotesPersonFilter(' + p.id + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
@@ -2867,7 +2867,7 @@ function renderNotes() {
         var person = n.people ? n.people.name : null;
         var color = person ? avatarColor(person) : 'var(--text-3)';
         var nid = n.id;
-        return '<div class="visit-card" style="margin-bottom:8px;" onclick="editNote(' + JSON.stringify(nid) + ')">' +
+        return '<div class="visit-card" style="margin-bottom:8px;" onclick="editNote(' + nid + ')">' +
           '<div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">' + fmtDateTime(n.created_at) + '</div>' +
           '<div style="font-size:14px;color:var(--text);line-height:1.5;">' + (n.content||'').replace(/\n/g,'<br>') + '</div>' +
           (person ? '<div style="margin-top:6px;display:flex;align-items:center;gap:5px;"><span style="width:16px;height:16px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">' + initials(person) + '</span><span style="font-size:11px;font-weight:600;color:' + color + ';">' + person + '</span></div>' : '') +
@@ -2941,7 +2941,7 @@ function renderDashboardPills() {
     var col = isActive ? 'white' : 'var(--text)';
     var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
     var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setDashboardFilter(' + JSON.stringify(p.id) + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    html += '<button onclick="setDashboardFilter(' + p.id + ')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
 }
