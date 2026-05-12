@@ -334,7 +334,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <div class="screen" id="screen-documents">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Documents</div><div class="header-sub" id="docs-sub">Files &amp; records</div></div>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Documents</div><div class="header-sub" id="docs-sub">Files & records</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -480,21 +480,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <input type="hidden" id="person-id">
       <div class="field"><label>Name *</label><input type="text" id="person-name" placeholder="Full name"></div>
       <div class="field"><label>Date of Birth</label><input type="date" id="person-dob"></div>
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:12px 0 4px;">Important Info</div>
-      <div class="field"><label>Medicare Number</label><input type="text" id="person-medicare" placeholder="e.g. 1234 56789 1"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="field" style="margin:0;"><label>Blood Type</label><select id="person-blood-type"><option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-        <div class="field" style="margin:0;"><label>Immunisations</label><select id="person-immunisations"><option value="true">Up to date</option><option value="false">Outstanding</option></select></div>
-      </div>
-      <div class="field"><label>Allergies</label><input type="text" id="person-allergies" placeholder="e.g. Penicillin, nuts (severe)"></div>
-      <div class="field"><label>Diagnoses / Conditions</label><input type="text" id="person-diagnoses" placeholder="e.g. ADHD, hypothyroidism"></div>
-      <div class="field"><label>Health Fund</label><input type="text" id="person-health-fund" placeholder="e.g. Medibank"></div>
-      <div class="field"><label>Health Fund Number</label><input type="text" id="person-health-fund-number" placeholder="Member number"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="field" style="margin:0;"><label>Emergency Contact</label><input type="text" id="person-emergency-contact" placeholder="Name"></div>
-        <div class="field" style="margin:0;"><label>Emergency Phone</label><input type="tel" id="person-emergency-phone" placeholder="Phone"></div>
-      </div>
-      <div class="field"><label>Notes</label><textarea id="person-notes" placeholder="Any relevant notes..."></textarea></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:12px 0 4px;">Important Info</div><div class="field"><label>Medicare Number</label><input type="text" id="person-medicare" placeholder="e.g. 1234 56789 1"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field" style="margin:0;"><label>Blood Type</label><select id="person-blood-type"><option value="">Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div><div class="field" style="margin:0;"><label>Immunisations</label><select id="person-immunisations"><option value="true">Up to date</option><option value="false">Outstanding</option></select></div></div><div class="field"><label>Allergies</label><input type="text" id="person-allergies" placeholder="e.g. Penicillin, nuts (severe)"></div><div class="field"><label>Diagnoses / Conditions</label><input type="text" id="person-diagnoses" placeholder="e.g. ADHD, hypothyroidism"></div><div class="field"><label>Health Fund</label><input type="text" id="person-health-fund" placeholder="e.g. Medibank"></div><div class="field"><label>Health Fund Number</label><input type="text" id="person-health-fund-number" placeholder="Member number"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field" style="margin:0;"><label>Emergency Contact</label><input type="text" id="person-emergency-contact" placeholder="Name"></div><div class="field" style="margin:0;"><label>Emergency Phone</label><input type="tel" id="person-emergency-phone" placeholder="Phone"></div></div><div class="field"><label>Notes</label><textarea id="person-notes" placeholder="Any relevant notes..."></textarea></div>
       <button class="btn-primary" onclick="savePerson()">Save</button>
       <button class="btn-danger" id="delete-person-btn" style="display:none" onclick="deletePerson()">Delete Person</button>
     </div>
@@ -569,12 +555,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
 <!-- NOTES MODAL -->
 <div class="modal-overlay" id="modal-note">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <div class="modal-title" id="modal-note-title">Add Note</div>
-      <button class="modal-close" onclick="closeModal('modal-note')">✕</button>
-    </div>
+  <div class="modal-sheet"><div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title" id="modal-note-title">Add Note</div><button class="modal-close" onclick="closeModal('modal-note')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="note-id">
       <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
@@ -587,7 +569,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     </div>
   </div>
 </div>
-
 <!-- CUSTOM SECTION MODAL -->
 <div class="modal-overlay" id="modal-section">
   <div class="modal-sheet">
@@ -729,6 +710,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <button class="ham-item" onclick="navToDocs()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span>Documents</span></button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
     <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Account</div>
+    <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openExportModal()"><div class="ham-icon" style="background:var(--green-bg)"><svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span>Export Data</span></button>
     <button class="ham-item" onclick="closeHamburger();openInviteModal()"><div class="ham-icon" style="background:var(--purple-bg)"><svg width="18" height="18" fill="none" stroke="var(--purple)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><span>Invite Someone</span></button>
@@ -1019,10 +1001,6 @@ function showTab(tab, btn) {
   if (tab==='todos') loadTodos();
   if (tab==='notes') loadNotes();
 }
-function navToMeds() { closeHamburger(); currentTab='medications'; showScreen('medications','forward'); if (!data.medications.length) loadMeds(); }
-function navToDocs() { closeHamburger(); currentTab='documents'; showScreen('documents','forward'); loadDocs(); }
-function navToVisits() { const btn = document.getElementById('nav-visits-btn'); showTab('visits', btn); }
-function navToTodos() { const btn = document.getElementById('nav-todo-btn'); showTab('todos', btn); }
 
 function toast(msg, dur=2500) {
   const t = document.getElementById('toast');
@@ -1052,7 +1030,7 @@ async function loadMeds() {
 async function loadVisits() {
   const {data:rows} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
   data.visits = rows || [];
-  if (typeof renderVisitsPersonPills === 'function') renderVisitsPersonPills();
+  if(typeof renderVisitsPersonPills==='function')renderVisitsPersonPills();
   renderVisits(data.visits, visitFilter);
 }
 
@@ -1065,9 +1043,7 @@ function renderPeople(rows) {
     const upcoming = data.visits.filter(v=>v.person_id===p.id && v.visit_date && visitDate(v.visit_date)>=new Date());
     return `<div class="person-card" onclick="openPerson('${p.id}')">
       <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-      <div class="person-info">
-        <div class="person-name">${p.name}</div>
-      </div>
+      <div class="person-info"><div class="person-name">${p.name}</div></div>
       <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
@@ -1208,15 +1184,10 @@ async function openPerson(id) {
   <div style="height:16px"></div>`;
 
   document.getElementById('person-detail').innerHTML = html;
-  // Mark all sections as collapsed by default
-  ['notes','doctors','meds','visits','docs','todos'].forEach(function(key) {
-    collapsedSections[id + '_' + key] = true;
-    var arrow = document.getElementById('arrow_' + id + '_' + key);
-    if (arrow) arrow.classList.add('collapsed');
-  });
+  ['notes','doctors','meds','visits','docs','todos'].forEach(k=>{collapsedSections[id+'_'+k]=true;var a=document.getElementById('arrow_'+id+'_'+k);if(a)a.classList.add('collapsed');});
   } catch(err) {
-    document.getElementById('person-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error loading: ' + err.message + '</div>';
-    console.error('openPerson error:', err);
+    document.getElementById('person-detail').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
+    console.error('openPerson error:',err);
   }
 }
 
@@ -1363,17 +1334,7 @@ function renderVisits(rows, filter) {
     </div>`;
   }).join('');
 }
-function setVisitFilter(f,btn) {
-  visitFilter=f;
-  const fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits;
-  renderVisits(fil,f);
-}
-
-function togglePastVisits(showPast) {
-  visitFilter = showPast ? 'all' : 'upcoming';
-  const fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits;
-  renderVisits(fil, visitFilter);
-}
+function setVisitFilter(f,btn){visitFilter=f;var fil=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(fil,f);}
 
 async function openVisit(id, from='visits') {
   currentVisit = data.visits.find(v=>v.id===id);
@@ -1401,7 +1362,7 @@ async function openVisit(id, from='visits') {
       visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
         active.map(t => {
           const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + t.id + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + t.id + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
         }).join('');
     }
     if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
@@ -1591,22 +1552,12 @@ async function openAddModal() {
     populateTodoSelects(null, null, null);
   }
   if (modal==='modal-note') {
-    document.getElementById('modal-note-title').textContent = 'Add Note';
-    document.getElementById('note-id').value = '';
-    document.getElementById('note-content').value = '';
-    document.getElementById('delete-note-btn').style.display = 'none';
+    document.getElementById('modal-note-title').textContent='Add Note';
+    document.getElementById('note-id').value='';
+    document.getElementById('note-content').value='';
+    document.getElementById('delete-note-btn').style.display='none';
     if (!data.people.length) await loadAll();
-    populateNoteSelects(notesPersonFilter, null, null, null);
-
-  }
-  if (modal==='modal-note') {
-    document.getElementById('modal-note-title').textContent = 'Add Note';
-    document.getElementById('note-id').value = '';
-    document.getElementById('note-content').value = '';
-    document.getElementById('delete-note-btn').style.display = 'none';
-    if (!data.people.length) await loadAll();
-    populateNoteSelects(notesPersonFilter, null, null, null);
-
+    populateNoteSelects(typeof notesPersonFilter!=='undefined'?notesPersonFilter:null,null,null,null);
   }
   openModal(modal);
 }
@@ -1689,21 +1640,7 @@ async function savePerson() {
   const id=document.getElementById('person-id').value;
   const name=document.getElementById('person-name').value.trim();
   if(!name){toast('Please enter a name');return;}
-  const basePayload={
-    name,
-    dob:document.getElementById('person-dob').value||null,
-    notes:document.getElementById('person-notes').value||null,
-    medicare_number:document.getElementById('person-medicare').value||null,
-    blood_type:document.getElementById('person-blood-type').value||null,
-    allergies:document.getElementById('person-allergies').value||null,
-    diagnoses:document.getElementById('person-diagnoses').value||null,
-    health_fund:document.getElementById('person-health-fund').value||null,
-    health_fund_number:document.getElementById('person-health-fund-number').value||null,
-    emergency_contact:document.getElementById('person-emergency-contact').value||null,
-    emergency_phone:document.getElementById('person-emergency-phone').value||null,
-    immunisations_current:document.getElementById('person-immunisations').value==='true',
-  };
-  const payload=id?basePayload:{...basePayload,family_group_id:currentFamilyGroupId};
+  const bp={name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null,medicare_number:document.getElementById('person-medicare').value||null,blood_type:document.getElementById('person-blood-type').value||null,allergies:document.getElementById('person-allergies').value||null,diagnoses:document.getElementById('person-diagnoses').value||null,health_fund:document.getElementById('person-health-fund').value||null,health_fund_number:document.getElementById('person-health-fund-number').value||null,emergency_contact:document.getElementById('person-emergency-contact').value||null,emergency_phone:document.getElementById('person-emergency-phone').value||null,immunisations_current:document.getElementById('person-immunisations').value==='true'};const payload=id?bp:{...bp,family_group_id:currentFamilyGroupId};
   const {error}=id?await sb.from('people').update(payload).eq('id',id):await sb.from('people').insert(payload);
   if(error){toast('Error saving');return;}
   closeModal('modal-person'); toast(id?'Updated ✓':'Added ✓'); await loadAll();
@@ -2089,7 +2026,7 @@ async function loadDocs() {
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   const { data: rows, error } = await sb.from('documents')
     .select('*, people(name), doctors(name), visits(title)')
-    .order('uploaded_at', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
   data.documents = rows || [];
   renderDocs(data.documents);
@@ -2342,92 +2279,18 @@ function closeHamburger() {
 // ── DASHBOARD ──
 let dashboardPersonFilter = null;
 
-async function loadDashboard() {
-  const el = document.getElementById('dashboard-content');
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  sb.from('family_groups').select('name').eq('id', currentFamilyGroupId).single().then(({data:fg}) => {
-    const name = fg?.name || '';
-    document.getElementById('dashboard-greeting').textContent = greeting + (name ? ', ' + name : '');
-  });
-  document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  if (!data.people.length) await loadAll();
-  if (!todosData.length) await loadTodos();
-  if (!notesData.length) await loadNotes();
-  renderDashboardPills();
-  renderDashboard();
-}
+async 
 
-function renderDashboard() {
-  var el = document.getElementById('dashboard-content');
-  if (!el) return;
-  var today = new Date();
-  var upcoming = data.visits
-    .filter(v => v.visit_date && new Date(v.visit_date) >= today && new Date(v.visit_date) <= new Date(today.getTime()+14*24*60*60*1000))
-    .sort((a,b) => new Date(a.visit_date)-new Date(b.visit_date));
-  var allUpcoming = data.visits.filter(v => v.visit_date && new Date(v.visit_date) >= today);
-  var activeTodos = todosData.filter(t => !t.completed);
-  var activeTab = window._overviewTab || 'upcoming';
-
-  function daysUntil(d) {
-    var diff = Math.ceil((new Date(d)-today)/(1000*60*60*24));
-    if (diff<=0) return '<span style="background:var(--green);color:white;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Today</span>';
-    if (diff===1) return '<span style="background:var(--green-bg);color:var(--green);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Tomorrow</span>';
-    if (diff<=7) return `<span style="background:#FEF3C7;color:#92400E;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">${diff} days</span>`;
-    return `<span style="font-size:10px;color:var(--text-3);">${fmtDate(d)}</span>`;
-  }
-
-  var qaHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
-    <button onclick="quickAdd('visit')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📅</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></button>
-    <button onclick="quickAdd('medication')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">💊</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Medication</div></button>
-    <button onclick="quickAdd('todo')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;">✓</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></button>
-    <button onclick="quickAdd('note')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📝</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Note</div></button>
-  </div>`;
-
-  var upcomingHtml = upcoming.length ? upcoming.map(v => {
-    var person = data.people.find(p => p.id===v.person_id);
-    var doctor = data.doctors.find(d => d.id===v.doctor_id);
-    return `<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard('${v.id}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-size:13px;font-weight:600;color:var(--text);">${v.title}</div>${daysUntil(v.visit_date)}</div><div style="font-size:11px;color:var(--text-3);margin-top:3px;">${[person?person.name.split(' ')[0]:null,doctor?doctor.name:null].filter(Boolean).join(' · ')}</div></div>`;
-  }).join('') : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">📅</div>No visits in the next 2 weeks</div>';
-
-  var todosHtml = activeTodos.length ? activeTodos.slice(0,5).map(t => {
-    var person = data.people.find(p => p.id===t.person_id);
-    var isOverdue = t.due_date && new Date(t.due_date)<today;
-    return `<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo('${t.id}')"><div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div><div style="font-size:11px;color:var(--text-3);">${person?person.name.split(' ')[0]:''}${t.due_date?(person?' · ':'')+fmtDate(t.due_date):''}</div></div></div>`;
-  }).join('') + (activeTodos.length>5 ? `<div onclick="navToTodos()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ${activeTodos.length} items →</div>` : '')
-  : '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">✓</div>All caught up!</div>';
-
-  var upBg = activeTab==='upcoming' ? 'var(--green)' : 'var(--surface)';
-  var upCol = activeTab==='upcoming' ? 'white' : 'var(--text-3)';
-  var tdBg = activeTab==='todos' ? 'var(--green)' : 'var(--surface)';
-  var tdCol = activeTab==='todos' ? 'white' : 'var(--text-3)';
-
-  el.innerHTML = `<div style="padding:0 16px 16px;">
-    <div class="section-label">Quick Actions</div>${qaHtml}
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;">
-      <div style="display:flex;gap:6px;">
-        <button onclick="setOverviewTab('upcoming')" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:${upBg};color:${upCol};">Upcoming</button>
-        <button onclick="setOverviewTab('todos')" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:${tdBg};color:${tdCol};">To Do</button>
-      </div>
-      <button onclick="${activeTab==='upcoming'?'navToVisits()':'navToTodos()'}" style="background:none;border:none;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:inherit;">View all →</button>
-    </div>
-    <div>${activeTab==='upcoming' ? upcomingHtml : todosHtml}</div>
-  </div>`;
-}
 
 
 function setDashboardFilter(personId) {
   dashboardPersonFilter = personId || null;
-  renderDashboardPills();
   renderDashboard();
   const el = document.getElementById('dashboard-content');
   if (el) el.scrollTop = 0;
 }
 
-function openVisitFromDashboard(id) {
-  navToVisits();
-  setTimeout(() => openVisit(id), 350);
-}
+
 
 
 // ── SETTINGS ──
@@ -2481,18 +2344,19 @@ async function loadTodos() {
 }
 
 function renderTodoPersonPills() {
-  const el = document.getElementById('todo-person-pills');
-  if (!el) return;
-  const evBg = !todoPersonFilter ? 'var(--green)' : 'var(--card)';
-  const evCol = !todoPersonFilter ? 'white' : 'var(--text-3)';
-  const evBdr = !todoPersonFilter ? 'var(--green)' : 'var(--border)';
-  let html = '<button onclick="setTodoPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(p => {
-    const isActive = todoPersonFilter == p.id;
-    const bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    const col = isActive ? 'white' : 'var(--text)';
-    const bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    const dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
+  var el = document.getElementById('todo-person-pills');
+  if (!el || !data.people.length) return;
+  var f = todoPersonFilter;
+  var evBg = !f ? 'var(--green)' : 'var(--card)';
+  var evCol = !f ? 'white' : 'var(--text-3)';
+  var evBdr = !f ? 'var(--green)' : 'var(--border)';
+  var html = '<button onclick="setTodoPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  data.people.forEach(function(p) {
+    var isActive = f == p.id;
+    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
+    var col = isActive ? 'white' : 'var(--text)';
+    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
+    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
     html += '<button onclick="setTodoPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
   });
   el.innerHTML = html;
@@ -2581,11 +2445,8 @@ function setTodoPersonFilter(personId) {
   renderTodos();
 }
 
-function toggleShowCompleted(checked) {
-  showCompleted = checked;
-  todoFilter = checked ? 'all' : 'active';
-  renderTodos();
-}
+function setTodoFilter(f,btn){todoFilter=f;renderTodos();}
+function toggleShowCompleted(checked){showCompleted=!!checked;todoFilter=checked?'all':'active';renderTodos();}
 
 async function toggleTodo(id, currentlyCompleted) {
   const { error } = await sb.from('todos').update({
@@ -2642,7 +2503,7 @@ function openFollowupFromVisit() {
 
 function editTodo(id) {
   const t = todosData.find(x => x.id === id);
-  if (!t) { loadTodos().then(() => { const t2 = todosData.find(x=>x.id===id); if(t2) editTodo(id); }); return; }
+  if (!t) return;
   document.getElementById('modal-todo-title').textContent = 'Edit Follow-up';
   document.getElementById('todo-id').value = t.id;
   document.getElementById('todo-title').value = t.title || '';
@@ -2727,279 +2588,188 @@ function toggleDashboardVisits() {
 }
 
 
-
 // ── NAV HELPERS ──
-function navToFamily() { closeHamburger(); currentTab='home'; showScreen('home','forward'); if (!data.people.length) loadPeople(); }
-function navToDoctors() { closeHamburger(); currentTab='doctors'; showScreen('doctors','forward'); if (!data.doctors.length) loadDoctors(); }
-function navToVisits() { closeHamburger(); currentTab='visits'; showScreen('visits','forward'); if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); var fil = window.visitsPersonFilter ? data.visits.filter(v=>v.person_id==window.visitsPersonFilter) : data.visits; renderVisits(fil, visitFilter); } }
-function navToMeds() { closeHamburger(); currentTab='medications'; showScreen('medications','forward'); if (!data.medications.length) loadMeds(); }
-function navToDocs() { closeHamburger(); currentTab='documents'; showScreen('documents','forward'); loadDocs(); }
-function navToNotes() { var btn = document.getElementById('nav-notes-btn'); showTab('notes', btn); }
+function navToDoctors(){closeHamburger();currentTab='doctors';showScreen('doctors','forward');if(!data.doctors.length)loadDoctors();}
+function navToVisits(){closeHamburger();currentTab='visits';showScreen('visits','forward');if(!data.visits.length)loadVisits();else{renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}}
+function navToMeds(){closeHamburger();currentTab='medications';showScreen('medications','forward');if(!data.medications.length)loadMeds();}
+function navToDocs(){closeHamburger();currentTab='documents';showScreen('documents','forward');loadDocs();}
+function navToTodos(){var b=document.getElementById('nav-todo-btn');showTab('todos',b);}
+function navToNotes(){var b=document.getElementById('nav-notes-btn');showTab('notes',b);}
+function openVisitFromDashboard(id){navToVisits();setTimeout(function(){openVisit(id);},350);}
 
-// ── VISITS PERSON FILTER ──
-window.visitsPersonFilter = null;
-
-function renderVisitsPersonPills() {
-  var el = document.getElementById('visits-person-pills');
-  if (!el || !data.people.length) return;
-  var f = window.visitsPersonFilter;
-  var evBg = !f ? 'var(--green)' : 'var(--card)';
-  var evCol = !f ? 'white' : 'var(--text-3)';
-  var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = '<button onclick="setVisitsFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p) {
-    var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    var col = isActive ? 'white' : 'var(--text)';
-    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setVisitsFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+// ── VISIT FILTER ──
+window.visitsPersonFilter=null;
+function togglePastVisits(showPast){visitFilter=showPast?'all':'upcoming';var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
+function renderVisitsPersonPills(){
+  var el=document.getElementById('visits-person-pills');
+  if(!el||!data.people.length)return;
+  var f=window.visitsPersonFilter;
+  var html='<button onclick="setVisitsFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  data.people.forEach(function(p){
+    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
+    html+='<button onclick="setVisitsFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
-
-function setVisitsFilter(personId) {
-  window.visitsPersonFilter = personId || null;
-  renderVisitsPersonPills();
-  var filtered = window.visitsPersonFilter ? data.visits.filter(function(v){return v.person_id==window.visitsPersonFilter;}) : data.visits;
-  renderVisits(filtered, visitFilter);
-}
+function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
 
 // ── NOTES ──
-var notesData = [];
-var notesPersonFilter = null;
-var showHiddenNotes = false;
-
-async function loadNotes() {
-  var el = document.getElementById('notes-list');
-  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-  if (!data.people.length) await loadAll();
-  var res = await sb.from('notes').select('*, people(name), doctors(name), visits(title), medications(name)').order('created_at', {ascending: false});
-  if (res.error) {
-    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not set up yet.<br><span style="font-size:12px">Run notes.sql in Supabase first</span></div>';
-    return;
-  }
-  notesData = res.data || [];
-  renderNotesPersonPills();
-  renderNotes();
+var notesData=[],notesPersonFilter=null,showHiddenNotes=false;
+async function loadNotes(){
+  var el=document.getElementById('notes-list');
+  if(el)el.innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
+  if(!data.people.length)await loadAll();
+  var res=await sb.from('notes').select('*, people(name), doctors(name), visits(title), medications(name)').order('created_at',{ascending:false});
+  if(res.error){if(el)el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.<br><span style="font-size:12px">Run notes.sql in Supabase</span></div>';return;}
+  notesData=res.data||[];renderNotesPersonPills();renderNotes();
 }
-
-function renderNotesPersonPills() {
-  var el = document.getElementById('notes-person-pills');
-  if (!el) return;
-  var f = notesPersonFilter;
-  var evBg = !f ? 'var(--green)' : 'var(--card)';
-  var evCol = !f ? 'white' : 'var(--text-3)';
-  var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = '<button onclick="setNotesPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p) {
-    var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    var col = isActive ? 'white' : 'var(--text)';
-    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setNotesPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+function renderNotesPersonPills(){
+  var el=document.getElementById('notes-person-pills');if(!el)return;
+  var f=notesPersonFilter;
+  var html='<button onclick="setNotesPersonFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  data.people.forEach(function(p){
+    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
+    html+='<button onclick="setNotesPersonFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
+}
+function renderNotes(){
+  var el=document.getElementById('notes-list');if(!el)return;
+  var all=notesPersonFilter?notesData.filter(n=>n.person_id==notesPersonFilter):notesData;
+  var rows=showHiddenNotes?all:all.filter(n=>!n.hidden);
+  var hc=all.filter(n=>n.hidden).length;
+  var sub=document.getElementById('notes-sub');
+  if(sub)sub.textContent=all.length+' note'+(all.length!==1?'s':'')+(hc?' · '+hc+' hidden':'');
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>'+(hc&&!showHiddenNotes?'No visible notes':'No notes yet<br><span style="font-size:12px">Tap + to add one</span>')+'</div>';return;}
+  var grouped={};
+  rows.forEach(n=>{var k=new Date(n.created_at).toLocaleDateString('en-AU',{month:'long',year:'numeric'});if(!grouped[k])grouped[k]=[];grouped[k].push(n);});
+  el.innerHTML=Object.entries(grouped).map(e=>'<div class="section-label">'+e[0]+'</div>'+e[1].map(n=>{
+    var person=n.people?n.people.name:null,pcolor=person?avatarColor(person):'var(--text-3)',nid=n.id;
+    var chips='';
+    if(n.doctors&&n.doctors.name)chips+='<span class="chip chip-blue">🩺 '+n.doctors.name+'</span> ';
+    if(n.visits&&n.visits.title)chips+='<span class="chip chip-teal">📋 '+n.visits.title+'</span> ';
+    if(n.medications&&n.medications.name)chips+='<span class="chip chip-amber">💊 '+n.medications.name+'</span> ';
+    return '<div class="visit-card" style="margin-bottom:8px;'+(n.hidden?'opacity:0.45;':'')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+      +'<div style="font-size:11px;color:var(--text-3);">'+fmtDateTime(n.created_at)+(n.hidden?' <span style="font-size:9px;background:var(--surface);color:var(--text-3);padding:1px 5px;border-radius:8px;">hidden</span>':'')+'</div>'
+      +'<button onclick="toggleNoteHidden(\''+nid+'\','+n.hidden+')" style="background:'+(n.hidden?'var(--green-bg)':'var(--surface)')+';border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:'+(n.hidden?'var(--green)':'var(--text-3)')+';cursor:pointer;">'+(n.hidden?'Show':'Hide')+'</button>'
+      +'</div>'
+      +'<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:4px;cursor:pointer;" onclick="editNote(\''+nid+'\')">'+(n.content||'').replace(/\n/g,'<br>')+'</div>'
+      +(chips?'<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">'+chips+'</div>':'')
+      +(person?'<div style="margin-top:5px;display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:50%;background:'+pcolor+';display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:white;">'+initials(person)+'</span><span style="font-size:11px;font-weight:600;color:'+pcolor+';">'+person+'</span></div>':'')
+      +'</div>';
+  }).join('')).join('');
+}
+function setNotesPersonFilter(p){notesPersonFilter=p||null;renderNotesPersonPills();renderNotes();}
+function toggleHiddenNotes(c){showHiddenNotes=c;renderNotes();}
+async function toggleNoteHidden(id,cur){var r=await sb.from('notes').update({hidden:!cur}).eq('id',id);if(r.error){toast('Error');return;}var n=notesData.find(x=>x.id===id);if(n)n.hidden=!cur;renderNotes();toast(cur?'Note visible ✓':'Note hidden');}
+function populateNoteSelects(pId,dId,vId,mId){
+  var ps=document.getElementById('note-person'),ds=document.getElementById('note-doctor'),vs=document.getElementById('note-visit'),ms=document.getElementById('note-medication');
+  if(!ps)return;
+  ps.innerHTML='<option value="">Select person...</option>'+data.people.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  ds.innerHTML='<option value="">Select doctor...</option>'+data.doctors.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
+  ms.innerHTML='<option value="">Select medication...</option>'+data.medications.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
+  if(pId){ps.value=pId;filterNoteVisits(pId);}else{vs.innerHTML='<option value="">Select visit...</option>';}
+  if(dId)ds.value=dId; if(vId)vs.value=vId; if(mId)ms.value=mId;
+  ps.onchange=function(){filterNoteVisits(ps.value);};
+}
+function filterNoteVisits(pId){var vs=document.getElementById('note-visit');if(!vs)return;var cur=vs.value,f=pId?data.visits.filter(v=>v.person_id===pId):data.visits;vs.innerHTML='<option value="">Select visit...</option>'+f.slice(0,50).map(v=>'<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>').join('');if(cur)vs.value=cur;}
+async function saveNote(){
+  var id=document.getElementById('note-id').value,nc=document.getElementById('note-content').value.trim();
+  if(!nc){toast('Please enter a note');return;}
+  var pId=document.getElementById('note-person').value||null;
+  if(!pId){toast('Please select a person');return;}
+  var payload={content:nc,person_id:pId,doctor_id:document.getElementById('note-doctor').value||null,visit_id:document.getElementById('note-visit').value||null,medication_id:document.getElementById('note-medication').value||null};
+  if(!id)payload.family_group_id=currentFamilyGroupId;
+  var r=id?await sb.from('notes').update(Object.assign({updated_at:new Date().toISOString()},payload)).eq('id',id):await sb.from('notes').insert(payload);
+  if(r.error){toast('Error: '+r.error.message);return;}
+  closeModal('modal-note');toast(id?'Note updated ✓':'Note saved ✓');await loadNotes();
+}
+async function deleteNote(){if(!confirm('Delete this note?'))return;await sb.from('notes').delete().eq('id',document.getElementById('note-id').value);closeModal('modal-note');toast('Deleted');await loadNotes();}
+function editNote(id){var n=notesData.find(x=>x.id===id);if(!n)return;document.getElementById('modal-note-title').textContent='Edit Note';document.getElementById('note-id').value=n.id;document.getElementById('note-content').value=n.content||'';document.getElementById('delete-note-btn').style.display='block';populateNoteSelects(n.person_id,n.doctor_id,n.visit_id,n.medication_id);openModal('modal-note');}
+
+// ── IMPORTANT INFO ──
+function buildImportantInfoCard(p){
+  var rows=[];
+  if(p.allergies)rows.push(['🚨 Allergies',p.allergies,true]);
+  if(p.diagnoses)rows.push(['🩺 Conditions',p.diagnoses,false]);
+  if(p.medicare_number)rows.push(['📋 Medicare',p.medicare_number,false]);
+  if(p.blood_type)rows.push(['🩸 Blood type',p.blood_type,false]);
+  if(p.health_fund)rows.push(['🏥 Health fund',p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:''),false]);
+  if(p.emergency_contact)rows.push(['📞 Emergency',p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:''),false]);
+  if(p.immunisations_current===false)rows.push(['💉 Immunisations','Outstanding',true]);
+  if(!rows.length)return '';
+  var html='<div class="visit-card" style="margin-bottom:10px;padding:10px 12px;'+(p.allergies?'border-left:3px solid #C0392B;':'')+'">';
+  html+='<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;">Important Info</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;">';
+  rows.forEach(r=>{html+='<div style="min-width:0;"><div style="font-size:10px;color:var(--text-3);">'+r[0]+'</div><div style="font-size:12px;font-weight:500;color:'+(r[2]?'#C0392B':'var(--text)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+r[1]+'</div></div>';});
+  html+='</div></div>';return html;
 }
 
-function renderNotes() {
-  var el = document.getElementById('notes-list');
-  if (!el) return;
-  var all = notesPersonFilter ? notesData.filter(function(n){return n.person_id==notesPersonFilter;}) : notesData;
-  var rows = showHiddenNotes ? all : all.filter(function(n){return !n.hidden;});
-  var hiddenCount = all.filter(function(n){return n.hidden;}).length;
-  var sub = document.getElementById('notes-sub');
-  if (sub) sub.textContent = all.length + ' note' + (all.length!==1?'s':'') + (hiddenCount ? ' · ' + hiddenCount + ' hidden' : '');
-  if (!rows.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>' + (!hiddenCount || showHiddenNotes ? 'No notes yet<br><span style="font-size:12px">Tap + to add one</span>' : 'No visible notes') + '</div>';
-    return;
-  }
-  var grouped = {};
-  rows.forEach(function(n) {
-    var d = new Date(n.created_at);
-    var key = d.toLocaleDateString('en-AU', {month:'long', year:'numeric'});
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(n);
-  });
-  el.innerHTML = Object.entries(grouped).map(function(entry) {
-    var month = entry[0]; var notes = entry[1];
-    return '<div class="section-label">' + month + '</div>' +
-      notes.map(function(n) {
-        var person = n.people ? n.people.name : null;
-        var pcolor = person ? avatarColor(person) : 'var(--text-3)';
-        var nid = n.id;
-        var chips = '';
-        if (n.doctors && n.doctors.name) chips += '<span class="chip chip-blue">🩺 ' + n.doctors.name + '</span> ';
-        if (n.visits && n.visits.title) chips += '<span class="chip chip-teal">📋 ' + n.visits.title + '</span> ';
-        if (n.medications && n.medications.name) chips += '<span class="chip chip-amber">💊 ' + n.medications.name + '</span> ';
-        return '<div class="visit-card" style="margin-bottom:8px;' + (n.hidden ? 'opacity:0.45;' : '') + '">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-          '<div style="font-size:11px;color:var(--text-3);">' + fmtDateTime(n.created_at) + (n.hidden ? ' <span style="font-size:9px;background:var(--surface);color:var(--text-3);padding:1px 5px;border-radius:8px;">hidden</span>' : '') + '</div>' +
-          '<button onclick="toggleNoteHidden(\'' + nid + '\',' + n.hidden + ')" style="background:' + (n.hidden?'var(--green-bg)':'var(--surface)') + ';border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:' + (n.hidden?'var(--green)':'var(--text-3)') + ';cursor:pointer;">' + (n.hidden?'Show':'Hide') + '</button>' +
-          '</div>' +
-          '<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:4px;cursor:pointer;" onclick="editNote(\'' + nid + '\')">' + (n.content||'').replace(/\n/g,'<br>') + '</div>' +
-          (chips ? '<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">' + chips + '</div>' : '') +
-          (person ? '<div style="margin-top:5px;display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:50%;background:' + pcolor + ';display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:white;">' + initials(person) + '</span><span style="font-size:11px;font-weight:600;color:' + pcolor + ';">' + person + '</span></div>' : '') +
-          '</div>';
-      }).join('');
-  }).join('');
-}
-
-function toggleHiddenNotes(checked) {
-  showHiddenNotes = checked;
-  renderNotes();
-}
-
-async function toggleNoteHidden(id, currentlyHidden) {
-  var res = await sb.from('notes').update({hidden: !currentlyHidden}).eq('id', id);
-  if (res.error) { toast('Error updating'); return; }
-  var n = notesData.find(function(x){return x.id===id;});
-  if (n) n.hidden = !currentlyHidden;
-  renderNotes();
-  toast(currentlyHidden ? 'Note visible ✓' : 'Note hidden');
-}
-
-function setNotesPersonFilter(personId) {
-  notesPersonFilter = personId || null;
-  renderNotesPersonPills();
-  renderNotes();
-}
-
-function populateNoteSelects(personId, doctorId, visitId, medicationId) {
-  var pSel = document.getElementById('note-person');
-  var dSel = document.getElementById('note-doctor');
-  var vSel = document.getElementById('note-visit');
-  var mSel = document.getElementById('note-medication');
-  if (!pSel) return;
-  pSel.innerHTML = '<option value="">Select person...</option>' +
-    data.people.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
-  dSel.innerHTML = '<option value="">Select doctor...</option>' +
-    data.doctors.map(function(d){return '<option value="'+d.id+'">'+d.name+'</option>';}).join('');
-  mSel.innerHTML = '<option value="">Select medication...</option>' +
-    data.medications.map(function(m){return '<option value="'+m.id+'">'+m.name+(m.people?' ('+m.people.name+')':'')+'</option>';}).join('');
-  if (personId) { pSel.value = personId; filterNoteVisits(personId); } else { vSel.innerHTML = '<option value="">Select visit...</option>'; }
-  if (doctorId) dSel.value = doctorId;
-  if (visitId) vSel.value = visitId;
-  if (medicationId) mSel.value = medicationId;
-  pSel.onchange = function() { filterNoteVisits(pSel.value); };
-}
-
-function filterNoteVisits(personId) {
-  var vSel = document.getElementById('note-visit');
-  if (!vSel) return;
-  var cur = vSel.value;
-  var filtered = personId ? data.visits.filter(function(v){return v.person_id===personId;}) : data.visits;
-  vSel.innerHTML = '<option value="">Select visit...</option>' +
-    filtered.slice(0,50).map(function(v){return '<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>';}).join('');
-  if (cur) vSel.value = cur;
-}
-
-async function saveNote() {
-  var id = document.getElementById('note-id').value;
-  var noteContent = document.getElementById('note-content').value.trim();
-  if (!noteContent) { toast('Please enter a note'); return; }
-  var personId = document.getElementById('note-person').value || null;
-  if (!personId) { toast('Please select a person'); return; }
-  var doctorId = document.getElementById('note-doctor').value || null;
-  var visitId = document.getElementById('note-visit').value || null;
-  var medicationId = document.getElementById('note-medication').value || null;
-  var payload = {content: noteContent, person_id: personId, doctor_id: doctorId, visit_id: visitId, medication_id: medicationId};
-  if (!id) payload.family_group_id = currentFamilyGroupId;
-  var res = id ?
-    await sb.from('notes').update(Object.assign({updated_at: new Date().toISOString()}, payload)).eq('id', id) :
-    await sb.from('notes').insert(payload);
-  if (res.error) { toast('Error: ' + res.error.message); return; }
-  closeModal('modal-note');
-  toast(id ? 'Note updated ✓' : 'Note saved ✓');
-  await loadNotes();
-}
-
-async function deleteNote() {
-  var id = document.getElementById('note-id').value;
-  if (!confirm('Delete this note?')) return;
-  await sb.from('notes').delete().eq('id', id);
-  closeModal('modal-note');
-  toast('Deleted');
-  await loadNotes();
-}
-
-function editNote(id) {
-  var n = notesData.find(function(x){return x.id===id;});
-  if (!n) return;
-  document.getElementById('modal-note-title').textContent = 'Edit Note';
-  document.getElementById('note-id').value = n.id;
-  document.getElementById('note-content').value = n.content || '';
-  document.getElementById('delete-note-btn').style.display = 'block';
-  populateNoteSelects(n.person_id, n.doctor_id, n.visit_id, n.medication_id);
-  openModal('modal-note');
-}
-
-// ── DASHBOARD PERSON PILLS ──
-function renderDashboardPills() {
-  var el = document.getElementById('dashboard-person-pills');
-  if (!el) return;
-  var f = dashboardPersonFilter;
-  var evBg = !f ? 'var(--green)' : 'var(--card)';
-  var evCol = !f ? 'white' : 'var(--text-3)';
-  var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = '<button onclick="setDashboardFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Overview</button>';
-  data.people.forEach(function(p) {
-    var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    var col = isActive ? 'white' : 'var(--text)';
-    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setDashboardFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
-  });
-  el.innerHTML = html;
-}
-
-
-// ── SWIPE TO GO BACK ──
-(function() {
-  var touchStartX = 0;
-  var touchStartY = 0;
-  var touchStartTime = 0;
-  var backMap = {
-    'screen-home':'dashboard','screen-doctors':'dashboard',
-    'screen-visits':'dashboard','screen-medications':'dashboard',
-    'screen-documents':'dashboard','screen-notes':'dashboard',
-    'screen-todos':'dashboard','screen-person':'home',
-    'screen-doctor-detail':'doctors','screen-med-detail':'medications',
-    'screen-visit-detail':'visits'
-  };
-  document.addEventListener('touchstart', function(e) {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchStartTime = Date.now();
-  }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
-    var dt = Date.now() - touchStartTime;
-    if (touchStartX > 30) return;
-    if (dx < 60) return;
-    if (Math.abs(dy) > Math.abs(dx) * 0.8) return;
-    if (dt > 400) return;
-    var current = document.querySelector('.screen.active');
-    if (!current) return;
-    var dest = backMap[current.id];
-    if (!dest) return;
-    goBack(dest);
-  }, { passive: true });
-})();
-
-</script
-function setOverviewTab(tab) {
-  window._overviewTab = tab;
+// ── DASHBOARD ──
+async function loadDashboard(){
+  var el=document.getElementById('dashboard-content');
+  var hour=new Date().getHours();
+  var greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  sb.from('family_groups').select('name').eq('id',currentFamilyGroupId).single().then(r=>{var n=r.data?.name||'';document.getElementById('dashboard-greeting').textContent=greeting+(n?', '+n:'');});
+  document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(!data.people.length)await loadAll();
+  if(!todosData.length)await loadTodos();
+  if(!notesData.length)await loadNotes();
   renderDashboard();
 }
-
-function quickAdd(type) {
-  var tabMap = {visit:'visits', medication:'medications', todo:'todos', note:'notes'};
-  var prevTab = currentTab;
-  currentTab = tabMap[type];
-  openAddModal().then(function(){ currentTab = prevTab; });
+function renderDashboard(){
+  var el=document.getElementById('dashboard-content');if(!el)return;
+  var today=new Date();
+  var upcoming=data.visits.filter(v=>v.visit_date&&new Date(v.visit_date)>=today&&new Date(v.visit_date)<=new Date(today.getTime()+14*24*60*60*1000)).sort((a,b)=>new Date(a.visit_date)-new Date(b.visit_date));
+  var allUpcoming=data.visits.filter(v=>v.visit_date&&new Date(v.visit_date)>=today);
+  var activeTodos=todosData.filter(t=>!t.completed);
+  var activeTab=window._overviewTab||'upcoming';
+  function daysUntil(d){var diff=Math.ceil((new Date(d)-today)/(1000*60*60*24));if(diff<=0)return '<span style="background:var(--green);color:white;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Today</span>';if(diff===1)return '<span style="background:var(--green-bg);color:var(--green);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Tomorrow</span>';if(diff<=7)return '<span style="background:#FEF3C7;color:#92400E;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">'+diff+' days</span>';return '<span style="font-size:10px;color:var(--text-3);">'+fmtDate(d)+'</span>';}
+  var qaHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
+    +'<button onclick="quickAdd(\'visit\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📅</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></button>'
+    +'<button onclick="quickAdd(\'medication\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">💊</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Medication</div></button>'
+    +'<button onclick="quickAdd(\'todo\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;">✓</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></button>'
+    +'<button onclick="quickAdd(\'note\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📝</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Note</div></button>'
+    +'</div>';
+  var upcomingHtml=upcoming.length?upcoming.map(v=>{
+    var person=data.people.find(p=>p.id===v.person_id),doctor=data.doctors.find(d=>d.id===v.doctor_id);
+    return `<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);cursor:pointer;" onclick="openVisitFromDashboard('${v.id}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-size:13px;font-weight:600;color:var(--text);">${v.title}</div>${daysUntil(v.visit_date)}</div><div style="font-size:11px;color:var(--text-3);margin-top:3px;">${person?person.name.split(' ')[0]:''}${(person&&doctor)?' · ':''}${doctor?doctor.name:''}</div></div>`;
+  }).join(''):'<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">📅</div>No visits in the next 2 weeks</div>';
+  var todosHtml=activeTodos.length?activeTodos.slice(0,5).map(t=>{
+    var person=data.people.find(p=>p.id===t.person_id),isOverdue=t.due_date&&new Date(t.due_date)<today;
+    return `<div style="background:var(--card);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border:0.5px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="editTodo('${t.id}')"><div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div><div style="font-size:11px;color:var(--text-3);">${person?person.name.split(' ')[0]:''}${t.due_date?(person?' · ':'')+fmtDate(t.due_date):''}</div></div></div>`;
+  }).join('')+(activeTodos.length>5?`<div onclick="navToTodos()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:4px 0;">View all ${activeTodos.length} items →</div>`:'')
+  :'<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:28px;">✓</div>All caught up!</div>';
+  var upBg=activeTab==='upcoming'?'var(--green)':'var(--surface)',upCol=activeTab==='upcoming'?'white':'var(--text-3)';
+  var tdBg=activeTab==='todos'?'var(--green)':'var(--surface)',tdCol=activeTab==='todos'?'white':'var(--text-3)';
+  el.innerHTML='<div style="padding:0 16px 16px;">'
+    +'<div class="section-label">Quick Actions</div>'+qaHtml
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;">'
+    +'<div style="display:flex;gap:6px;">'
+    +'<button onclick="setOverviewTab(\'upcoming\')" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+upBg+';color:'+upCol+';">Upcoming</button>'
+    +'<button onclick="setOverviewTab(\'todos\')" style="padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:'+tdBg+';color:'+tdCol+';">To Do</button>'
+    +'</div>'
+    +'<button onclick="'+(activeTab==='upcoming'?'navToVisits()':'navToTodos()')+'" style="background:none;border:none;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;font-family:inherit;">View all →</button>'
+    +'</div>'
+    +'<div>'+(activeTab==='upcoming'?upcomingHtml:todosHtml)+'</div>'
+    +'</div>';
 }
->
+function setOverviewTab(tab){window._overviewTab=tab;renderDashboard();}
+function quickAdd(type){var m={visit:'visits',medication:'medications',todo:'todos',note:'notes'};var p=currentTab;currentTab=m[type];openAddModal().then(function(){currentTab=p;});}
+
+// ── OPENADDMODAL for note ──
+// (injected via openAddModal update above)
+
+// ── PERSON DETAIL: inject important info ──
+// buildImportantInfoCard is called in openPerson after hero card
+
+// ── SWIPE TO GO BACK ──
+(function(){
+  var tx=0,ty=0,tt=0;
+  var bm={'screen-home':'dashboard','screen-doctors':'dashboard','screen-visits':'dashboard','screen-medications':'dashboard','screen-documents':'dashboard','screen-notes':'dashboard','screen-todos':'dashboard','screen-person':'home','screen-doctor-detail':'doctors','screen-med-detail':'medications','screen-visit-detail':'visits'};
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;tt=Date.now();},{passive:true});
+  document.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty,dt=Date.now()-tt;if(tx>30||dx<60||Math.abs(dy)>Math.abs(dx)*0.8||dt>400)return;var cur=document.querySelector('.screen.active');if(cur&&bm[cur.id])goBack(bm[cur.id]);},{passive:true});
+})();
+
+</script>
