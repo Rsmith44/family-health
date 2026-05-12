@@ -2293,11 +2293,7 @@ function closeHamburger() {
 // ── DASHBOARD ──
 let dashboardPersonFilter = null;
 
-async 
-
-
-
-function setDashboardFilter(personId) {
+async function setDashboardFilter(personId) {
   dashboardPersonFilter = personId || null;
   renderDashboard();
   const el = document.getElementById('dashboard-content');
