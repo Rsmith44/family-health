@@ -923,6 +923,7 @@ let data = { people: [], doctors: [], medications: [], visits: [], documents: []
 let currentTab = 'home';
 let currentPerson = null, currentDoctor = null, currentMed = null, currentVisit = null;
 let visitFilter = 'upcoming';
+const collapsedSections = {};
 
 const COLORS = ['#2A6049','#B56B2A','#2C5282','#9B3A4A','#5B3A8E','#1A6B6B','#7A4A1A'];
 function avatarColor(str) {
@@ -996,7 +997,7 @@ function showTab(tab, btn) {
   if (tab==='dashboard') { loadDashboard(); if (!todosData.length) loadTodos().then(renderDashboard); }
   if (tab==='doctors' && !data.doctors.length) loadDoctors();
   if (tab==='medications' && !data.medications.length) loadMeds();
-  if (tab==='visits' && !data.visits.length) loadVisits();
+  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
   if (tab==='documents') loadDocs();
   if (tab==='todos') loadTodos();
   if (tab==='notes') loadNotes();
@@ -1138,7 +1139,7 @@ async function openPerson(id) {
         const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') ? '🖼️' : '📝';
         return `<div class="list-item" onclick="openDocument('${d.id}')">
           <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
-          <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.doctors?.name, d.visits?.title, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div></div>
+          <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.doctors?.name, d.visits?.title, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div></div>
           <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
         </div>`;
       }).join('') + '</div>';
@@ -1463,7 +1464,7 @@ function addToCalendar() {
   if (!title||!datetime) { toast('Add a title and date first'); return; }
   const doctor = data.doctors.find(d=>d.id===document.getElementById('visit-doctor').value);
   const person = data.people.find(p=>p.id===document.getElementById('visit-person').value);
-  downloadICS(title, datetime, document.getElementById('visit-notes').value, doctor?.name, person?.name);
+  downloadICS(title, datetime, document.getElementById('visit-pre-notes').value, doctor?.name, person?.name);
 }
 function addToCalendarFromVisit(id) {
   const v = data.visits.find(x=>x.id===id);
@@ -2073,7 +2074,7 @@ function renderDocs(rows) {
         <div class="list-icon" style="background:var(--blue-bg);font-size:20px;cursor:pointer" onclick="openDocument('${d.id}')">${icon}</div>
         <div class="list-info" style="cursor:pointer" onclick="openDocument('${d.id}')">
           <div class="list-title">${d.name}${isHidden ? ' <span style="font-size:10px;background:var(--surface);color:var(--text-3);padding:2px 6px;border-radius:10px;margin-left:4px">hidden</span>' : ''}</div>
-          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
+          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
         </div>
         <button onclick="toggleDocVisibility('${d.id}', ${isHidden})" style="background:${isHidden ? 'var(--green-bg)' : 'var(--surface)'};border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;color:${isHidden ? 'var(--green)' : 'var(--text-3)'};cursor:pointer;white-space:nowrap;margin-left:4px;">
           ${isHidden ? 'Show' : 'Hide'}
@@ -2214,7 +2215,7 @@ function addDocumentForPerson(personId) {
 
 
 async function autoLoadVisitDocs(visitId) {
-  const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("uploaded_at", {ascending: false});
+  const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("created_at", {ascending: false});
   const el = document.getElementById("visit-docs-" + visitId);
   if (!el) return;
   if (!docs || !docs.length) { el.innerHTML = ""; return; }
@@ -2228,7 +2229,7 @@ async function autoLoadVisitDocs(visitId) {
     return d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+"MB" : Math.round(d.file_size/1024)+"KB";
   }
   var rows = docs.map(function(d) {
-    return "<div class=\"list-item\" onclick=\"openDocument('" + d.id + "')\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + [docSize(d), fmtDate(d.uploaded_at)].filter(Boolean).join(" · ") + "</div></div><svg class=\"chevron\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" viewBox=\"0 0 24 24\"><path d=\"M9 18l6-6-6-6\"/></svg></div>";
+    return "<div class=\"list-item\" onclick=\"openDocument('" + d.id + "')\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + [docSize(d), fmtDate(d.created_at)].filter(Boolean).join(" · ") + "</div></div><svg class=\"chevron\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" viewBox=\"0 0 24 24\"><path d=\"M9 18l6-6-6-6\"/></svg></div>";
   });
   el.innerHTML = "<div class=\"section-label\">Documents (" + docs.length + ")</div><div class=\"list-card\">" + rows.join("") + "</div>";
 }
@@ -2331,7 +2332,7 @@ let showCompleted = false;
 
 async function loadTodos() {
   const el = document.getElementById('todos-list');
-  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   const { data: rows } = await sb.from('todos')
     .select('*, people(name), doctors(name), visits(title)')
     .order('due_date', { ascending: true, nullsFirst: false });
@@ -2562,7 +2563,6 @@ function addTodoToCalendar() {
 
 
 // ── COLLAPSIBLE SECTIONS ──
-const collapsedSections = {};
 
 function toggleSection(personId, key) {
   const sectionKey = personId + '_' + key;
@@ -2710,10 +2710,15 @@ async function loadDashboard(){
   var greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   sb.from('family_groups').select('name').eq('id',currentFamilyGroupId).single().then(r=>{var n=r.data?.name||'';document.getElementById('dashboard-greeting').textContent=greeting+(n?', '+n:'');});
   document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  if(!data.people.length)await loadAll();
-  if(!todosData.length)await loadTodos();
-  if(!notesData.length)await loadNotes();
-  renderDashboard();
+  try {
+    if(!data.people.length)await loadAll();
+    if(!todosData.length)await loadTodos();
+    if(!notesData.length)await loadNotes();
+    renderDashboard();
+  } catch(err) {
+    console.error('loadDashboard error:', err);
+    renderDashboard();
+  }
 }
 function renderDashboard(){
   var el=document.getElementById('dashboard-content');if(!el)return;
