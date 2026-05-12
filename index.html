@@ -1027,20 +1027,29 @@ async function loadPeople() {
   }
 }
 async function loadDoctors() {
-  const {data:rows} = await sb.from('doctors').select('*').order('name');
-  data.doctors = rows || [];
-  renderDoctors(data.doctors);
+  try {
+    const {data:rows, error} = await sb.from('doctors').select('*').order('name');
+    if (error) console.error('loadDoctors error:', error);
+    data.doctors = rows || [];
+    renderDoctors(data.doctors);
+  } catch(err) { console.error('loadDoctors exception:', err); data.doctors = []; }
 }
 async function loadMeds() {
-  const {data:rows} = await sb.from('medications').select('*, people(name), prescriber:doctors!medications_prescribed_by_fkey(name)').order('name');
-  data.medications = (rows || []).map(m => ({...m, doctors: m.prescriber}));
-  renderMeds(data.medications);
+  try {
+    const {data:rows, error} = await sb.from('medications').select('*, people(name), prescriber:doctors!medications_prescribed_by_fkey(name)').order('name');
+    if (error) console.error('loadMeds error:', error);
+    data.medications = (rows || []).map(m => ({...m, doctors: m.prescriber}));
+    renderMeds(data.medications);
+  } catch(err) { console.error('loadMeds exception:', err); data.medications = []; }
 }
 async function loadVisits() {
-  const {data:rows} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
-  data.visits = rows || [];
-  if(typeof renderVisitsPersonPills==='function')renderVisitsPersonPills();
-  renderVisits(data.visits, visitFilter);
+  try {
+    const {data:rows, error} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
+    if (error) console.error('loadVisits error:', error);
+    data.visits = rows || [];
+    if(typeof renderVisitsPersonPills==='function')renderVisitsPersonPills();
+    renderVisits(data.visits, visitFilter);
+  } catch(err) { console.error('loadVisits exception:', err); data.visits = []; }
 }
 
 function renderPeople(rows) {
@@ -2734,7 +2743,7 @@ async function loadDashboard(){
   } catch(err) {
     console.error('loadDashboard error:', err);
     var el2 = document.getElementById('dashboard-content');
-    if (el2) el2.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Could not load data. Please check your connection.</div>';
+    if (el2) el2.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div style="font-size:13px;margin-top:4px">Error: ' + (err && err.message ? err.message : String(err)) + '</div></div>';
   }
 }
 function renderDashboard(){
