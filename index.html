@@ -1000,6 +1000,7 @@ function showTab(tab, btn) {
   if (tab==='documents') loadDocs();
   if (tab==='todos') loadTodos();
   if (tab==='notes') loadNotes();
+  if (tab==='home') { if (!data.people.length) loadPeople(); else renderPeople(data.people); }
 }
 
 function toast(msg, dur=2500) {
@@ -1756,8 +1757,6 @@ document.querySelectorAll('.modal-overlay').forEach(overlay=>{
   overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.classList.remove('open');});
 });
 
-loadAll();
-
 // ── DOCTOR TYPES ──
 let doctorTypes = [];
 async function loadDoctorTypes() {
@@ -1858,8 +1857,6 @@ async function deleteSection() {
   toast('Section deleted');
   await openPerson(sectionPersonId);
 }
-
-loadDoctorTypes();
 
 
 // ── EXPORT ──
@@ -2330,7 +2327,7 @@ async function saveGroupName() {
 let todosData = [];
 let todoPersonFilter = null;
 let todoFilter = 'active';
-let showCompleted = true;
+let showCompleted = false;
 
 async function loadTodos() {
   const el = document.getElementById('todos-list');
