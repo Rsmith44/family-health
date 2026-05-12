@@ -862,7 +862,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  loadAll().then(() => loadDashboard());
+  loadDashboard();
   loadDoctorTypes();
 }
 
@@ -994,7 +994,7 @@ function showTab(tab, btn) {
   if (btn) btn.classList.add('active');
   currentTab = tab;
   showScreen(tab,'none');
-  if (tab==='dashboard') { loadDashboard(); if (!todosData.length) loadTodos().then(renderDashboard); }
+  if (tab==='dashboard') { loadDashboard(); }
   if (tab==='doctors' && !data.doctors.length) loadDoctors();
   if (tab==='medications' && !data.medications.length) loadMeds();
   if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
@@ -1015,9 +1015,16 @@ async function loadAll() {
 }
 
 async function loadPeople() {
-  const {data:rows} = await sb.from('people').select('*, custom_sections').order('name');
-  data.people = rows || [];
-  renderPeople(data.people);
+  try {
+    const {data:rows, error} = await sb.from('people').select('*, custom_sections').order('name');
+    if (error) console.error('loadPeople error:', error);
+    data.people = rows || [];
+    renderPeople(data.people);
+  } catch(err) {
+    console.error('loadPeople exception:', err);
+    data.people = [];
+    renderPeople([]);
+  }
 }
 async function loadDoctors() {
   const {data:rows} = await sb.from('doctors').select('*').order('name');
@@ -2333,12 +2340,20 @@ let showCompleted = false;
 async function loadTodos() {
   const el = document.getElementById('todos-list');
   if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-  const { data: rows } = await sb.from('todos')
-    .select('*, people(name), doctors(name), visits(title)')
-    .order('due_date', { ascending: true, nullsFirst: false });
-  todosData = rows || [];
-  renderTodoPersonPills();
-  renderTodos();
+  try {
+    const { data: rows, error } = await sb.from('todos')
+      .select('*, people(name), doctors(name), visits(title)')
+      .order('due_date', { ascending: true, nullsFirst: false });
+    if (error) { console.error('loadTodos error:', error); }
+    todosData = rows || [];
+    renderTodoPersonPills();
+    renderTodos();
+  } catch(err) {
+    console.error('loadTodos exception:', err);
+    todosData = [];
+    renderTodoPersonPills();
+    renderTodos();
+  }
 }
 
 function renderTodoPersonPills() {
@@ -2705,19 +2720,21 @@ function buildImportantInfoCard(p){
 
 // ── DASHBOARD ──
 async function loadDashboard(){
-  var el=document.getElementById('dashboard-content');
   var hour=new Date().getHours();
   var greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
   sb.from('family_groups').select('name').eq('id',currentFamilyGroupId).single().then(r=>{var n=r.data?.name||'';document.getElementById('dashboard-greeting').textContent=greeting+(n?', '+n:'');});
   document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   try {
-    if(!data.people.length)await loadAll();
-    if(!todosData.length)await loadTodos();
-    if(!notesData.length)await loadNotes();
+    await loadAll();
+    var { data: tRows, error: tErr } = await sb.from('todos').select('*, people(name), doctors(name), visits(title)').order('due_date',{ascending:true,nullsFirst:false});
+    todosData = tRows || [];
     renderDashboard();
+    renderTodoPersonPills();
+    renderPeople(data.people);
   } catch(err) {
     console.error('loadDashboard error:', err);
-    renderDashboard();
+    var el2 = document.getElementById('dashboard-content');
+    if (el2) el2.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Could not load data. Please check your connection.</div>';
   }
 }
 function renderDashboard(){
