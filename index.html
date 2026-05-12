@@ -2320,52 +2320,106 @@ function renderDashboard() {
     // PERSON VIEW
     var p = data.people.find(x => x.id == dashboardPersonFilter);
     if (!p) return;
-    var myVisits = data.visits.filter(v => v.person_id === p.id).sort((a,b) => new Date(b.visit_date)-new Date(a.visit_date));
-    var myActiveMeds = data.medications.filter(m => m.person_id === p.id && m.status === 'Active');
-    var myUpcoming = myVisits.filter(v => v.visit_date && new Date(v.visit_date) >= today);
+
+    var today = new Date();
+    var twoWeeks = new Date(today.getTime() + 14*24*60*60*1000);
+    var myUpcoming = data.visits
+      .filter(v => v.person_id === p.id && v.visit_date && new Date(v.visit_date) >= today && new Date(v.visit_date) <= twoWeeks)
+      .sort((a,b) => new Date(a.visit_date) - new Date(b.visit_date));
     var myTodos = todosData.filter(t => t.person_id === p.id && !t.completed);
+    var myNotes = notesData.filter(n => n.person_id === p.id && !n.hidden)
+      .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    var myActiveMeds = data.medications.filter(m => m.person_id === p.id && m.status === 'Active');
 
-    var html = `<div class="detail-hero" style="margin:0 0 4px;">
+    var html = '';
+
+    // ── 1. PROFILE HERO ──
+    html += `<div class="detail-hero" style="margin:0 0 12px;">
       <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-      <div><div class="detail-name">${p.name}</div>
-      <div class="detail-sub">${p.dob ? fmtDate(p.dob) + ' · ' + age(p.dob) + ' old' : 'No DOB recorded'}</div>
-      <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">
-        ${myActiveMeds.length ? `<span class="chip chip-amber">💊 ${myActiveMeds.length} med${myActiveMeds.length!==1?'s':''}</span>` : ''}
-        ${myUpcoming.length ? `<span class="chip chip-blue">📅 ${myUpcoming.length} upcoming</span>` : ''}
-        ${myTodos.length ? `<span class="chip chip-teal">✓ ${myTodos.length} to do</span>` : ''}
-      </div></div></div>`;
+      <div>
+        <div class="detail-name">${p.name}</div>
+        <div class="detail-sub">${p.dob ? fmtDate(p.dob) + ' · ' + age(p.dob) + ' old' : 'No DOB recorded'}</div>
+        <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">
+          ${myActiveMeds.length ? `<span class="chip chip-amber">💊 ${myActiveMeds.length} med${myActiveMeds.length!==1?'s':''}</span>` : ''}
+          ${myUpcoming.length ? `<span class="chip chip-blue">📅 ${myUpcoming.length} upcoming</span>` : ''}
+          ${myTodos.length ? `<span class="chip chip-teal">✓ ${myTodos.length} to do</span>` : ''}
+        </div>
+      </div>
+    </div>`;
 
+    // ── 2. IMPORTANT INFO (placeholder) ──
+    html += `<div class="section-label">Important Info</div>
+    <div class="visit-card" style="margin-bottom:10px;background:var(--surface);border:1.5px dashed var(--border);">
+      <div style="font-size:13px;color:var(--text-3);text-align:center;padding:4px 0;">Coming soon — you'll define what goes here</div>
+    </div>`;
+
+    // ── 3. UPCOMING VISITS (next 2 weeks) ──
+    html += `<div class="section-label">Upcoming Visits${myUpcoming.length ? ' (' + myUpcoming.length + ')' : ''}</div>`;
     if (myUpcoming.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('dash','visits')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Upcoming Visits (${myUpcoming.length})</div><svg id="arrow_dash_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div><div id="section_dash_visits">`;
-      myUpcoming.slice(0,3).forEach(v => {
+      myUpcoming.forEach(v => {
         var doc = data.doctors.find(d => d.id === v.doctor_id);
-        html += `<div class="visit-card" style="margin-bottom:7px;" onclick="openVisitFromDashboard('${v.id}')"><div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>${doc ? `<div class="visit-meta">🩺 ${doc.name}</div>` : ''}</div>`;
+        html += `<div class="visit-card" style="margin-bottom:7px;cursor:pointer;" onclick="openVisitFromDashboard('${v.id}')">
+          <div class="visit-top">
+            <div class="visit-title">${v.title}</div>
+            <div class="visit-date">${fmtDateTime(v.visit_date)}</div>
+          </div>
+          ${doc ? `<div class="visit-meta">🩺 ${doc.name}</div>` : ''}
+        </div>`;
       });
-      html += '</div>';
+    } else {
+      html += `<div style="font-size:13px;color:var(--text-3);padding:6px 2px 10px;">No visits in the next 2 weeks</div>`;
     }
 
-    if (myActiveMeds.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('dash','meds')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Medications (${myActiveMeds.length})</div><svg id="arrow_dash_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div><div id="section_dash_meds"><div class="list-card">`;
-      myActiveMeds.forEach(m => {
-        html += `<div class="list-item" onclick="openMed('${m.id}')"><div class="list-icon" style="background:var(--amber-bg)">💊</div><div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div></div>`;
-      });
-      html += '</div></div>';
-    }
-
+    // ── 4. FOLLOW-UPS (active only) ──
     if (myTodos.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('dash','todos')" style="margin:14px 4px 6px;"><div class="section-label" style="margin:0;">Follow-ups (${myTodos.length})</div><svg id="arrow_dash_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div><div id="section_dash_todos">`;
-      myTodos.slice(0,5).forEach(t => {
+      html += `<div class="section-label">Follow-ups (${myTodos.length})</div>`;
+      myTodos.forEach(t => {
         var isOverdue = t.due_date && new Date(t.due_date) < today;
-        html += `<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo('${t.id}')"><div style="display:flex;align-items:center;gap:10px;"><div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div><div><div style="font-size:14px;font-weight:600;">${t.title}</div>${t.due_date ? `<div style="font-size:11px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}</div></div></div>`;
+        html += `<div class="visit-card" style="margin-bottom:7px;" onclick="editTodo('${t.id}')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;flex-shrink:0;cursor:pointer;"></div>
+            <div>
+              <div style="font-size:14px;font-weight:600;">${t.title}</div>
+              ${t.due_date ? `<div style="font-size:11px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
       });
-      html += '</div>';
     }
 
-    if (!myUpcoming.length && !myActiveMeds.length && !myTodos.length) {
-      html += '<div class="empty-state" style="margin-top:20px;"><div class="empty-icon">📋</div>No records yet</div>';
+    // ── 5. NOTES ──
+    if (myNotes.length) {
+      html += `<div class="section-label">Notes (${myNotes.length})</div>`;
+      myNotes.slice(0,3).forEach(n => {
+        html += `<div class="visit-card" style="margin-bottom:7px;cursor:pointer;" onclick="editNote('${n.id}')">
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:3px;">${fmtDateTime(n.created_at)}</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.5;">${(n.content||'').slice(0,120)}${n.content&&n.content.length>120?'…':''}</div>
+          ${n.doctors&&n.doctors.name ? `<span class="chip chip-blue" style="margin-top:5px;display:inline-block;">🩺 ${n.doctors.name}</span>` : ''}
+        </div>`;
+      });
+      if (myNotes.length > 3) {
+        html += `<div onclick="navToNotes()" style="text-align:right;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;padding:2px 0 8px;">View all ${myNotes.length} notes →</div>`;
+      }
     }
-    el.innerHTML = `<div style="padding:0 16px 16px;">${html}</div>`;
 
+    // ── 6. MEDICATIONS ──
+    if (myActiveMeds.length) {
+      html += `<div class="section-label">Medications (${myActiveMeds.length})</div>
+      <div class="list-card">`;
+      myActiveMeds.forEach(m => {
+        html += `<div class="list-item" onclick="openMed('${m.id}')">
+          <div class="list-icon" style="background:var(--amber-bg)">💊</div>
+          <div class="list-info">
+            <div class="list-title">${m.name}</div>
+            <div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div>
+          </div>
+          <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    el.innerHTML = `<div style="padding:0 16px 24px;">${html}</div>`;
   } else {
     // OVERVIEW MODE
     var upcoming = data.visits
