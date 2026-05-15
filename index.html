@@ -328,10 +328,44 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       </div>
     </div>
     <div class="scroll-full" id="visit-detail-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
-    <button id="start-appt-btn" onclick="toast('Appointment mode coming soon')" style="position:absolute;bottom:calc(24px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:var(--green);color:white;border:none;border-radius:50px;padding:12px 22px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 4px 16px rgba(42,96,73,0.35);z-index:10;">
+    <button id="start-appt-btn" onclick="openAppointmentMode(currentVisit.id, 'visit')" style="position:absolute;bottom:calc(24px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:var(--green);color:white;border:none;border-radius:50px;padding:12px 22px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 4px 16px rgba(42,96,73,0.35);z-index:10;">
       <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       Start Appointment
     </button>
+  </div>
+
+
+  <!-- ══ APPOINTMENT SELECT SCREEN ══ -->
+  <div class="screen" id="screen-appointment-select">
+    <div class="header">
+      <button class="header-back" onclick="goBack('dashboard')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-title">Select Appointment</div>
+      <div style="width:36px"></div>
+    </div>
+    <div class="scroll-full" id="appt-select-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ══ APPOINTMENT MODE SCREEN ══ -->
+  <div class="screen" id="screen-appointment-mode">
+    <div class="header" style="border-bottom:1px solid var(--border);">
+      <button class="header-back" id="appt-mode-back-btn">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div style="flex:1;padding-left:4px;">
+        <div class="header-title" id="appt-mode-title">Appointment</div>
+        <div id="appt-mode-sub" style="font-size:12px;color:var(--text-2);"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <div style="width:7px;height:7px;border-radius:50%;background:#2A6049;"></div>
+        <span style="font-size:11px;font-weight:600;color:#2A6049;">Live</span>
+      </div>
+    </div>
+    <div class="scroll-full" id="appt-mode-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    <div style="padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;">
+      <button class="btn-primary" onclick="saveAppointmentNotes()">Finish &amp; Save</button>
+    </div>
   </div>
 
   <!-- ══ DOCUMENTS SCREEN ══ -->
@@ -1880,6 +1914,205 @@ async function deleteSection() {
 }
 
 
+// ── APPOINTMENT MODE ──
+
+async function openAppointmentSelect() {
+  showScreen('appointment-select', 'forward');
+  const el = document.getElementById('appt-select-list');
+
+  if (!data.visits.length) await loadVisits();
+  if (!data.people.length) await loadAll();
+
+  const now = new Date();
+  const upcoming = [...data.visits]
+    .filter(v => v.visit_date && visitDate(v.visit_date) >= now)
+    .sort((a,b) => visitDate(a.visit_date) - visitDate(b.visit_date));
+  const past = [...data.visits]
+    .filter(v => !v.visit_date || visitDate(v.visit_date) < now)
+    .sort((a,b) => visitDate(b.visit_date) - visitDate(a.visit_date))
+    .slice(0, 10);
+
+  if (!upcoming.length && !past.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>No visits found.<br><span style="font-size:12px">Add a visit first.</span></div>';
+    return;
+  }
+
+  function visitCard(v) {
+    const person = data.people.find(p => p.id === v.person_id);
+    const doctor = data.doctors.find(d => d.id === v.doctor_id);
+    const d = v.visit_date ? visitDate(v.visit_date) : null;
+    const dateStr = d ? d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : 'No date';
+    const color = person ? avatarColor(person.name) : '#2A6049';
+    const ini = person ? initials(person.name) : '?';
+    return '<div onclick="openAppointmentMode(\'' + v.id + '\')" style="background:var(--card);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);cursor:pointer;display:flex;align-items:center;gap:12px;">'
+      + '<div style="width:40px;height:40px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">' + ini + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (v.title||'Visit') + '</div>'
+      + '<div style="font-size:12px;color:var(--text-2);margin-top:2px;">' + (person?person.name:'Unknown') + ' · ' + (doctor?doctor.name:'No doctor') + '</div>'
+      + '<div style="font-size:11px;color:var(--text-3);margin-top:1px;">' + dateStr + '</div>'
+      + '</div>'
+      + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>'
+      + '</div>';
+  }
+
+  let html = '';
+  if (upcoming.length) {
+    html += '<div style="font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin:0 0 8px;">Upcoming</div>';
+    html += upcoming.map(visitCard).join('');
+  }
+  if (past.length) {
+    html += '<div style="font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin:' + (upcoming.length?'16px':'0') + ' 0 8px;">Recent</div>';
+    html += past.map(visitCard).join('');
+  }
+  el.innerHTML = '<div style="padding:16px;">' + html + '</div>';
+}
+
+let currentApptVisitId = null;
+let apptHistoryCollapsed = true;
+
+async function openAppointmentMode(visitId, from) {
+  currentApptVisitId = visitId;
+  apptHistoryCollapsed = true;
+
+  const visit = data.visits.find(v => v.id === visitId);
+  if (!visit) return;
+
+  const person = data.people.find(p => p.id === visit.person_id);
+  const doctor = data.doctors.find(d => d.id === visit.doctor_id);
+
+  document.getElementById('appt-mode-title').textContent = doctor ? doctor.name : (visit.title || 'Appointment');
+  document.getElementById('appt-mode-sub').textContent = (person ? person.name : '') + (visit.visit_date ? ' · ' + visitDate(visit.visit_date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}) : '');
+
+  showScreen('appointment-mode', 'forward');
+  var apptBackBtn = document.getElementById('appt-mode-back-btn');
+  if (apptBackBtn) apptBackBtn.onclick = function(){ goBack(from === 'visit' ? 'visit-detail' : 'appointment-select'); };
+
+  const el = document.getElementById('appt-mode-content');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  const { data: histVisits } = await sb.from('visits')
+    .select('id, title, visit_date, pre_notes, post_notes')
+    .eq('person_id', visit.person_id)
+    .eq('doctor_id', visit.doctor_id)
+    .order('visit_date', { ascending: false });
+
+  const { data: histNotes } = await sb.from('notes')
+    .select('id, content, created_at, visits(title)')
+    .eq('person_id', visit.person_id)
+    .eq('doctor_id', visit.doctor_id)
+    .order('created_at', { ascending: false });
+
+  const allVisits = histVisits || [];
+  const allNotes = histNotes || [];
+  const preNotes = visit.pre_notes || '';
+  const otherVisits = allVisits.filter(v => v.id !== visitId);
+
+  let histItems = [];
+  otherVisits.forEach(function(v) {
+    const d = v.visit_date ? visitDate(v.visit_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '';
+    if (v.pre_notes) histItems.push({ date: v.visit_date, dateStr: d, text: v.pre_notes, type: 'pre', label: 'Pre-notes' });
+    if (v.post_notes) histItems.push({ date: v.visit_date, dateStr: d, text: v.post_notes, type: 'post', label: 'Post-notes' });
+  });
+  allNotes.forEach(function(n) {
+    const d = n.created_at ? new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '';
+    histItems.push({ date: n.created_at, dateStr: d, text: n.content, type: 'note', label: 'Note' });
+  });
+  histItems.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+
+  const existingPost = visit.post_notes || '';
+
+  const typeBg  = { pre:'#E8EFF8', post:'#E6F0EC', note:'#EEE8F7' };
+  const typeCol = { pre:'#2C5282', post:'#1A4D35', note:'#5B3A8E' };
+
+  let html = '<div style="padding:16px 16px 8px;">';
+
+  // BRIEFING
+  html += '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Briefing</div>';
+
+  if (preNotes) {
+    html += '<div style="background:#E6F0EC;border-radius:var(--r-sm);border:1px solid #C0D8CA;padding:10px 12px;margin-bottom:8px;">'
+      + '<div style="font-size:10px;font-weight:700;color:#1A4D35;margin-bottom:4px;">Pre-notes</div>'
+      + '<div style="font-size:13px;color:#1C1917;line-height:1.55;">' + preNotes.replace(/\n/g,'<br>') + '</div>'
+      + '</div>';
+  } else {
+    html += '<div style="background:var(--surface);border-radius:var(--r-sm);border:1px dashed var(--border);padding:9px 12px;margin-bottom:8px;">'
+      + '<div style="font-size:12px;color:var(--text-3);font-style:italic;">No pre-visit notes for this appointment</div>'
+      + '</div>';
+  }
+
+  if (otherVisits.length) {
+    const last = otherVisits[0];
+    const lastD = last.visit_date ? visitDate(last.visit_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '';
+    const lastText = last.post_notes || last.pre_notes || '';
+    if (lastText) {
+      html += '<div style="font-size:11px;color:var(--text-3);margin-bottom:12px;line-height:1.4;">'
+        + '<span style="font-weight:600;color:var(--text-2);">Last visit ' + lastD + '</span> · ' + lastText.substring(0,120) + (lastText.length>120?'…':'')
+        + '</div>';
+    }
+  }
+
+  // FULL HISTORY
+  html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px;">'
+    + '<div class="collapsible-header" onclick="toggleApptHistory()" style="margin-bottom:0;">'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;">Full History</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">'
+    + '<span style="font-size:11px;color:var(--text-3);">' + histItems.length + ' item' + (histItems.length!==1?'s':'') + '</span>'
+    + '<svg id="appt-history-arrow" class="collapsible-arrow collapsed" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+    + '</div></div>'
+    + '<div id="appt-history-content" style="display:none;margin-top:10px;">';
+
+  if (histItems.length === 0) {
+    html += '<div style="font-size:12px;color:var(--text-3);font-style:italic;padding:4px 0;">No previous history with this doctor and patient.</div>';
+  } else {
+    histItems.forEach(function(item) {
+      const bg = typeBg[item.type] || '#EEEAE3';
+      const col = typeCol[item.type] || '#6B6460';
+      html += '<div style="margin-bottom:10px;">'
+        + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'
+        + '<div style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;background:' + bg + ';color:' + col + ';">' + item.label + '</div>'
+        + '<div style="font-size:10px;color:var(--text-3);">' + item.dateStr + '</div>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--text);line-height:1.5;padding-left:2px;">' + item.text.replace(/\n/g,'<br>') + '</div>'
+        + '</div>';
+    });
+  }
+
+  html += '</div></div>';
+
+  // CAPTURE NOW
+  html += '<div style="border-top:1px solid var(--border);padding-top:12px;">'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Capture Now</div>'
+    + '<div style="font-size:11px;color:var(--text-2);margin-bottom:8px;">Saved as post-visit notes for this appointment.</div>'
+    + '<textarea id="appt-capture-notes" placeholder="Start typing your notes\u2026" style="width:100%;min-height:140px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;line-height:1.6;resize:vertical;outline:none;">' + existingPost + '</textarea>'
+    + '</div>';
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function toggleApptHistory() {
+  apptHistoryCollapsed = !apptHistoryCollapsed;
+  const c = document.getElementById('appt-history-content');
+  const arrow = document.getElementById('appt-history-arrow');
+  if (c) c.style.display = apptHistoryCollapsed ? 'none' : 'block';
+  if (arrow) arrow.classList.toggle('collapsed', apptHistoryCollapsed);
+}
+
+async function saveAppointmentNotes() {
+  if (!currentApptVisitId) return;
+  const notesEl = document.getElementById('appt-capture-notes');
+  if (!notesEl) return;
+  const text = notesEl.value.trim();
+  const { error } = await sb.from('visits')
+    .update({ post_notes: text || null })
+    .eq('id', currentApptVisitId);
+  if (error) { toast('Error saving: ' + error.message); return; }
+  toast('Saved \u2713');
+  await loadVisits();
+  goBack('appointment-select');
+}
+
+
 // ── EXPORT ──
 function openExportModal() {
   // Populate selects
@@ -2756,7 +2989,7 @@ function renderDashboard(){
   function daysUntil(d){var diff=Math.ceil((new Date(d)-today)/(1000*60*60*24));if(diff<=0)return '<span style="background:var(--green);color:white;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Today</span>';if(diff===1)return '<span style="background:var(--green-bg);color:var(--green);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">Tomorrow</span>';if(diff<=7)return '<span style="background:#FEF3C7;color:#92400E;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;">'+diff+' days</span>';return '<span style="font-size:10px;color:var(--text-3);">'+fmtDate(d)+'</span>';}
   var qaHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">'
     +'<button onclick="quickAdd(\'visit\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📅</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Visit</div></button>'
-    +'<button onclick="openAddModal(\'modal-visit\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">🩺</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Start Appointment</div></button>'
+    +'<button onclick="openAppointmentSelect()" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">🩺</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Start Appointment</div></button>'
     +'<button onclick="quickAdd(\'todo\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;">✓</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add To Do</div></button>'
     +'<button onclick="quickAdd(\'note\')" style="background:var(--card);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:10px;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);"><div style="width:34px;height:34px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📝</div><div style="text-align:left;font-size:13px;font-weight:600;color:var(--text);">Add Note</div></button>'
     +'</div>';
