@@ -1973,6 +1973,7 @@ let apptHistoryCollapsed = true;
 async function openAppointmentMode(visitId, from) {
   currentApptVisitId = visitId;
   apptHistoryCollapsed = true;
+  apptTodos = [];
 
   const visit = data.visits.find(v => v.id === visitId);
   if (!visit) return;
@@ -2086,8 +2087,21 @@ async function openAppointmentMode(visitId, from) {
     + '<textarea id="appt-capture-notes" placeholder="Start typing your notes\u2026" style="width:100%;min-height:140px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;line-height:1.6;resize:vertical;outline:none;">' + existingPost + '</textarea>'
     + '</div>';
 
+  // FOLLOW-UPS
+  html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Follow-ups</div>'
+    + '<div id="appt-todos-list" style="margin-bottom:8px;"></div>'
+    + '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card);border-radius:var(--r-sm);border:1px dashed var(--border);cursor:pointer;" onclick="addApptTodo()">'
+    + '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg width="10" height="10" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+    + '</div>'
+    + '<span style="font-size:13px;color:var(--text-3);">Add follow-up...</span>'
+    + '</div>'
+    + '</div>';
+
   html += '</div>';
   el.innerHTML = html;
+  renderApptTodos();
 }
 
 function toggleApptHistory() {
@@ -2098,18 +2112,115 @@ function toggleApptHistory() {
   if (arrow) arrow.classList.toggle('collapsed', apptHistoryCollapsed);
 }
 
+// ── APPOINTMENT MODE TODOS ──
+
+var apptTodos = []; // in-memory list for this appointment session
+
+function renderApptTodos() {
+  const el = document.getElementById('appt-todos-list');
+  if (!el) return;
+  if (!apptTodos.length) { el.innerHTML = ''; return; }
+  el.innerHTML = apptTodos.map(function(t, i) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:6px;">'
+      + '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);flex-shrink:0;"></div>'
+      + '<div style="flex:1;font-size:13px;color:var(--text);line-height:1.4;">' + t.title + '</div>'
+      + '<button onclick="removeApptTodo(' + i + ')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">'
+      + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+      + '</button>'
+      + '</div>';
+  }).join('');
+}
+
+function addApptTodo() {
+  const visit = data.visits.find(function(v){ return v.id === currentApptVisitId; });
+  if (!visit) return;
+
+  // Build a simple inline input row
+  const el = document.getElementById('appt-todos-list');
+  if (!el) return;
+
+  // Check if an input is already open
+  if (document.getElementById('appt-todo-input')) return;
+
+  const inputRow = document.createElement('div');
+  inputRow.id = 'appt-todo-input-row';
+  inputRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--green);margin-bottom:6px;';
+  inputRow.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);flex-shrink:0;"></div>'
+    + '<input id="appt-todo-input" type="text" placeholder="Follow-up task..." style="flex:1;border:none;background:transparent;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;outline:none;" />'
+    + '<button onclick="confirmApptTodo()" style="background:var(--green);color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Add</button>';
+
+  el.appendChild(inputRow);
+  const input = document.getElementById('appt-todo-input');
+  if (input) {
+    input.focus();
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') confirmApptTodo();
+      if (e.key === 'Escape') cancelApptTodo();
+    });
+  }
+}
+
+function cancelApptTodo() {
+  const row = document.getElementById('appt-todo-input-row');
+  if (row) row.remove();
+}
+
+function confirmApptTodo() {
+  const input = document.getElementById('appt-todo-input');
+  if (!input) return;
+  const title = input.value.trim();
+  if (!title) { cancelApptTodo(); return; }
+
+  const visit = data.visits.find(function(v){ return v.id === currentApptVisitId; });
+  apptTodos.push({
+    title: title,
+    person_id: visit ? visit.person_id : null,
+    doctor_id: visit ? visit.doctor_id : null,
+    visit_id: currentApptVisitId,
+  });
+
+  cancelApptTodo();
+  renderApptTodos();
+}
+
+function removeApptTodo(index) {
+  apptTodos.splice(index, 1);
+  renderApptTodos();
+}
+
+
 async function saveAppointmentNotes() {
   if (!currentApptVisitId) return;
   const notesEl = document.getElementById('appt-capture-notes');
   if (!notesEl) return;
   const text = notesEl.value.trim();
+
+  // Save post-visit notes
   const { error } = await sb.from('visits')
     .update({ post_notes: text || null })
     .eq('id', currentApptVisitId);
   if (error) { toast('Error saving: ' + error.message); return; }
+
+  // Save any follow-up todos
+  if (apptTodos.length) {
+    const todoRows = apptTodos.map(function(t) {
+      return {
+        title: t.title,
+        person_id: t.person_id,
+        doctor_id: t.doctor_id,
+        visit_id: t.visit_id,
+        completed: false,
+        family_group_id: currentFamilyGroupId,
+      };
+    });
+    const { error: todoErr } = await sb.from('todos').insert(todoRows);
+    if (todoErr) { toast('Notes saved but follow-ups failed: ' + todoErr.message); }
+    apptTodos = [];
+  }
+
   toast('Saved \u2713');
-  await loadVisits();
-  goBack('appointment-select');
+  await Promise.all([loadVisits(), loadTodos()]);
+  showTab('dashboard', document.getElementById('nav-dashboard'));
 }
 
 
