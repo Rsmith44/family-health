@@ -1122,17 +1122,59 @@ async function openPerson(id) {
     <div><div class="detail-name">${p.name}</div><div class="detail-sub">${p.dob ? `${fmtDate(p.dob)} · ${age(p.dob)} old` : 'No DOB recorded'}</div></div>
   </div>`;
   html += buildImportantInfoCard(p);
+
+  // Fetch surgeries/major events for this person (stored in notes with [EVENT:] prefix)
+  const { data: personEvents } = await sb.from('notes')
+    .select('id, content, created_at')
+    .eq('person_id', id)
+    .like('content', '[EVENT:%')
+    .order('content', { ascending: false });
+
+  // Surgeries/Major Events section
+  const eventsData = personEvents || [];
+  html += `<div class="collapsible-header" onclick="toggleSection('${id}','events')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Surgeries &amp; Major Events${eventsData.length ? ' (' + eventsData.length + ')' : ''}</div>
+      <svg id="arrow_${id}_events" class="collapsible-arrow collapsed" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div id="section_${id}_events" class="collapsible-content" style="display:none;">
+      <div style="padding-top:8px;">`;
+  if (eventsData.length) {
+    eventsData.forEach(ev => {
+      // Parse [EVENT:YYYY-MM-DD] prefix
+      const match = ev.content.match(/^\[EVENT:(\d{4}-\d{2}-\d{2})\](.*)/s);
+      const dateStr = match ? fmtDate(match[1]) : '';
+      const text = match ? match[2].trim() : ev.content;
+      html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="flex:1;">
+          ${dateStr ? `<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:3px;">${dateStr}</div>` : ''}
+          <div style="font-size:13px;color:var(--text);line-height:1.5;">${text}</div>
+        </div>
+        <button onclick="event.stopPropagation();deletePersonEvent('${ev.id}','${id}')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">
+          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>`;
+    });
+  }
+  html += `<div id="add-event-area-${id}">
+        <button onclick="showAddEventForm('${id}')" style="display:flex;align-items:center;gap:8px;width:100%;background:var(--surface);border:1px dashed var(--border);border-radius:var(--r-sm);padding:9px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:4px;">
+          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          <span style="font-size:13px;color:var(--text-3);">Add event...</span>
+        </button>
+      </div>
+      </div>
+    </div>`;
+
   if (p.notes) html += `
-    <div class="collapsible-header" onclick="toggleSection('${id}','notes')" style="margin:22px 4px 8px;">
-      <div class="section-label" style="margin:0;">Notes</div>
+    <div class="collapsible-header" onclick="toggleSection('${id}','notes')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Notes</div>
       <svg id="arrow_${id}_notes" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div id="section_${id}_notes" class="collapsible-content" style="display:none;">
       <div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left">${p.notes}</span></div></div>
     </div>`;
   if (myDocs.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','doctors')" style="margin:22px 4px 8px;">
-      <div class="section-label" style="margin:0;">Doctors (${myDocs.length})</div>
+    html += `<div class="collapsible-header" onclick="toggleSection('${id}','doctors')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Doctors (${myDocs.length})</div>
       <svg id="arrow_${id}_doctors" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div id="section_${id}_doctors" class="collapsible-content" style="display:none;"><div class="list-card">` +
@@ -1143,8 +1185,8 @@ async function openPerson(id) {
       </div>`).join('') + '</div></div>';
   }
   if (myMeds.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','meds')" style="margin:22px 4px 8px;">
-      <div class="section-label" style="margin:0;">Medications (${myMeds.length})</div>
+    html += `<div class="collapsible-header" onclick="toggleSection('${id}','meds')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Medications (${myMeds.length})</div>
       <svg id="arrow_${id}_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div id="section_${id}_meds" class="collapsible-content" style="display:none;"><div class="list-card">` +
@@ -1155,8 +1197,8 @@ async function openPerson(id) {
       </div>`).join('') + '</div></div>';
   }
   if (myVisits.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','visits')" style="margin:22px 4px 8px;">
-      <div class="section-label" style="margin:0;">Visits (${myVisits.length})</div>
+    html += `<div class="collapsible-header" onclick="toggleSection('${id}','visits')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Visits (${myVisits.length})</div>
       <svg id="arrow_${id}_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div id="section_${id}_visits" class="collapsible-content" style="display:none;">` +
@@ -1184,8 +1226,8 @@ async function openPerson(id) {
   // Load documents for this person
   const { data: personDocs } = await sb.from('documents').select('*, doctors(name), visits(title)').eq('person_id', id).order('created_at', {ascending: false});
   if (personDocs?.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','docs')" style="margin:22px 4px 8px;">
-      <div class="section-label" style="margin:0;">Documents (${personDocs.length})</div>
+    html += `<div class="collapsible-header" onclick="toggleSection('${id}','docs')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Documents (${personDocs.length})</div>
       <svg id="arrow_${id}_docs" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div id="section_${id}_docs" class="collapsible-content" style="display:none;"><div class="list-card">` +
@@ -1205,8 +1247,8 @@ async function openPerson(id) {
     const activeTodos = personTodos.filter(t => !t.completed);
     const doneTodos = personTodos.filter(t => t.completed);
     if (activeTodos.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('${id}','todos')" style="margin:22px 4px 8px;">
-        <div class="section-label" style="margin:0;">Follow-ups (${activeTodos.length})</div>
+      html += `<div class="collapsible-header" onclick="toggleSection('${id}','todos')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Follow-ups (${activeTodos.length})</div>
         <svg id="arrow_${id}_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div id="section_${id}_todos" class="collapsible-content" style="display:none;">`;
@@ -1240,7 +1282,7 @@ async function openPerson(id) {
   <div style="height:16px"></div>`;
 
   document.getElementById('person-detail').innerHTML = html;
-  ['notes','doctors','meds','visits','docs','todos'].forEach(k=>{collapsedSections[id+'_'+k]=true;var a=document.getElementById('arrow_'+id+'_'+k);if(a)a.classList.add('collapsed');});
+  ['events','notes','doctors','meds','visits','docs','todos'].forEach(k=>{collapsedSections[id+'_'+k]=true;var a=document.getElementById('arrow_'+id+'_'+k);if(a)a.classList.add('collapsed');});
   } catch(err) {
     document.getElementById('person-detail').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
     console.error('openPerson error:',err);
@@ -2221,6 +2263,71 @@ async function saveAppointmentNotes() {
   toast('Saved \u2713');
   await Promise.all([loadVisits(), loadTodos()]);
   showTab('dashboard', document.getElementById('nav-dashboard'));
+}
+
+
+
+// ── PERSON EVENTS (Surgeries / Major Events) ──
+
+function showAddEventForm(personId) {
+  const area = document.getElementById('add-event-area-' + personId);
+  if (!area) return;
+  if (document.getElementById('event-form-' + personId)) return;
+
+  area.innerHTML = '<div id="event-form-' + personId + '" style="background:var(--card);border:1px solid var(--green);border-radius:var(--r-sm);padding:12px;margin-bottom:4px;">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Date</div>'
+    + '<input type="date" id="event-date-' + personId + '" style="width:100%;margin-bottom:10px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:\'DM Sans\',sans-serif;background:var(--bg);color:var(--text);outline:none;" />'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Event</div>'
+    + '<textarea id="event-text-' + personId + '" placeholder="e.g. Appendectomy, broken wrist, diagnosed with hypertension..." style="width:100%;min-height:72px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:\'DM Sans\',sans-serif;background:var(--bg);color:var(--text);outline:none;resize:none;"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;">'
+    + '<button onclick="savePersonEvent(\'' + personId + '\')" style="flex:1;background:var(--green);color:white;border:none;border-radius:var(--r-sm);padding:9px;font-size:13px;font-weight:600;font-family:\'DM Sans\',sans-serif;cursor:pointer;">Save</button>'
+    + '<button onclick="cancelEventForm(\'' + personId + '\')" style="background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 16px;font-size:13px;font-family:\'DM Sans\',sans-serif;cursor:pointer;">Cancel</button>'
+    + '</div>'
+    + '</div>'
+    + '<button onclick="showAddEventForm(\'' + personId + '\')" style="display:none;"></button>';
+
+  const dateInput = document.getElementById('event-date-' + personId);
+  if (dateInput) dateInput.focus();
+}
+
+function cancelEventForm(personId) {
+  const area = document.getElementById('add-event-area-' + personId);
+  if (!area) return;
+  area.innerHTML = '<button onclick="showAddEventForm(\'' + personId + '\')" style="display:flex;align-items:center;gap:8px;width:100%;background:var(--surface);border:1px dashed var(--border);border-radius:var(--r-sm);padding:9px 12px;cursor:pointer;font-family:\'DM Sans\',sans-serif;margin-bottom:4px;">'
+    + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+    + '<span style="font-size:13px;color:var(--text-3);">Add event...</span>'
+    + '</button>';
+}
+
+async function savePersonEvent(personId) {
+  const dateEl = document.getElementById('event-date-' + personId);
+  const textEl = document.getElementById('event-text-' + personId);
+  if (!dateEl || !textEl) return;
+
+  const dateVal = dateEl.value.trim();
+  const textVal = textEl.value.trim();
+  if (!textVal) { toast('Please enter an event description'); return; }
+
+  const content = '[EVENT:' + (dateVal || '0000-00-00') + '] ' + textVal;
+
+  const { error } = await sb.from('notes').insert({
+    content: content,
+    person_id: personId,
+    family_group_id: currentFamilyGroupId,
+    hidden: false,
+  });
+
+  if (error) { toast('Error saving: ' + error.message); return; }
+  toast('Event saved \u2713');
+  await openPerson(personId);
+}
+
+async function deletePersonEvent(noteId, personId) {
+  if (!confirm('Delete this event?')) return;
+  const { error } = await sb.from('notes').delete().eq('id', noteId);
+  if (error) { toast('Error deleting'); return; }
+  toast('Deleted');
+  await openPerson(personId);
 }
 
 
