@@ -770,13 +770,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div id="hamburger-user" style="font-size:12px;color:var(--text-3);margin-top:3px;"></div>
   </div>
   <div style="flex:1;overflow-y:auto;padding:8px 0;">
-    <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Manage</div>
-    <button class="ham-item" onclick="navToDoctors()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span>Doctors</span></button>
-    <button class="ham-item" onclick="navToMeds()"><div class="ham-icon" style="background:var(--amber-bg)"><svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.5 20H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v3"/><circle cx="17" cy="17" r="5"/><path d="M17 15v4M15 17h4"/></svg></div><span>Medications</span></button>
     <button class="ham-item" onclick="navToDocs()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span>Documents</span></button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
     <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Account</div>
-    <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openExportModal()"><div class="ham-icon" style="background:var(--green-bg)"><svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span>Export Data</span></button>
     <button class="ham-item" onclick="closeHamburger();openInviteModal()"><div class="ham-icon" style="background:var(--purple-bg)"><svg width="18" height="18" fill="none" stroke="var(--purple)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><span>Invite Someone</span></button>
@@ -1252,6 +1248,467 @@ async function openPerson(id) {
     document.getElementById('person-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
     console.error('openPerson error:',err);
   }
+}
+
+function renderDoctors(rows) {
+  const el = document.getElementById('doctors-list');
+  document.getElementById('doctors-sub').textContent = `${rows.length} doctor${rows.length!==1?'s':''}`;
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🩺</div>No doctors yet</div>'; return; }
+  const grouped = {};
+  rows.forEach(d => { const t = d.type||'Other'; if (!grouped[t]) grouped[t]=[]; grouped[t].push(d); });
+  el.innerHTML = Object.entries(grouped).map(([type,docs]) =>
+    `<div class="section-label">${type}</div><div class="list-card">` +
+    docs.map(d=>`<div class="list-item" onclick="openDoctor('${d.id}')">
+      <div class="list-icon" style="background:var(--blue-bg)">🩺</div>
+      <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${d.address||d.phone||'No details'}</div></div>
+      <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`).join('') + '</div>'
+  ).join('');
+}
+function filterDoctors(q) { renderDoctors(q ? data.doctors.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())) : data.doctors); }
+
+async function openDoctor(id, from='doctors') {
+  currentDoctor = data.doctors.find(d=>d.id===id);
+  if (!currentDoctor) return;
+  const backBtn = document.getElementById('back-from-doctor');
+  backBtn.onclick = ()=>goBack(from==='person'?'person':'doctors');
+  document.getElementById('edit-doctor-btn').onclick = ()=>editDoctor(id);
+  showScreen('doctor-detail','forward');
+  const {data:pdRows} = await sb.from('people_doctors').select('person_id').eq('doctor_id',id);
+  const personIds = (pdRows||[]).map(r=>r.person_id);
+  const patients = data.people.filter(p=>personIds.includes(p.id));
+  const myMeds = data.medications.filter(m=>m.prescribed_by===id);
+  const myVisits = data.visits.filter(v=>v.doctor_id===id).sort((a,b)=>visitDate(b.visit_date)-visitDate(a.visit_date));
+  const d = currentDoctor;
+  let html = `<div class="detail-hero">
+    <div class="list-icon" style="background:var(--blue-bg);width:62px;height:62px;font-size:28px;border-radius:16px">🩺</div>
+    <div><div class="detail-name">${d.name}</div><div class="detail-sub">${d.type||'Doctor'}</div></div>
+  </div>`;
+  const fields = [[d.address,'Practice/Address'],[d.phone&&`<a href="tel:${d.phone}">${d.phone}</a>`,'Phone'],[d.email&&`<a href="mailto:${d.email}">${d.email}</a>`,'Email'],[d.notes,'Notes']].filter(([v])=>v);
+  if (fields.length) html += `<div class="section-label">Contact</div><div class="prop-card">${fields.map(([v,l])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
+  if (patients.length) {
+    html += `<div class="section-label">Patients</div><div class="list-card">` +
+      patients.map(p=>`<div class="list-item" onclick="openPerson('${p.id}')">
+        <div class="avatar avatar-sq" style="background:${avatarColor(p.name)};width:40px;height:40px;font-size:15px">${initials(p.name)}</div>
+        <div class="list-info"><div class="list-title">${p.name}</div><div class="list-sub">${p.dob?age(p.dob)+' old':''}</div></div>
+        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`).join('') + '</div></div>';
+  }
+  if (myMeds.length) {
+    html += `<div class="section-label">Prescribed Medications</div><div class="list-card">` +
+      myMeds.map(m=>`<div class="list-item" onclick="openMed('${m.id}','doctor')">
+        <div class="list-icon" style="background:var(--amber-bg)">💊</div>
+        <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
+      </div>`).join('') + '</div></div>';
+  }
+  if (myVisits.length) {
+    html += `<div class="section-label">Visits</div>` +
+      myVisits.slice(0,5).map(v=>`<div class="visit-card" onclick="openVisit('${v.id}','doctor')">
+        <div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>
+        ${v.people?.name?`<div class="visit-meta">👤 ${v.people.name}</div>`:''}
+      </div>`).join('');
+  }
+
+  // Doctor todos
+  const { data: docTodos } = await sb.from('todos').select('*, people(name), visits(title)').eq('doctor_id', id).eq('completed', false).order('due_date', {ascending: true, nullsFirst: false});
+  if (docTodos?.length) {
+    html += `<div class="section-label">Follow-ups (${docTodos.length})</div>`;
+    docTodos.forEach(t => {
+      const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+      html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;">${t.title}</div>
+            ${t.people?.name ? `<div style="font-size:12px;color:var(--text-3);">👤 ${t.people.name}</div>` : ''}
+            ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('doctor-detail-content').innerHTML = html;
+}
+
+function renderMeds(rows) {
+  const el = document.getElementById('meds-list');
+  document.getElementById('meds-sub').textContent = `${rows.length} medication${rows.length!==1?'s':''}`;
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💊</div>No medications yet</div>'; return; }
+  const active = rows.filter(m=>m.status==='Active');
+  const other = rows.filter(m=>m.status!=='Active');
+  let html = '';
+  if (active.length) html += '<div class="section-label">Active</div><div class="list-card">' + active.map(medListItem).join('') + '</div>';
+  if (other.length) html += '<div class="section-label">Inactive / As Needed</div><div class="list-card">' + other.map(medListItem).join('') + '</div>';
+  el.innerHTML = html;
+}
+function medListItem(m) {
+  return `<div class="list-item" onclick="openMed('${m.id}')">
+    <div class="list-icon" style="background:var(--amber-bg)">💊</div>
+    <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency,m.people?.name].filter(Boolean).join(' · ')}</div></div>
+    <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </div>`;
+}
+function filterMeds(q) { renderMeds(q ? data.medications.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())) : data.medications); }
+
+function openMed(id, from='medications') {
+  currentMed = data.medications.find(m=>m.id===id);
+  if (!currentMed) return;
+  const backBtn = document.getElementById('back-from-med');
+  backBtn.onclick = ()=>goBack(from==='person'?'person':from==='doctor'?'doctor-detail':'medications');
+  document.getElementById('edit-med-btn').onclick = ()=>editMed(id);
+  showScreen('med-detail','forward');
+  const m = currentMed;
+  const fields = [['Dosage',m.dosage],['Frequency',m.frequency],['Reason',m.reason],['Status',`<span class="${m.status==='Active'?'status-active':'status-inactive'}">${m.status||'—'}</span>`],['Start Date',fmtDate(m.start_date)],['End Date',m.end_date?fmtDate(m.end_date):null],['Person',m.people?.name],['Prescribed By',m.doctors?.name],['Notes',m.notes]].filter(([,v])=>v);
+  document.getElementById('med-detail-content').innerHTML = `
+    <div class="detail-hero">
+      <div class="list-icon" style="background:var(--amber-bg);width:62px;height:62px;font-size:28px;border-radius:16px">💊</div>
+      <div><div class="detail-name">${m.name}</div><div class="detail-sub">${m.reason||'Medication'}</div></div>
+    </div>
+    <div class="section-label">Details</div>
+    <div class="prop-card">${fields.map(([l,v])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
+}
+
+function renderVisits(rows, filter) {
+  const el = document.getElementById('visits-list');
+  const today = new Date();
+  let filtered = filter==='upcoming' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)>=today)
+    : filter==='past' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)<today) : rows;
+  filtered = [...filtered].sort((a,b)=>filter==='upcoming'?visitDate(a.visit_date)-visitDate(b.visit_date):visitDate(b.visit_date||0)-visitDate(a.visit_date||0));
+  document.getElementById('visits-sub').textContent = `${filtered.length} visit${filtered.length!==1?'s':''}`;
+  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>No visits found</div>'; return; }
+  el.innerHTML = filtered.map(v=>{
+    const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=today;
+    return `<div class="visit-card" onclick="openVisit('${v.id}')">
+      <div class="visit-top">
+        <div><div class="visit-title">${v.title}</div>${isUpcoming?'<span class="chip chip-green" style="margin-top:5px;display:inline-block">Upcoming</span>':''}</div>
+        <div class="visit-date">${fmtDateTime(v.visit_date)}</div>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+        ${v.people?.name?`<span class="chip chip-teal">👤 ${v.people.name}</span>`:''}
+        ${v.doctors?.name?`<span class="chip chip-blue">🩺 ${v.doctors.name}</span>`:''}
+      </div>
+      ${v.notes?`<div class="visit-meta" style="margin-top:6px">${v.notes.slice(0,100)}${v.notes.length>100?"...":""}</div>`:""}
+      ${v.visit_date?`<button class="cal-btn" style="margin-top:8px;font-size:12px;padding:8px 12px" onclick="event.stopPropagation();addToCalendarFromVisit('${v.id}')">📅 Add to Calendar</button>`:""}
+    </div>`;
+  }).join('');
+}
+function setVisitFilter(f,btn){visitFilter=f;var fil=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(fil,f);}
+
+async function openVisit(id, from='visits') {
+  currentVisit = data.visits.find(v=>v.id===id);
+  if (!currentVisit) return;
+  const backBtn = document.getElementById('back-from-visit');
+  backBtn.onclick = ()=>goBack(from==='person'?'person':from==='doctor'?'doctor-detail':'visits');
+  document.getElementById('edit-visit-btn').onclick = ()=>editVisit(id);
+  showScreen('visit-detail','forward');
+  const v = currentVisit;
+  const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=new Date();
+  const costStr = v.total_cost ? `$${parseFloat(v.total_cost).toFixed(2)} total${v.out_of_pocket?' · $'+parseFloat(v.out_of_pocket).toFixed(2)+' out of pocket':''}` : null;
+  const fields = [
+    ['Date & Time', fmtDateTime(v.visit_date)],
+    ['Person', v.people?.name],
+    ['Doctor', v.doctors?.name],
+    ['Cost', costStr],
+  ].filter(([,val])=>val);
+  // Load todos for this visit
+  const { data: vTodos } = await sb.from('todos').select('*, people(name)').eq('visit_id', id).order('due_date', {ascending: true, nullsFirst: false});
+  let visitTodosHtml = '';
+  if (vTodos?.length) {
+    const active = vTodos.filter(t => !t.completed);
+    const done = vTodos.filter(t => t.completed);
+    if (active.length) {
+      visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
+        active.map(t => {
+          const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
+        }).join('');
+    }
+    if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
+  }
+
+  document.getElementById('visit-detail-content').innerHTML = `
+    <div class="detail-hero">
+      <div class="list-icon" style="background:${isUpcoming?'var(--green-bg)':'var(--surface)'};width:62px;height:62px;font-size:28px;border-radius:16px">📅</div>
+      <div><div class="detail-name">${v.title}</div><div class="detail-sub">${fmtDateTime(v.visit_date)}${isUpcoming?' · Upcoming':''}</div></div>
+    </div>
+    <div class="section-label">Details</div>
+    <div class="prop-card">${fields.map(([l,val])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${val}</span></div>`).join('')}</div>
+    ${(v.pre_notes||v.notes)?`<div class="section-label">Pre-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${(v.pre_notes||v.notes||'').replace(/</g,'&lt;')}</span></div></div>`:''}
+    ${v.post_notes?`<div class="section-label">Post-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${v.post_notes.replace(/</g,'&lt;')}</span></div></div>`:''}
+    <div style="padding:4px 0 8px">
+      <button class="cal-btn" onclick="addToCalendarFromVisit('${v.id}')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Add to Google / iOS Calendar
+      </button>
+    </div>
+    <div id="visit-docs-${v.id}"></div>
+    <button onclick="openUploadForVisit('${v.id}', '${v.person_id||''}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:16px;">
+      <span style="font-size:18px">📎</span> Add Document
+    </button>`;
+  // Auto-load existing docs for this visit
+  document.getElementById('visit-detail-content').innerHTML && setTimeout(() => autoLoadVisitDocs(v.id), 200);
+}
+
+function makeICS(title, datetime, notes, doctorName, personName) {
+  const dt = new Date(datetime);
+  const end = new Date(dt.getTime() + 60*60*1000);
+  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const desc = [personName?'Patient: '+personName:'', doctorName?'Doctor: '+doctorName:'', notes||''].filter(Boolean).join('\n');
+  const uid = Date.now() + '@familyhealth';
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Family Health//EN',
+    'BEGIN:VEVENT',
+    'UID:' + uid,
+    'DTSTAMP:' + fmt(new Date()),
+    'DTSTART:' + fmt(dt),
+    'DTEND:' + fmt(end),
+    'SUMMARY:' + title,
+    desc ? 'DESCRIPTION:' + desc.replace(/\n/g,'\\n') : '',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(Boolean).join('\r\n');
+}
+
+function downloadICS(title, datetime, notes, doctorName, personName) {
+  // Build Google Calendar URL
+  const dt = new Date(datetime);
+  const end = new Date(dt.getTime() + 60*60*1000);
+  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const desc = [personName?'Patient: '+personName:'', doctorName?'Doctor: '+doctorName:'', notes||''].filter(Boolean).join('\n');
+  const gcalUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' + encodeURIComponent(title) +
+    '&dates=' + fmt(dt) + '/' + fmt(end) +
+    '&details=' + encodeURIComponent(desc);
+
+  // Try to open Google Calendar app directly using its URL scheme
+  // If not installed, fall back to web Google Calendar in a new Safari window
+  const appUrl = 'googlechrome://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' + encodeURIComponent(title) +
+    '&dates=' + fmt(dt) + '/' + fmt(end) +
+    '&details=' + encodeURIComponent(desc);
+
+  // Use iframe trick to try app URL scheme, fall back to web
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  
+  // Set a timeout - if app doesn't open within 500ms, open web version
+  const timer = setTimeout(() => {
+    document.body.removeChild(iframe);
+    window.open(gcalUrl, '_blank');
+  }, 500);
+
+  iframe.onload = () => {
+    clearTimeout(timer);
+    document.body.removeChild(iframe);
+  };
+
+  // Try the Google Calendar app scheme first
+  iframe.src = 'googlecalendar://';
+  setTimeout(() => {
+    window.location.href = gcalUrl;
+  }, 100);
+  
+  toast('Opening Google Calendar...');
+}
+
+function addToCalendar() {
+  const title = document.getElementById('visit-title').value;
+  const datetime = document.getElementById('visit-datetime').value;
+  if (!title||!datetime) { toast('Add a title and date first'); return; }
+  const doctor = data.doctors.find(d=>d.id===document.getElementById('visit-doctor').value);
+  const person = data.people.find(p=>p.id===document.getElementById('visit-person').value);
+  downloadICS(title, datetime, document.getElementById('visit-pre-notes').value, doctor?.name, person?.name);
+}
+function addToCalendarFromVisit(id) {
+  const v = data.visits.find(x=>x.id===id);
+  if (!v||!v.visit_date) { toast('No date set for this visit'); return; }
+  downloadICS(v.title, v.visit_date, v.notes, v.doctors?.name, v.people?.name);
+}
+
+
+// ── RICH TEXT NOTE HELPERS ──
+function syncNotes(type) {
+  const editor = document.getElementById(type+'-notes-editor');
+  const hidden = document.getElementById('visit-'+type+'-notes');
+  if (editor && hidden) hidden.value = editor.innerText;
+}
+
+function setNoteContent(type, text) {
+  const editor = document.getElementById(type+'-notes-editor');
+  const hidden = document.getElementById('visit-'+type+'-notes');
+  if (!editor) return;
+  const lines = (text||'').split('\n');
+  editor.innerHTML = lines.map(l => {
+    if (l.startsWith('• ') || l.startsWith('- ')) return '<div>'+l+'</div>';
+    return l ? '<div>'+l+'</div>' : '<div><br></div>';
+  }).join('');
+  if (hidden) hidden.value = text||'';
+}
+
+function addBullet(type) {
+  const editor = document.getElementById(type+'-notes-editor');
+  if (!editor) return;
+  editor.focus();
+  const newDiv = document.createElement('div');
+  newDiv.textContent = '• ';
+  editor.appendChild(newDiv);
+  const range = document.createRange();
+  range.setStartAfter(newDiv);
+  range.collapse(true);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  syncNotes(type);
+}
+
+function handleNoteKey(e, type) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const editor = document.getElementById(type+'-notes-editor');
+    const sel = window.getSelection();
+    const anchor = sel.anchorNode;
+    const parentDiv = anchor?.nodeType === 3 ? anchor.parentElement : anchor;
+    const text = parentDiv?.textContent || '';
+    const isBullet = text.trimStart().startsWith('• ');
+    document.execCommand('insertHTML', false, isBullet ? '<div>• </div>' : '<div><br></div>');
+    syncNotes(type);
+  }
+}
+
+async function openAddModal() {
+  const map = {dashboard:'modal-visit',home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo',notes:'modal-note'};
+  const modal = map[currentTab];
+  if (!modal) return;
+  clearForm(modal);
+  if (modal==='modal-visit') { document.getElementById('modal-visit-title').textContent='New Visit'; document.getElementById('delete-visit-btn').style.display='none'; document.getElementById('add-followup-btn').style.display='none'; populateSelects(); }
+  if (modal==='modal-person') { document.getElementById('modal-person-title').textContent='New Person'; document.getElementById('delete-person-btn').style.display='none'; }
+  if (modal==='modal-doctor') { document.getElementById('modal-doctor-title').textContent='New Doctor'; document.getElementById('delete-doctor-btn').style.display='none'; selectedPatients=[]; renderDoctorTypeSelect(); renderDoctorPatientsList(); }
+  if (modal==='modal-med') { document.getElementById('modal-med-title').textContent='New Medication'; document.getElementById('delete-med-btn').style.display='none'; populateSelects(); }
+  if (modal==='modal-document') { 
+    document.getElementById('modal-doc-title').textContent='Add Document';
+    document.getElementById('doc-id').value='';
+    document.getElementById('doc-name').value='';
+    document.getElementById('doc-file-input').value='';
+    document.getElementById('selected-file-name').style.display='none';
+    document.getElementById('upload-progress').style.display='none';
+    populateDocSelects();
+  }
+  if (modal==='modal-todo') {
+    document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
+    document.getElementById('todo-id').value = '';
+    document.getElementById('todo-title').value = '';
+    document.getElementById('todo-notes').value = '';
+    document.getElementById('todo-due-date').value = '';
+    document.getElementById('delete-todo-btn').style.display = 'none';
+    // Ensure data loaded then populate
+    if (!data.people.length || !data.doctors.length) {
+      await loadAll();
+    }
+    populateTodoSelects(null, null, null);
+  }
+  if (modal==='modal-note') {
+    document.getElementById('modal-note-title').textContent='Add Note';
+    document.getElementById('note-id').value='';
+    document.getElementById('note-content').value='';
+    document.getElementById('delete-note-btn').style.display='none';
+    if (!data.people.length) await loadAll();
+    populateNoteSelects(typeof notesPersonFilter!=='undefined'?notesPersonFilter:null,null,null,null);
+  }
+  openModal(modal);
+}
+function clearForm(modal) {
+  document.querySelectorAll(`#${modal} input:not([type=hidden]), #${modal} select, #${modal} textarea`).forEach(el=>{
+    if (el.tagName==='SELECT') el.selectedIndex=0; else el.value='';
+  });
+  // Clear rich text editors
+  if (modal==='modal-visit') {
+    setNoteContent('pre', '');
+    setNoteContent('post', '');
+  }
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function populateSelects() {
+  ['visit-person','med-person'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=el.value;
+    el.innerHTML='<option value="">Select person...</option>'+data.people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    if(cur) el.value=cur;
+  });
+  ['visit-doctor','med-doctor'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=el.value;
+    el.innerHTML='<option value="">Select doctor...</option>'+data.doctors.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+    if(cur) el.value=cur;
+  });
+}
+
+async function saveVisit() {
+  const id=document.getElementById('visit-id').value;
+  const title=document.getElementById('visit-title').value.trim();
+  if(!title){toast('Please enter a title');return;}
+  syncNotes('pre'); syncNotes('post');
+  const basePayload={
+    title,
+    visit_date:toSydneyISO(document.getElementById('visit-datetime').value),
+    person_id:document.getElementById('visit-person').value||null,
+    doctor_id:document.getElementById('visit-doctor').value||null,
+    pre_notes:document.getElementById('visit-pre-notes').value||null,
+    post_notes:document.getElementById('visit-post-notes').value||null,
+    notes:document.getElementById('visit-pre-notes').value||null,
+    total_cost:document.getElementById('visit-total-cost').value||null,
+    out_of_pocket:document.getElementById('visit-oop-cost').value||null,
+  };
+  // Only include family_group_id on insert, not update
+  const payload = id ? basePayload : {...basePayload, family_group_id:currentFamilyGroupId};
+  const {error}=id?await sb.from('visits').update(payload).eq('id',id):await sb.from('visits').insert(payload);
+  if(error){toast('Error: '+error.message);console.error(error);return;}
+  closeModal('modal-visit'); toast(id?'Visit updated ✓':'Visit added ✓');
+  await loadVisits(); if(currentPerson) await openPerson(currentPerson.id);
+}
+async function deleteVisit() {
+  const id=document.getElementById('visit-id').value; if(!id) return;
+  if(!confirm('Delete this visit?')) return;
+  await sb.from('visits').delete().eq('id',id);
+  closeModal('modal-visit'); toast('Visit deleted'); goBack('visits'); await loadVisits();
+}
+function editVisit(id) {
+  const v=data.visits.find(x=>x.id===id); if(!v) return;
+  populateSelects();
+  document.getElementById('modal-visit-title').textContent='Edit Visit';
+  document.getElementById('visit-id').value=v.id;
+  document.getElementById('visit-title').value=v.title||'';
+  document.getElementById('visit-datetime').value=v.visit_date?toLocalInput(v.visit_date):'';
+  document.getElementById('visit-person').value=v.person_id||'';
+  document.getElementById('visit-doctor').value=v.doctor_id||'';
+  setNoteContent('pre', v.pre_notes||v.notes||'');
+  setNoteContent('post', v.post_notes||'');
+  document.getElementById('visit-total-cost').value=v.total_cost||'';
+  document.getElementById('visit-oop-cost').value=v.out_of_pocket||'';
+  document.getElementById('delete-visit-btn').style.display='block';
+  document.getElementById('add-followup-btn').style.display='flex';
+  openModal('modal-visit');
+}
+
+async function savePerson() {
+  const id=document.getElementById('person-id').value;
+  const name=document.getElementById('person-name').value.trim();
+  if(!name){toast('Please enter a name');return;}
+  const bp={name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null,medicare_number:document.getElementById('person-medicare').value||null,blood_type:document.getElementById('person-blood-type').value||null,allergies:document.getElementById('person-allergies').value||null,diagnoses:document.getElementById('person-diagnoses').value||null,health_fund:document.getElementById('person-health-fund').value||null,health_fund_number:document.getElementById('person-health-fund-number').value||null,emergency_contact:document.getElementById('person-emergency-contact').value||null,emergency_phone:document.getElementById('person-emergency-phone').value||null,immunisations_current:document.getElementById('person-immunisations').value==='true'};const payload=id?bp:{...bp,family_group_id:currentFamilyGroupId};
+  const {error}=id?await sb.from('people').update(payload).eq('id',id):await sb.from('people').insert(payload);
+  if(error){toast('Error saving');return;}
+  closeModal('modal-person'); toast(id?'Updated ✓':'Added ✓'); await loadAll();
+}
+async function deletePerson() {
+  const id=document.getElementById('person-id').value;
+  if(!confirm('Delete this person?')) return;
+  await sb.from('people').delete().eq('id',id);
+  closeModal('modal-person'); toast('Deleted'); goBack('home'); await loadAll();
 }
 
 
