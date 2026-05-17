@@ -350,7 +350,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <!-- ══ APPOINTMENT MODE SCREEN ══ -->
   <div class="screen" id="screen-appointment-mode">
     <div class="header" style="border-bottom:1px solid var(--border);">
-      <button class="header-back" id="appt-mode-back-btn">
+      <button class="header-back" id="appt-mode-back-btn" onclick="goBack('visits')">
         <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
       </button>
       <div style="flex:1;padding-left:4px;">
@@ -421,7 +421,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;">
         <div class="header-title">To Do</div>
-        <div class="header-sub" id="todos-sub">Follow-ups & tasks</div>
+        <div class="header-sub" id="todos-sub">To Do & tasks</div>
       </div>
 
     </div>
@@ -1312,7 +1312,7 @@ async function openDoctor(id, from='doctors') {
   // Doctor todos
   const { data: docTodos } = await sb.from('todos').select('*, people(name), visits(title)').eq('doctor_id', id).eq('completed', false).order('due_date', {ascending: true, nullsFirst: false});
   if (docTodos?.length) {
-    html += `<div class="section-label">Follow-ups (${docTodos.length})</div>`;
+    html += `<div class="section-label">To Do (${docTodos.length})</div>`;
     docTodos.forEach(t => {
       const isOverdue = t.due_date && new Date(t.due_date) < new Date();
       html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
@@ -1418,7 +1418,7 @@ async function openVisit(id, from='visits') {
     const active = vTodos.filter(t => !t.completed);
     const done = vTodos.filter(t => t.completed);
     if (active.length) {
-      visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
+      visitTodosHtml = '<div class="section-label">To Do (' + active.length + ')</div>' +
         active.map(t => {
           const isOverdue = t.due_date && new Date(t.due_date) < new Date();
           return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
@@ -2030,7 +2030,11 @@ async function openAppointmentMode(visitId, from) {
   const typeBg  = { pre:'#E8EFF8', post:'#E6F0EC', note:'#EEE8F7' };
   const typeCol = { pre:'#2C5282', post:'#1A4D35', note:'#5B3A8E' };
 
-  let html = '<div style="padding:16px 16px 8px;">';
+  let html = '<div style="padding:16px 16px 8px;">'
+    + '<div style="padding-bottom:8px;">'
+    + '<button onclick="document.getElementById(\'appt-mode-back-btn\').click()" style="display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:var(--green);font-size:13px;font-weight:500;font-family:\'DM Sans\',sans-serif;cursor:pointer;padding:0;">'
+    + '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back'
+    + '</button></div>';
 
   // BRIEFING
   html += '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Briefing</div>';
@@ -2094,13 +2098,13 @@ async function openAppointmentMode(visitId, from) {
 
   // FOLLOW-UPS
   html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">'
-    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Follow-ups</div>'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">To Do</div>'
     + '<div id="appt-todos-list" style="margin-bottom:8px;"></div>'
     + '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card);border-radius:var(--r-sm);border:1px dashed var(--border);cursor:pointer;" onclick="addApptTodo()">'
     + '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     + '<svg width="10" height="10" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
     + '</div>'
-    + '<span style="font-size:13px;color:var(--text-3);">Add follow-up...</span>'
+    + '<span style="font-size:13px;color:var(--text-3);">Add to do...</span>'
     + '</div>'
     + '</div>';
 
@@ -2151,7 +2155,7 @@ function addApptTodo() {
   inputRow.id = 'appt-todo-input-row';
   inputRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--green);margin-bottom:6px;';
   inputRow.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);flex-shrink:0;"></div>'
-    + '<input id="appt-todo-input" type="text" placeholder="Follow-up task..." style="flex:1;border:none;background:transparent;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;outline:none;" />'
+    + '<input id="appt-todo-input" type="text" placeholder="To do item..." style="flex:1;border:none;background:transparent;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;outline:none;" />'
     + '<button onclick="confirmApptTodo()" style="background:var(--green);color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Add</button>';
 
   el.appendChild(inputRow);
