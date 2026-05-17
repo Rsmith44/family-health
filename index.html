@@ -368,6 +368,35 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     </div>
   </div>
 
+  <!-- ══ PERSON EVENTS SCREEN ══ -->
+  <div class="screen" id="screen-person-events">
+    <div class="header">
+      <button class="header-back" id="back-from-events" onclick="goBack('person')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-title" id="person-events-title">Medical Events</div>
+      <button class="icon-btn" onclick="showAddEventFromPage(currentPerson&&currentPerson.id)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div id="add-event-page-area"></div>
+    <div class="scroll-full" id="person-events-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ══ PERSON INFO CARD SCREEN ══ -->
+  <div class="screen" id="screen-person-infocard">
+    <div class="header">
+      <button class="header-back" id="back-from-infocard" onclick="goBack('person')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-title" id="person-infocard-title">Info Card</div>
+      <button class="icon-btn" onclick="editCurrentPerson()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </button>
+    </div>
+    <div class="scroll-full" id="person-infocard-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
   <!-- ══ DOCUMENTS SCREEN ══ -->
   <div class="screen" id="screen-documents">
     <div class="header">
@@ -1108,645 +1137,124 @@ async function openPerson(id) {
   currentPerson = data.people.find(p=>p.id===id);
   if (!currentPerson) return;
   showScreen('person','forward');
+  const el = document.getElementById('person-detail');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   try {
-  const {data:pdRows} = await sb.from('people_doctors').select('doctor_id').eq('person_id',id);
-  const docIds = (pdRows||[]).map(r=>r.doctor_id);
-  const myDocs = data.doctors.filter(d=>docIds.includes(d.id));
-  const myMeds = data.medications.filter(m=>m.person_id===id);
-  const myVisits = data.visits.filter(v=>v.person_id===id).sort((a,b)=>visitDate(b.visit_date)-visitDate(a.visit_date));
-  const p = currentPerson;
-  let html = `<div class="detail-hero">
-    <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-    <div><div class="detail-name">${p.name}</div><div class="detail-sub">${p.dob ? `${fmtDate(p.dob)} · ${age(p.dob)} old` : 'No DOB recorded'}</div></div>
-  </div>`;
-  html += buildImportantInfoCard(p);
+    const p = currentPerson;
 
-  // Fetch surgeries/major events for this person (stored in notes with [EVENT:] prefix)
-  const { data: personEvents } = await sb.from('notes')
-    .select('id, content, created_at')
-    .eq('person_id', id)
-    .like('content', '[EVENT:%')
-    .order('content', { ascending: false });
+    // Count doctors linked to this person
+    const {data:pdRows} = await sb.from('people_doctors').select('doctor_id').eq('person_id',id);
+    const docIds = (pdRows||[]).map(r=>r.doctor_id);
+    const myDocs = data.doctors.filter(d=>docIds.includes(d.id));
 
-  // Surgeries/Major Events section
-  const eventsData = personEvents || [];
-  html += `<div class="collapsible-header" onclick="toggleSection('${id}','events')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Surgeries &amp; Major Events${eventsData.length ? ' (' + eventsData.length + ')' : ''}</div>
-      <svg id="arrow_${id}_events" class="collapsible-arrow collapsed" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_events" class="collapsible-content" style="display:none;">
-      <div style="padding-top:8px;">`;
-  if (eventsData.length) {
-    eventsData.forEach(ev => {
-      // Parse [EVENT:YYYY-MM-DD] prefix
-      const match = ev.content.match(/^\[EVENT:(\d{4}-\d{2}-\d{2})\](.*)/s);
-      const dateStr = match ? fmtDate(match[1]) : '';
-      const text = match ? match[2].trim() : ev.content;
-      html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;">
-        <div style="flex:1;">
-          ${dateStr ? `<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:3px;">${dateStr}</div>` : ''}
-          <div style="font-size:13px;color:var(--text);line-height:1.5;">${text}</div>
+    // Count active + all meds
+    const myMeds = data.medications.filter(m=>m.person_id===id);
+    const activeMeds = myMeds.filter(m=>m.status==='Active');
+
+    // Count medical events
+    const {data:evRows} = await sb.from('notes').select('id').eq('person_id',id).like('content','[EVENT:%');
+    const evCount = (evRows||[]).length;
+
+    // Count open todos
+    const myTodos = todosData.filter(t=>t.person_id===id && !t.completed);
+
+    // Count upcoming visits
+    const myVisits = data.visits.filter(v=>v.person_id===id && v.visit_date && visitDate(v.visit_date)>=new Date());
+
+    const color = avatarColor(p.name);
+    const ini = initials(p.name);
+
+    let html = `
+    <div style="background:${color};padding:20px 16px 18px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0;">${ini}</div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#fff;">${p.name}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">${p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : 'No DOB recorded'}</div>
         </div>
-        <button onclick="event.stopPropagation();deletePersonEvent('${ev.id}','${id}')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">
-          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>`;
-    });
-  }
-  html += `<div id="add-event-area-${id}">
-        <button onclick="showAddEventForm('${id}')" style="display:flex;align-items:center;gap:8px;width:100%;background:var(--surface);border:1px dashed var(--border);border-radius:var(--r-sm);padding:9px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:4px;">
-          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          <span style="font-size:13px;color:var(--text-3);">Add event...</span>
-        </button>
-      </div>
+        <div style="margin-left:auto;">
+          <button onclick="editCurrentPerson()" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Edit</button>
+        </div>
       </div>
     </div>`;
 
-  if (p.notes) html += `
-    <div class="collapsible-header" onclick="toggleSection('${id}','notes')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Notes</div>
-      <svg id="arrow_${id}_notes" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_notes" class="collapsible-content" style="display:none;">
-      <div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left">${p.notes}</span></div></div>
+    // Quick info strip (allergies, blood type, health fund)
+    const strips = [];
+    if (p.allergies) strips.push(`<div style="background:#F5E8EB;border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:#9B3A4A;text-transform:uppercase;letter-spacing:.06em;">Allergies</div><div style="font-size:12px;font-weight:600;color:#7A2030;margin-top:1px;">${p.allergies}</div></div>`);
+    if (p.blood_type) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Blood Type</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.blood_type}</div></div>`);
+    if (p.health_fund) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Health Fund</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.health_fund}</div></div>`);
+    if (p.medicare_number) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Medicare</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.medicare_number}</div></div>`);
+
+    if (strips.length) {
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px 14px 0;">${strips.join('')}</div>`;
+    }
+
+    // Main section menu
+    html += `<div style="padding:14px 14px 0;">
+      <div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">`;
+
+    // Doctors row
+    html += `<div onclick="openPersonDoctors('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👨‍⚕️</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Doctors</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${myDocs.length || ''}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
-  if (myDocs.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','doctors')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Doctors (${myDocs.length})</div>
-      <svg id="arrow_${id}_doctors" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_doctors" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      myDocs.map(d=>`<div class="list-item" onclick="openDoctor('${d.id}','person')">
-        <div class="list-icon" style="background:var(--blue-bg)">🩺</div>
-        <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.type,d.address].filter(Boolean).join(' · ')}</div></div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myMeds.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','meds')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Medications (${myMeds.length})</div>
-      <svg id="arrow_${id}_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_meds" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      myMeds.map(m=>`<div class="list-item" onclick="openMed('${m.id}','person')">
-        <div class="list-icon" style="background:var(--amber-bg)">💊</div>
-        <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myVisits.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','visits')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Visits (${myVisits.length})</div>
-      <svg id="arrow_${id}_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_visits" class="collapsible-content" style="display:none;">` +
-      myVisits.slice(0,5).map(v=>`<div class="visit-card" onclick="openVisit('${v.id}','person')">
-        <div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>
-        ${v.doctors?.name?`<div class="visit-meta">🩺 ${v.doctors.name}</div>`:''}
-      </div>`).join('') + '</div>';
-  }
-  // Custom sections
-  const person = data.people.find(p=>p.id===id);
-  currentSections = person?.custom_sections || [];
-  if (currentSections.length) {
-    currentSections.forEach((sec, i) => {
-      html += `<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">
-        <span>${sec.name}</span>
-        <button onclick="openEditSection('${id}',${i})" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:500;cursor:pointer;">Edit</button>
-      </div>
-      <div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap">${sec.content||'—'}</span></div></div>`;
-    });
-  }
 
-  if (!myDocs.length && !myMeds.length && !myVisits.length && !currentSections.length) html += `<div class="empty-state" style="margin-top:20px"><div class="empty-icon">📋</div>No records yet</div>`;
+    // Medications row
+    const medLabel = activeMeds.length ? activeMeds.length + ' active' : (myMeds.length ? myMeds.length + ' total' : '');
+    html += `<div onclick="openPersonMeds('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💊</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medications</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${medLabel}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
 
-  // Add section button
-  // Load documents for this person
-  const { data: personDocs } = await sb.from('documents').select('*, doctors(name), visits(title)').eq('person_id', id).order('created_at', {ascending: false});
-  if (personDocs?.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','docs')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Documents (${personDocs.length})</div>
-      <svg id="arrow_${id}_docs" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_docs" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      personDocs.map(d => {
-        const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') ? '🖼️' : '📝';
-        return `<div class="list-item" onclick="openDocument('${d.id}')">
-          <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
-          <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.doctors?.name, d.visits?.title, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div></div>
-          <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-        </div>`;
-      }).join('') + '</div>';
-  }
+    // Medical Events row
+    html += `<div onclick="openPersonEvents('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--rose-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏥</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medical Events</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Surgeries, diagnoses, illnesses</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${evCount || ''}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
 
-  // Person todos
-  const { data: personTodos } = await sb.from('todos').select('*, doctors(name), visits(title)').eq('person_id', id).order('due_date', {ascending: true, nullsFirst: false});
-  if (personTodos?.length) {
-    const activeTodos = personTodos.filter(t => !t.completed);
-    const doneTodos = personTodos.filter(t => t.completed);
-    if (activeTodos.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('${id}','todos')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Follow-ups (${activeTodos.length})</div>
-        <svg id="arrow_${id}_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div id="section_${id}_todos" class="collapsible-content" style="display:none;">`;
-      activeTodos.forEach(t => {
-        const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-        html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
-          <div style="display:flex;align-items:flex-start;gap:12px;">
-            <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;">${t.title}</div>
-              ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
-              ${t.doctors?.name ? `<span class="chip chip-blue" style="margin-top:4px;display:inline-block;">🩺 ${t.doctors.name}</span>` : ''}
-            </div>
-          </div>
+    // Info Card row
+    html += `<div onclick="openPersonInfoCard('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🪪</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Info Card</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Emergency contacts, Medicare, allergies</div></div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+
+    html += `</div></div>`;
+
+    // Notes section (still accessible, below menu)
+    const myNotes = notesData.filter(n=>n.person_id===id && !n.hidden && !n.content.startsWith('[EVENT:'));
+    if (myNotes.length) {
+      html += `<div style="padding:14px 14px 0;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Notes (${myNotes.length})</div>`;
+      myNotes.slice(0,3).forEach(n => {
+        html += `<div onclick="editNote('${n.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:7px;cursor:pointer;">
+          <div style="font-size:13px;color:var(--text);line-height:1.5;">${n.content.slice(0,120)}${n.content.length>120?'…':''}</div>
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px;">${n.created_at ? new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
         </div>`;
       });
-      html += '</div>';
+      if (myNotes.length > 3) {
+        html += `<div onclick="setNotesPersonFilter('${id}');showTab('notes',document.getElementById('nav-notes-btn'))" style="text-align:center;padding:6px 0;font-size:13px;color:var(--green);font-weight:500;cursor:pointer;">View all ${myNotes.length} notes →</div>`;
+      }
+      html += `</div>`;
     }
-    if (activeTodos.length) html += '</div>';
-    if (doneTodos.length) html += `<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ${doneTodos.length} completed follow-up${doneTodos.length!==1?'s':''}</div>`;
-  }
 
-  html += `<div style="padding:8px 0 4px;display:flex;gap:8px;">
-    <button onclick="openAddSection('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;">
-      <span style="font-size:18px">+</span> Add Section
-    </button>
-    <button onclick="addDocumentForPerson('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;">
-      <span style="font-size:18px">📎</span> Add Doc
-    </button>
-  </div>
-  <div style="height:16px"></div>`;
+    html += `<div style="height:20px;"></div>`;
 
-  document.getElementById('person-detail').innerHTML = html;
-  ['events','notes','doctors','meds','visits','docs','todos'].forEach(k=>{collapsedSections[id+'_'+k]=true;var a=document.getElementById('arrow_'+id+'_'+k);if(a)a.classList.add('collapsed');});
+    document.getElementById('person-detail').innerHTML = html;
+
   } catch(err) {
-    document.getElementById('person-detail').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
+    document.getElementById('person-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
     console.error('openPerson error:',err);
   }
 }
 
-function renderDoctors(rows) {
-  const el = document.getElementById('doctors-list');
-  document.getElementById('doctors-sub').textContent = `${rows.length} doctor${rows.length!==1?'s':''}`;
-  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🩺</div>No doctors yet</div>'; return; }
-  const grouped = {};
-  rows.forEach(d => { const t = d.type||'Other'; if (!grouped[t]) grouped[t]=[]; grouped[t].push(d); });
-  el.innerHTML = Object.entries(grouped).map(([type,docs]) =>
-    `<div class="section-label">${type}</div><div class="list-card">` +
-    docs.map(d=>`<div class="list-item" onclick="openDoctor('${d.id}')">
-      <div class="list-icon" style="background:var(--blue-bg)">🩺</div>
-      <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${d.address||d.phone||'No details'}</div></div>
-      <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-    </div>`).join('') + '</div>'
-  ).join('');
-}
-function filterDoctors(q) { renderDoctors(q ? data.doctors.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())) : data.doctors); }
 
-async function openDoctor(id, from='doctors') {
-  currentDoctor = data.doctors.find(d=>d.id===id);
-  if (!currentDoctor) return;
-  const backBtn = document.getElementById('back-from-doctor');
-  backBtn.onclick = ()=>goBack(from==='person'?'person':'doctors');
-  document.getElementById('edit-doctor-btn').onclick = ()=>editDoctor(id);
-  showScreen('doctor-detail','forward');
-  const {data:pdRows} = await sb.from('people_doctors').select('person_id').eq('doctor_id',id);
-  const personIds = (pdRows||[]).map(r=>r.person_id);
-  const patients = data.people.filter(p=>personIds.includes(p.id));
-  const myMeds = data.medications.filter(m=>m.prescribed_by===id);
-  const myVisits = data.visits.filter(v=>v.doctor_id===id).sort((a,b)=>visitDate(b.visit_date)-visitDate(a.visit_date));
-  const d = currentDoctor;
-  let html = `<div class="detail-hero">
-    <div class="list-icon" style="background:var(--blue-bg);width:62px;height:62px;font-size:28px;border-radius:16px">🩺</div>
-    <div><div class="detail-name">${d.name}</div><div class="detail-sub">${d.type||'Doctor'}</div></div>
-  </div>`;
-  const fields = [[d.address,'Practice/Address'],[d.phone&&`<a href="tel:${d.phone}">${d.phone}</a>`,'Phone'],[d.email&&`<a href="mailto:${d.email}">${d.email}</a>`,'Email'],[d.notes,'Notes']].filter(([v])=>v);
-  if (fields.length) html += `<div class="section-label">Contact</div><div class="prop-card">${fields.map(([v,l])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
-  if (patients.length) {
-    html += `<div class="section-label">Patients</div><div class="list-card">` +
-      patients.map(p=>`<div class="list-item" onclick="openPerson('${p.id}')">
-        <div class="avatar avatar-sq" style="background:${avatarColor(p.name)};width:40px;height:40px;font-size:15px">${initials(p.name)}</div>
-        <div class="list-info"><div class="list-title">${p.name}</div><div class="list-sub">${p.dob?age(p.dob)+' old':''}</div></div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myMeds.length) {
-    html += `<div class="section-label">Prescribed Medications</div><div class="list-card">` +
-      myMeds.map(m=>`<div class="list-item" onclick="openMed('${m.id}','doctor')">
-        <div class="list-icon" style="background:var(--amber-bg)">💊</div>
-        <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myVisits.length) {
-    html += `<div class="section-label">Visits</div>` +
-      myVisits.slice(0,5).map(v=>`<div class="visit-card" onclick="openVisit('${v.id}','doctor')">
-        <div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>
-        ${v.people?.name?`<div class="visit-meta">👤 ${v.people.name}</div>`:''}
-      </div>`).join('');
-  }
-
-  // Doctor todos
-  const { data: docTodos } = await sb.from('todos').select('*, people(name), visits(title)').eq('doctor_id', id).eq('completed', false).order('due_date', {ascending: true, nullsFirst: false});
-  if (docTodos?.length) {
-    html += `<div class="section-label">Follow-ups (${docTodos.length})</div>`;
-    docTodos.forEach(t => {
-      const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-      html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
-          <div style="flex:1;">
-            <div style="font-size:14px;font-weight:600;">${t.title}</div>
-            ${t.people?.name ? `<div style="font-size:12px;color:var(--text-3);">👤 ${t.people.name}</div>` : ''}
-            ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
-          </div>
-        </div>
-      </div>`;
-    });
-  }
-
-  document.getElementById('doctor-detail-content').innerHTML = html;
-}
-
-function renderMeds(rows) {
-  const el = document.getElementById('meds-list');
-  document.getElementById('meds-sub').textContent = `${rows.length} medication${rows.length!==1?'s':''}`;
-  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💊</div>No medications yet</div>'; return; }
-  const active = rows.filter(m=>m.status==='Active');
-  const other = rows.filter(m=>m.status!=='Active');
-  let html = '';
-  if (active.length) html += '<div class="section-label">Active</div><div class="list-card">' + active.map(medListItem).join('') + '</div>';
-  if (other.length) html += '<div class="section-label">Inactive / As Needed</div><div class="list-card">' + other.map(medListItem).join('') + '</div>';
-  el.innerHTML = html;
-}
-function medListItem(m) {
-  return `<div class="list-item" onclick="openMed('${m.id}')">
-    <div class="list-icon" style="background:var(--amber-bg)">💊</div>
-    <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency,m.people?.name].filter(Boolean).join(' · ')}</div></div>
-    <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-  </div>`;
-}
-function filterMeds(q) { renderMeds(q ? data.medications.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())) : data.medications); }
-
-function openMed(id, from='medications') {
-  currentMed = data.medications.find(m=>m.id===id);
-  if (!currentMed) return;
-  const backBtn = document.getElementById('back-from-med');
-  backBtn.onclick = ()=>goBack(from==='person'?'person':from==='doctor'?'doctor-detail':'medications');
-  document.getElementById('edit-med-btn').onclick = ()=>editMed(id);
-  showScreen('med-detail','forward');
-  const m = currentMed;
-  const fields = [['Dosage',m.dosage],['Frequency',m.frequency],['Reason',m.reason],['Status',`<span class="${m.status==='Active'?'status-active':'status-inactive'}">${m.status||'—'}</span>`],['Start Date',fmtDate(m.start_date)],['End Date',m.end_date?fmtDate(m.end_date):null],['Person',m.people?.name],['Prescribed By',m.doctors?.name],['Notes',m.notes]].filter(([,v])=>v);
-  document.getElementById('med-detail-content').innerHTML = `
-    <div class="detail-hero">
-      <div class="list-icon" style="background:var(--amber-bg);width:62px;height:62px;font-size:28px;border-radius:16px">💊</div>
-      <div><div class="detail-name">${m.name}</div><div class="detail-sub">${m.reason||'Medication'}</div></div>
-    </div>
-    <div class="section-label">Details</div>
-    <div class="prop-card">${fields.map(([l,v])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
-}
-
-function renderVisits(rows, filter) {
-  const el = document.getElementById('visits-list');
-  const today = new Date();
-  let filtered = filter==='upcoming' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)>=today)
-    : filter==='past' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)<today) : rows;
-  filtered = [...filtered].sort((a,b)=>filter==='upcoming'?visitDate(a.visit_date)-visitDate(b.visit_date):visitDate(b.visit_date||0)-visitDate(a.visit_date||0));
-  document.getElementById('visits-sub').textContent = `${filtered.length} visit${filtered.length!==1?'s':''}`;
-  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>No visits found</div>'; return; }
-  el.innerHTML = filtered.map(v=>{
-    const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=today;
-    return `<div class="visit-card" onclick="openVisit('${v.id}')">
-      <div class="visit-top">
-        <div><div class="visit-title">${v.title}</div>${isUpcoming?'<span class="chip chip-green" style="margin-top:5px;display:inline-block">Upcoming</span>':''}</div>
-        <div class="visit-date">${fmtDateTime(v.visit_date)}</div>
-      </div>
-      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-        ${v.people?.name?`<span class="chip chip-teal">👤 ${v.people.name}</span>`:''}
-        ${v.doctors?.name?`<span class="chip chip-blue">🩺 ${v.doctors.name}</span>`:''}
-      </div>
-      ${v.notes?`<div class="visit-meta" style="margin-top:6px">${v.notes.slice(0,100)}${v.notes.length>100?"...":""}</div>`:""}
-      ${v.visit_date?`<button class="cal-btn" style="margin-top:8px;font-size:12px;padding:8px 12px" onclick="event.stopPropagation();addToCalendarFromVisit('${v.id}')">📅 Add to Calendar</button>`:""}
-    </div>`;
-  }).join('');
-}
-function setVisitFilter(f,btn){visitFilter=f;var fil=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(fil,f);}
-
-async function openVisit(id, from='visits') {
-  currentVisit = data.visits.find(v=>v.id===id);
-  if (!currentVisit) return;
-  const backBtn = document.getElementById('back-from-visit');
-  backBtn.onclick = ()=>goBack(from==='person'?'person':from==='doctor'?'doctor-detail':'visits');
-  document.getElementById('edit-visit-btn').onclick = ()=>editVisit(id);
-  showScreen('visit-detail','forward');
-  const v = currentVisit;
-  const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=new Date();
-  const costStr = v.total_cost ? `$${parseFloat(v.total_cost).toFixed(2)} total${v.out_of_pocket?' · $'+parseFloat(v.out_of_pocket).toFixed(2)+' out of pocket':''}` : null;
-  const fields = [
-    ['Date & Time', fmtDateTime(v.visit_date)],
-    ['Person', v.people?.name],
-    ['Doctor', v.doctors?.name],
-    ['Cost', costStr],
-  ].filter(([,val])=>val);
-  // Load todos for this visit
-  const { data: vTodos } = await sb.from('todos').select('*, people(name)').eq('visit_id', id).order('due_date', {ascending: true, nullsFirst: false});
-  let visitTodosHtml = '';
-  if (vTodos?.length) {
-    const active = vTodos.filter(t => !t.completed);
-    const done = vTodos.filter(t => t.completed);
-    if (active.length) {
-      visitTodosHtml = '<div class="section-label">Follow-ups (' + active.length + ')</div>' +
-        active.map(t => {
-          const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-          return '<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo(' + JSON.stringify(t.id) + ')"><div style="display:flex;align-items:flex-start;gap:12px;"><div onclick="event.stopPropagation();toggleTodo(' + JSON.stringify(t.id) + ',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">' + t.title + '</div>' + (t.due_date ? '<div style="font-size:12px;color:' + (isOverdue ? '#C0392B' : 'var(--text-3)') + ';">' + (isOverdue ? '⚠ Overdue · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') + '</div></div></div>';
-        }).join('');
-    }
-    if (done.length) visitTodosHtml += '<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ' + done.length + ' completed</div>';
-  }
-
-  document.getElementById('visit-detail-content').innerHTML = `
-    <div class="detail-hero">
-      <div class="list-icon" style="background:${isUpcoming?'var(--green-bg)':'var(--surface)'};width:62px;height:62px;font-size:28px;border-radius:16px">📅</div>
-      <div><div class="detail-name">${v.title}</div><div class="detail-sub">${fmtDateTime(v.visit_date)}${isUpcoming?' · Upcoming':''}</div></div>
-    </div>
-    <div class="section-label">Details</div>
-    <div class="prop-card">${fields.map(([l,val])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${val}</span></div>`).join('')}</div>
-    ${(v.pre_notes||v.notes)?`<div class="section-label">Pre-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${(v.pre_notes||v.notes||'').replace(/</g,'&lt;')}</span></div></div>`:''}
-    ${v.post_notes?`<div class="section-label">Post-Appointment Notes</div><div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap;line-height:1.7">${v.post_notes.replace(/</g,'&lt;')}</span></div></div>`:''}
-    <div style="padding:4px 0 8px">
-      <button class="cal-btn" onclick="addToCalendarFromVisit('${v.id}')">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Add to Google / iOS Calendar
-      </button>
-    </div>
-    <div id="visit-docs-${v.id}"></div>
-    <button onclick="openUploadForVisit('${v.id}', '${v.person_id||''}')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:16px;">
-      <span style="font-size:18px">📎</span> Add Document
-    </button>`;
-  // Auto-load existing docs for this visit
-  document.getElementById('visit-detail-content').innerHTML && setTimeout(() => autoLoadVisitDocs(v.id), 200);
-}
-
-function makeICS(title, datetime, notes, doctorName, personName) {
-  const dt = new Date(datetime);
-  const end = new Date(dt.getTime() + 60*60*1000);
-  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const desc = [personName?'Patient: '+personName:'', doctorName?'Doctor: '+doctorName:'', notes||''].filter(Boolean).join('\n');
-  const uid = Date.now() + '@familyhealth';
-  return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Family Health//EN',
-    'BEGIN:VEVENT',
-    'UID:' + uid,
-    'DTSTAMP:' + fmt(new Date()),
-    'DTSTART:' + fmt(dt),
-    'DTEND:' + fmt(end),
-    'SUMMARY:' + title,
-    desc ? 'DESCRIPTION:' + desc.replace(/\n/g,'\\n') : '',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].filter(Boolean).join('\r\n');
-}
-
-function downloadICS(title, datetime, notes, doctorName, personName) {
-  // Build Google Calendar URL
-  const dt = new Date(datetime);
-  const end = new Date(dt.getTime() + 60*60*1000);
-  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const desc = [personName?'Patient: '+personName:'', doctorName?'Doctor: '+doctorName:'', notes||''].filter(Boolean).join('\n');
-  const gcalUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-    '&text=' + encodeURIComponent(title) +
-    '&dates=' + fmt(dt) + '/' + fmt(end) +
-    '&details=' + encodeURIComponent(desc);
-
-  // Try to open Google Calendar app directly using its URL scheme
-  // If not installed, fall back to web Google Calendar in a new Safari window
-  const appUrl = 'googlechrome://calendar.google.com/calendar/render?action=TEMPLATE' +
-    '&text=' + encodeURIComponent(title) +
-    '&dates=' + fmt(dt) + '/' + fmt(end) +
-    '&details=' + encodeURIComponent(desc);
-
-  // Use iframe trick to try app URL scheme, fall back to web
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-  
-  // Set a timeout - if app doesn't open within 500ms, open web version
-  const timer = setTimeout(() => {
-    document.body.removeChild(iframe);
-    window.open(gcalUrl, '_blank');
-  }, 500);
-
-  iframe.onload = () => {
-    clearTimeout(timer);
-    document.body.removeChild(iframe);
-  };
-
-  // Try the Google Calendar app scheme first
-  iframe.src = 'googlecalendar://';
-  setTimeout(() => {
-    window.location.href = gcalUrl;
-  }, 100);
-  
-  toast('Opening Google Calendar...');
-}
-
-function addToCalendar() {
-  const title = document.getElementById('visit-title').value;
-  const datetime = document.getElementById('visit-datetime').value;
-  if (!title||!datetime) { toast('Add a title and date first'); return; }
-  const doctor = data.doctors.find(d=>d.id===document.getElementById('visit-doctor').value);
-  const person = data.people.find(p=>p.id===document.getElementById('visit-person').value);
-  downloadICS(title, datetime, document.getElementById('visit-pre-notes').value, doctor?.name, person?.name);
-}
-function addToCalendarFromVisit(id) {
-  const v = data.visits.find(x=>x.id===id);
-  if (!v||!v.visit_date) { toast('No date set for this visit'); return; }
-  downloadICS(v.title, v.visit_date, v.notes, v.doctors?.name, v.people?.name);
-}
-
-
-// ── RICH TEXT NOTE HELPERS ──
-function syncNotes(type) {
-  const editor = document.getElementById(type+'-notes-editor');
-  const hidden = document.getElementById('visit-'+type+'-notes');
-  if (editor && hidden) hidden.value = editor.innerText;
-}
-
-function setNoteContent(type, text) {
-  const editor = document.getElementById(type+'-notes-editor');
-  const hidden = document.getElementById('visit-'+type+'-notes');
-  if (!editor) return;
-  const lines = (text||'').split('\n');
-  editor.innerHTML = lines.map(l => {
-    if (l.startsWith('• ') || l.startsWith('- ')) return '<div>'+l+'</div>';
-    return l ? '<div>'+l+'</div>' : '<div><br></div>';
-  }).join('');
-  if (hidden) hidden.value = text||'';
-}
-
-function addBullet(type) {
-  const editor = document.getElementById(type+'-notes-editor');
-  if (!editor) return;
-  editor.focus();
-  const newDiv = document.createElement('div');
-  newDiv.textContent = '• ';
-  editor.appendChild(newDiv);
-  const range = document.createRange();
-  range.setStartAfter(newDiv);
-  range.collapse(true);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  syncNotes(type);
-}
-
-function handleNoteKey(e, type) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const editor = document.getElementById(type+'-notes-editor');
-    const sel = window.getSelection();
-    const anchor = sel.anchorNode;
-    const parentDiv = anchor?.nodeType === 3 ? anchor.parentElement : anchor;
-    const text = parentDiv?.textContent || '';
-    const isBullet = text.trimStart().startsWith('• ');
-    document.execCommand('insertHTML', false, isBullet ? '<div>• </div>' : '<div><br></div>');
-    syncNotes(type);
-  }
-}
-
-async function openAddModal() {
-  const map = {home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo',notes:'modal-note'};
-  const modal = map[currentTab];
-  if (!modal) return;
-  clearForm(modal);
-  if (modal==='modal-visit') { document.getElementById('modal-visit-title').textContent='New Visit'; document.getElementById('delete-visit-btn').style.display='none'; document.getElementById('add-followup-btn').style.display='none'; populateSelects(); }
-  if (modal==='modal-person') { document.getElementById('modal-person-title').textContent='New Person'; document.getElementById('delete-person-btn').style.display='none'; }
-  if (modal==='modal-doctor') { document.getElementById('modal-doctor-title').textContent='New Doctor'; document.getElementById('delete-doctor-btn').style.display='none'; selectedPatients=[]; renderDoctorTypeSelect(); renderDoctorPatientsList(); }
-  if (modal==='modal-med') { document.getElementById('modal-med-title').textContent='New Medication'; document.getElementById('delete-med-btn').style.display='none'; populateSelects(); }
-  if (modal==='modal-document') { 
-    document.getElementById('modal-doc-title').textContent='Add Document';
-    document.getElementById('doc-id').value='';
-    document.getElementById('doc-name').value='';
-    document.getElementById('doc-file-input').value='';
-    document.getElementById('selected-file-name').style.display='none';
-    document.getElementById('upload-progress').style.display='none';
-    populateDocSelects();
-  }
-  if (modal==='modal-todo') {
-    document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
-    document.getElementById('todo-id').value = '';
-    document.getElementById('todo-title').value = '';
-    document.getElementById('todo-notes').value = '';
-    document.getElementById('todo-due-date').value = '';
-    document.getElementById('delete-todo-btn').style.display = 'none';
-    // Ensure data loaded then populate
-    if (!data.people.length || !data.doctors.length) {
-      await loadAll();
-    }
-    populateTodoSelects(null, null, null);
-  }
-  if (modal==='modal-note') {
-    document.getElementById('modal-note-title').textContent='Add Note';
-    document.getElementById('note-id').value='';
-    document.getElementById('note-content').value='';
-    document.getElementById('delete-note-btn').style.display='none';
-    if (!data.people.length) await loadAll();
-    populateNoteSelects(typeof notesPersonFilter!=='undefined'?notesPersonFilter:null,null,null,null);
-  }
-  openModal(modal);
-}
-function clearForm(modal) {
-  document.querySelectorAll(`#${modal} input:not([type=hidden]), #${modal} select, #${modal} textarea`).forEach(el=>{
-    if (el.tagName==='SELECT') el.selectedIndex=0; else el.value='';
-  });
-  // Clear rich text editors
-  if (modal==='modal-visit') {
-    setNoteContent('pre', '');
-    setNoteContent('post', '');
-  }
-}
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-function populateSelects() {
-  ['visit-person','med-person'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const cur=el.value;
-    el.innerHTML='<option value="">Select person...</option>'+data.people.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-    if(cur) el.value=cur;
-  });
-  ['visit-doctor','med-doctor'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const cur=el.value;
-    el.innerHTML='<option value="">Select doctor...</option>'+data.doctors.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
-    if(cur) el.value=cur;
-  });
-}
-
-async function saveVisit() {
-  const id=document.getElementById('visit-id').value;
-  const title=document.getElementById('visit-title').value.trim();
-  if(!title){toast('Please enter a title');return;}
-  syncNotes('pre'); syncNotes('post');
-  const basePayload={
-    title,
-    visit_date:toSydneyISO(document.getElementById('visit-datetime').value),
-    person_id:document.getElementById('visit-person').value||null,
-    doctor_id:document.getElementById('visit-doctor').value||null,
-    pre_notes:document.getElementById('visit-pre-notes').value||null,
-    post_notes:document.getElementById('visit-post-notes').value||null,
-    notes:document.getElementById('visit-pre-notes').value||null,
-    total_cost:document.getElementById('visit-total-cost').value||null,
-    out_of_pocket:document.getElementById('visit-oop-cost').value||null,
-  };
-  // Only include family_group_id on insert, not update
-  const payload = id ? basePayload : {...basePayload, family_group_id:currentFamilyGroupId};
-  const {error}=id?await sb.from('visits').update(payload).eq('id',id):await sb.from('visits').insert(payload);
-  if(error){toast('Error: '+error.message);console.error(error);return;}
-  closeModal('modal-visit'); toast(id?'Visit updated ✓':'Visit added ✓');
-  await loadVisits(); if(currentPerson) await openPerson(currentPerson.id);
-}
-async function deleteVisit() {
-  const id=document.getElementById('visit-id').value; if(!id) return;
-  if(!confirm('Delete this visit?')) return;
-  await sb.from('visits').delete().eq('id',id);
-  closeModal('modal-visit'); toast('Visit deleted'); goBack('visits'); await loadVisits();
-}
-function editVisit(id) {
-  const v=data.visits.find(x=>x.id===id); if(!v) return;
-  populateSelects();
-  document.getElementById('modal-visit-title').textContent='Edit Visit';
-  document.getElementById('visit-id').value=v.id;
-  document.getElementById('visit-title').value=v.title||'';
-  document.getElementById('visit-datetime').value=v.visit_date?toLocalInput(v.visit_date):'';
-  document.getElementById('visit-person').value=v.person_id||'';
-  document.getElementById('visit-doctor').value=v.doctor_id||'';
-  setNoteContent('pre', v.pre_notes||v.notes||'');
-  setNoteContent('post', v.post_notes||'');
-  document.getElementById('visit-total-cost').value=v.total_cost||'';
-  document.getElementById('visit-oop-cost').value=v.out_of_pocket||'';
-  document.getElementById('delete-visit-btn').style.display='block';
-  document.getElementById('add-followup-btn').style.display='flex';
-  openModal('modal-visit');
-}
-
-async function savePerson() {
-  const id=document.getElementById('person-id').value;
-  const name=document.getElementById('person-name').value.trim();
-  if(!name){toast('Please enter a name');return;}
-  const bp={name,dob:document.getElementById('person-dob').value||null,notes:document.getElementById('person-notes').value||null,medicare_number:document.getElementById('person-medicare').value||null,blood_type:document.getElementById('person-blood-type').value||null,allergies:document.getElementById('person-allergies').value||null,diagnoses:document.getElementById('person-diagnoses').value||null,health_fund:document.getElementById('person-health-fund').value||null,health_fund_number:document.getElementById('person-health-fund-number').value||null,emergency_contact:document.getElementById('person-emergency-contact').value||null,emergency_phone:document.getElementById('person-emergency-phone').value||null,immunisations_current:document.getElementById('person-immunisations').value==='true'};const payload=id?bp:{...bp,family_group_id:currentFamilyGroupId};
-  const {error}=id?await sb.from('people').update(payload).eq('id',id):await sb.from('people').insert(payload);
-  if(error){toast('Error saving');return;}
-  closeModal('modal-person'); toast(id?'Updated ✓':'Added ✓'); await loadAll();
-}
-async function deletePerson() {
-  const id=document.getElementById('person-id').value;
-  if(!confirm('Delete this person?')) return;
-  await sb.from('people').delete().eq('id',id);
-  closeModal('modal-person'); toast('Deleted'); goBack('home'); await loadAll();
-}
 function editCurrentPerson() {
   if(!currentPerson) return;
   document.getElementById('modal-person-title').textContent='Edit Person';
@@ -2326,6 +1834,180 @@ async function deletePersonEvent(noteId, personId) {
   if (error) { toast('Error deleting'); return; }
   toast('Deleted');
   await openPerson(personId);
+}
+
+
+
+// ── PERSON SUB-PAGES ──
+
+function openPersonDoctors(personId) {
+  const person = data.people.find(p => p.id === personId);
+  const docIds = data.doctors
+    .filter(d => d.id) // all doctors - filtered by people_doctors
+    .map(d => d.id);
+
+  // Filter doctors linked to this person via people_doctors
+  // We already loaded people_doctors in openPerson; re-fetch to be safe
+  sb.from('people_doctors').select('doctor_id').eq('person_id', personId).then(({data: rows}) => {
+    const linkedIds = (rows||[]).map(r => r.doctor_id);
+    const myDocs = data.doctors.filter(d => linkedIds.includes(d.id));
+    showScreen('doctors', 'forward');
+    currentTab = 'doctors';
+    const el = document.getElementById('doctors-list');
+    const sub = document.getElementById('doctors-sub');
+    if (sub) sub.textContent = (person ? person.name + ' · ' : '') + myDocs.length + ' doctor' + (myDocs.length !== 1 ? 's' : '');
+    // Update back button
+    const backBtn = document.getElementById('back-from-doctors');
+    if (backBtn) backBtn.onclick = () => goBack('person');
+    if (!myDocs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🩺</div>No doctors linked to ' + (person ? person.name : 'this person') + '</div>';
+      return;
+    }
+    const grouped = {};
+    myDocs.forEach(d => { const t = d.type||'Other'; if (!grouped[t]) grouped[t]=[]; grouped[t].push(d); });
+    el.innerHTML = Object.entries(grouped).map(([type, docs]) =>
+      '<div class="section-label">' + type + '</div><div class="list-card">' +
+      docs.map(d => '<div class="list-item" onclick="openDoctor(\'' + d.id + '\',\'person\')">' +
+        '<div class="list-icon" style="background:var(--blue-bg)">🩺</div>' +
+        '<div class="list-info"><div class="list-title">' + d.name + '</div><div class="list-sub">' + (d.address||d.phone||'No details') + '</div></div>' +
+        '<svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>' +
+        '</div>').join('') + '</div>'
+    ).join('');
+  });
+}
+
+function openPersonMeds(personId) {
+  const person = data.people.find(p => p.id === personId);
+  const myMeds = data.medications.filter(m => m.person_id === personId);
+  showScreen('medications', 'forward');
+  currentTab = 'medications';
+  const backBtn = document.getElementById('back-from-meds');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  const sub = document.getElementById('meds-sub');
+  if (sub) sub.textContent = (person ? person.name + ' · ' : '') + myMeds.length + ' medication' + (myMeds.length !== 1 ? 's' : '');
+  renderMeds(myMeds);
+}
+
+function openPersonEvents(personId) {
+  const person = data.people.find(p => p.id === personId);
+  showScreen('person-events', 'forward');
+  const el = document.getElementById('person-events-content');
+  if (!el) return;
+  const backBtn = document.getElementById('back-from-events');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  document.getElementById('person-events-title').textContent = person ? person.name : 'Medical Events';
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  sb.from('notes')
+    .select('id, content, created_at')
+    .eq('person_id', personId)
+    .like('content', '[EVENT:%')
+    .order('content', { ascending: false })
+    .then(({ data: rows }) => {
+      const events = rows || [];
+      if (!events.length) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏥</div>No medical events yet<br><span style="font-size:12px">Tap + to add one</span></div>';
+        return;
+      }
+      el.innerHTML = '<div style="padding:12px 16px;">' + events.map(ev => {
+        const match = ev.content.match(/^\[EVENT:(\d{4}-\d{2}-\d{2})\](.*)/s);
+        const dateStr = match ? fmtDate(match[1]) : '';
+        const text = match ? match[2].trim() : ev.content;
+        return '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;">'
+          + '<div style="flex:1;">'
+          + (dateStr ? '<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:3px;">' + dateStr + '</div>' : '')
+          + '<div style="font-size:13px;color:var(--text);line-height:1.5;">' + text + '</div>'
+          + '</div>'
+          + '<button onclick="event.stopPropagation();deletePersonEventFromPage(\'' + ev.id + '\',\'' + personId + '\')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">'
+          + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+          + '</button>'
+          + '</div>';
+      }).join('') + '</div>';
+    });
+}
+
+async function deletePersonEventFromPage(noteId, personId) {
+  if (!confirm('Delete this event?')) return;
+  const { error } = await sb.from('notes').delete().eq('id', noteId);
+  if (error) { toast('Error deleting'); return; }
+  toast('Deleted');
+  openPersonEvents(personId);
+}
+
+function showAddEventFromPage(personId) {
+  const area = document.getElementById('add-event-page-area');
+  if (!area) return;
+  area.innerHTML = '<div style="background:var(--card);border:1px solid var(--green);border-radius:var(--r-sm);padding:14px;margin:12px 16px 0;">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Date</div>'
+    + '<input type="date" id="event-page-date" style="width:100%;margin-bottom:10px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:\'DM Sans\',sans-serif;background:var(--bg);color:var(--text);outline:none;">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Event</div>'
+    + '<textarea id="event-page-text" placeholder="e.g. Appendectomy, ear infection, broken wrist…" style="width:100%;min-height:72px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:\'DM Sans\',sans-serif;background:var(--bg);color:var(--text);outline:none;resize:none;"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:10px;">'
+    + '<button onclick="saveEventFromPage(\'' + personId + '\')" style="flex:1;background:var(--green);color:white;border:none;border-radius:var(--r-sm);padding:10px;font-size:13px;font-weight:600;font-family:\'DM Sans\',sans-serif;cursor:pointer;">Save</button>'
+    + '<button onclick="cancelEventFromPage(\'' + personId + '\')" style="background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 16px;font-size:13px;font-family:\'DM Sans\',sans-serif;cursor:pointer;">Cancel</button>'
+    + '</div></div>';
+  const d = document.getElementById('event-page-date');
+  if (d) d.focus();
+}
+
+function cancelEventFromPage(personId) {
+  const area = document.getElementById('add-event-page-area');
+  if (area) area.innerHTML = '';
+}
+
+async function saveEventFromPage(personId) {
+  const dateEl = document.getElementById('event-page-date');
+  const textEl = document.getElementById('event-page-text');
+  if (!dateEl || !textEl) return;
+  const dateVal = dateEl.value.trim();
+  const textVal = textEl.value.trim();
+  if (!textVal) { toast('Please enter an event description'); return; }
+  const c = '[EVENT:' + (dateVal || '0000-00-00') + '] ' + textVal;
+  const { error } = await sb.from('notes').insert({
+    content: c, person_id: personId, family_group_id: currentFamilyGroupId, hidden: false
+  });
+  if (error) { toast('Error saving: ' + error.message); return; }
+  toast('Event saved ✓');
+  openPersonEvents(personId);
+}
+
+function openPersonInfoCard(personId) {
+  const person = data.people.find(p => p.id === personId);
+  if (!person) return;
+  showScreen('person-infocard', 'forward');
+  const el = document.getElementById('person-infocard-content');
+  const backBtn = document.getElementById('back-from-infocard');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  document.getElementById('person-infocard-title').textContent = person.name;
+
+  const rows = [
+    ['🚨 Allergies', person.allergies, true],
+    ['🩺 Conditions', person.diagnoses, false],
+    ['🩸 Blood Type', person.blood_type, false],
+    ['📋 Medicare', person.medicare_number, false],
+    ['🏥 Health Fund', person.health_fund ? person.health_fund + (person.health_fund_number ? ' · ' + person.health_fund_number : '') : null, false],
+    ['📞 Emergency Contact', person.emergency_contact ? person.emergency_contact + (person.emergency_phone ? ' · ' + person.emergency_phone : '') : null, false],
+    ['💉 Immunisations', person.immunisations_current === false ? 'Outstanding ⚠' : (person.immunisations_current ? 'Up to date ✓' : null), person.immunisations_current === false],
+  ].filter(r => r[1]);
+
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🪪</div>No info added yet<br><span style="font-size:12px">Edit this person to add details</span></div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="padding:16px;">'
+    + '<div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">'
+    + rows.map((r, i) =>
+        '<div style="padding:13px 16px;' + (i > 0 ? 'border-top:1px solid var(--border);' : '') + 'display:flex;align-items:flex-start;gap:12px;">'
+        + '<div style="flex:1;">'
+        + '<div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">' + r[0] + '</div>'
+        + '<div style="font-size:14px;font-weight:500;color:' + (r[2] ? '#C0392B' : 'var(--text)') + ';line-height:1.4;">' + r[1] + '</div>'
+        + '</div>'
+        + '</div>'
+      ).join('')
+    + '</div>'
+    + (person.notes ? '<div style="margin-top:14px;"><div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">General Notes</div><div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.6;">' + person.notes + '</div></div>' : '')
+    + '</div>';
 }
 
 
