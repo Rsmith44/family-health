@@ -216,14 +216,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div id="main-app" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
 
-  <div class="screen active" id="screen-dashboard">
+  <div class="screen" id="screen-dashboard">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div style="flex:1;padding-left:8px;"><div class="header-title" id="dashboard-greeting">Good morning</div><div class="header-sub" id="dashboard-date"></div></div>
     </div>
     <div class="scroll" id="dashboard-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
-  <div class="screen" id="screen-home">
+  <div class="screen active" id="screen-home">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Family</div><div class="header-sub" id="home-sub">Loading...</div></div>
@@ -338,7 +338,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <!-- ══ APPOINTMENT SELECT SCREEN ══ -->
   <div class="screen" id="screen-appointment-select">
     <div class="header">
-      <button class="header-back" onclick="goBack('dashboard')">
+      <button class="header-back" onclick="goBack('home')">
         <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
       </button>
       <div class="header-title">Select Appointment</div>
@@ -424,11 +424,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   </div>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span class="nav-label">Home</span>
-    </button>
-    <button class="nav-item" id="nav-family-btn" onclick="showTab('home',this)">
+    <button class="nav-item active" id="nav-family-btn" onclick="showTab('home',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       <span class="nav-label">Family</span>
     </button>
@@ -439,6 +435,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <button class="nav-item" id="nav-notes-btn" onclick="showTab('notes',this)">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span class="nav-label">Notes</span>
+    </button>
+    <button class="nav-item" id="nav-visits-btn" onclick="showTab('visits',this)">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="nav-label">Visits</span>
     </button>
   </nav>
 </div>
@@ -741,9 +741,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div id="hamburger-user" style="font-size:12px;color:var(--text-3);margin-top:3px;"></div>
   </div>
   <div style="flex:1;overflow-y:auto;padding:8px 0;">
-    <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Navigate</div>
+    <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Manage</div>
     <button class="ham-item" onclick="navToDoctors()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span>Doctors</span></button>
-    <button class="ham-item" onclick="navToVisits()"><div class="ham-icon" style="background:var(--teal-bg)"><svg width="18" height="18" fill="none" stroke="var(--teal)" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span>Visits</span></button>
     <button class="ham-item" onclick="navToMeds()"><div class="ham-icon" style="background:var(--amber-bg)"><svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.5 20H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v3"/><circle cx="17" cy="17" r="5"/><path d="M17 15v4M15 17h4"/></svg></div><span>Medications</span></button>
     <button class="ham-item" onclick="navToDocs()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span>Documents</span></button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
@@ -900,7 +899,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  loadDashboard();
+  loadAll().then(() => { renderPeople(data.people); });
   loadDoctorTypes();
 }
 
@@ -1022,7 +1021,7 @@ function showScreen(id, dir='forward') {
   next.classList.add('active');
   if (dir==='forward') next.classList.add('slide-in');
   else if (dir==='back') next.classList.add('slide-back');
-  const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos','notes'];
+  const fabScreens = ['home','doctors','medications','visits','documents','todos','notes'];
   document.getElementById('fab').style.display = fabScreens.includes(id) ? 'flex' : 'none';
 }
 function goBack(to) { showScreen(to,'back'); }
@@ -1032,14 +1031,13 @@ function showTab(tab, btn) {
   if (btn) btn.classList.add('active');
   currentTab = tab;
   showScreen(tab,'none');
-  if (tab==='dashboard') { loadDashboard(); }
-  if (tab==='doctors' && !data.doctors.length) loadDoctors();
-  if (tab==='medications' && !data.medications.length) loadMeds();
-  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
-  if (tab==='documents') loadDocs();
+  if (tab==='home') { if (!data.people.length) loadPeople(); else renderPeople(data.people); }
   if (tab==='todos') loadTodos();
   if (tab==='notes') loadNotes();
-  if (tab==='home') { if (!data.people.length) loadPeople(); else renderPeople(data.people); }
+  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
+  if (tab==='doctors' && !data.doctors.length) loadDoctors();
+  if (tab==='medications' && !data.medications.length) loadMeds();
+  if (tab==='documents') loadDocs();
 }
 
 function toast(msg, dur=2500) {
@@ -1619,7 +1617,7 @@ function handleNoteKey(e, type) {
 }
 
 async function openAddModal() {
-  const map = {dashboard:'modal-visit',home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo',notes:'modal-note'};
+  const map = {home:'modal-person',doctors:'modal-doctor',medications:'modal-med',visits:'modal-visit',documents:'modal-document',todos:'modal-todo',notes:'modal-note'};
   const modal = map[currentTab];
   if (!modal) return;
   clearForm(modal);
@@ -2262,7 +2260,7 @@ async function saveAppointmentNotes() {
 
   toast('Saved \u2713');
   await Promise.all([loadVisits(), loadTodos()]);
-  showTab('dashboard', document.getElementById('nav-dashboard'));
+  showTab('visits', document.getElementById('nav-visits-btn'));
 }
 
 
@@ -3062,12 +3060,12 @@ function toggleDashboardVisits() {
 
 // ── NAV HELPERS ──
 function navToDoctors(){closeHamburger();currentTab='doctors';showScreen('doctors','forward');if(!data.doctors.length)loadDoctors();}
-function navToVisits(){closeHamburger();currentTab='visits';showScreen('visits','forward');if(!data.visits.length)loadVisits();else{renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}}
+function navToVisits(){closeHamburger();var b=document.getElementById('nav-visits-btn');showTab('visits',b);}
 function navToMeds(){closeHamburger();currentTab='medications';showScreen('medications','forward');if(!data.medications.length)loadMeds();}
 function navToDocs(){closeHamburger();currentTab='documents';showScreen('documents','forward');loadDocs();}
-function navToTodos(){var b=document.getElementById('nav-todo-btn');showTab('todos',b);}
-function navToNotes(){var b=document.getElementById('nav-notes-btn');showTab('notes',b);}
-function openVisitFromDashboard(id){navToVisits();setTimeout(function(){openVisit(id);},350);}
+function navToTodos(){closeHamburger();var b=document.getElementById('nav-todo-btn');showTab('todos',b);}
+function navToNotes(){closeHamburger();var b=document.getElementById('nav-notes-btn');showTab('notes',b);}
+function openVisitFromDashboard(id){var b=document.getElementById('nav-visits-btn');showTab('visits',b);setTimeout(function(){openVisit(id);},350);}
 
 // ── VISIT FILTER ──
 window.visitsPersonFilter=null;
