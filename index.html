@@ -37,19 +37,9 @@
   --nav-h: calc(60px + env(safe-area-inset-bottom, 34px));
 }
 /* ── LARGE FONT MODE ── */
-body.large-font { font-size: 17px; }
-body.large-font .person-name, body.large-font .list-title, body.large-font .visit-title,
-body.large-font .detail-name, body.large-font .header-title { font-size: 19px; }
-body.large-font .list-sub, body.large-font .visit-meta,
-body.large-font .prop-label, body.large-font .prop-value { font-size: 15px; }
-body.large-font .nav-label { font-size: 12px; }
-body.large-font .section-label { font-size: 13px; }
-body.large-font input, body.large-font textarea, body.large-font select,
-body.large-font button { font-size: 16px !important; }
-body.large-font .btn-primary { font-size: 17px !important; }
-body.large-font .chip, body.large-font .badge { font-size: 12px; }
-body.large-font .modal-title { font-size: 19px; }
-body.large-font label { font-size: 14px; }
+body.large-font #main-app,
+body.large-font #login-screen,
+body.large-font #onboarding-screen { zoom: 1.2; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); position: fixed; width: 100%; height: 100%; overflow: hidden; }
 #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
@@ -3659,7 +3649,7 @@ function quickAdd(type){var m={visit:'visits',medication:'medications',todo:'tod
 // ── SWIPE TO GO BACK ──
 (function(){
   var tx=0,ty=0,tt=0;
-  var bm={'screen-home':'dashboard','screen-doctors':'dashboard','screen-visits':'dashboard','screen-medications':'dashboard','screen-documents':'dashboard','screen-notes':'dashboard','screen-todos':'dashboard','screen-person':'home','screen-doctor-detail':'doctors','screen-med-detail':'medications','screen-visit-detail':'visits'};
+  var bm={'screen-person':'home','screen-doctor-detail':'doctors','screen-med-detail':'medications','screen-visit-detail':'visits'};
   document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;tt=Date.now();},{passive:true});
   document.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty,dt=Date.now()-tt;if(tx>30||dx<60||Math.abs(dy)>Math.abs(dx)*0.8||dt>400)return;var cur=document.querySelector('.screen.active');if(cur&&bm[cur.id])goBack(bm[cur.id]);},{passive:true});
 })();
