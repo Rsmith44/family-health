@@ -981,7 +981,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  loadAll().then(() => { renderPeople(data.people); });
+  Promise.all([loadAll(), loadTodos()]).then(() => { renderPeople(data.people); });
   loadDoctorTypes();
 }
 
@@ -2561,6 +2561,14 @@ function openPersonInfoCard(personId) {
       ).join('')
     + '</div>'
     + (person.notes ? '<div style="margin-top:14px;"><div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">General Notes</div><div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.6;">' + person.notes + '</div></div>' : '')
+    + '<div style="margin-top:20px;display:flex;gap:10px;">'
+    + '<button onclick="showShareCard(currentPerson.id)" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);padding:13px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">'
+    + '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
+    + 'Share Card</button>'
+    + '<button onclick="copyInfoCardText(currentPerson.id)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 16px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">'
+    + '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>'
+    + 'Copy</button>'
+    + '</div>'
     + '</div>';
 }
 
@@ -2732,6 +2740,129 @@ function toggleFontSize() {
   localStorage.setItem('largeFontMode', large ? '0' : '1');
   applyFontSize();
 }
+
+
+// ── INFO CARD SHARE ──
+
+function showShareCard(personId) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+
+  const color = avatarColor(p.name);
+  const ini = initials(p.name);
+
+  const fields = [
+    { icon:'🚨', label:'Allergies',       value: p.allergies,        urgent: true },
+    { icon:'🩺', label:'Conditions',      value: p.diagnoses,        urgent: false },
+    { icon:'🩸', label:'Blood Type',      value: p.blood_type,       urgent: false },
+    { icon:'📋', label:'Medicare',        value: p.medicare_number,  urgent: false },
+    { icon:'🏥', label:'Health Fund',     value: p.health_fund ? p.health_fund + (p.health_fund_number ? ' · ' + p.health_fund_number : '') : null, urgent: false },
+    { icon:'📞', label:'Emergency',       value: p.emergency_contact ? p.emergency_contact + (p.emergency_phone ? ' · ' + p.emergency_phone : '') : null, urgent: false },
+    { icon:'💉', label:'Immunisations',   value: p.immunisations_current === false ? 'Outstanding ⚠' : (p.immunisations_current ? 'Up to date ✓' : null), urgent: p.immunisations_current === false },
+  ].filter(f => f.value);
+
+  const dobStr = p.dob ? fmtDate(p.dob) + ' · ' + age(p.dob) + ' old' : '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'share-card-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+
+  overlay.innerHTML =
+    '<div id="share-card" style="background:#FDFAF6;border-radius:20px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">'
+
+    // Header
+    + '<div style="background:' + color + ';padding:22px 20px 18px;display:flex;align-items:center;gap:14px;">'
+    + '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0;">' + ini + '</div>'
+    + '<div>'
+    + '<div style="font-size:20px;font-weight:700;color:#fff;line-height:1.2;">' + p.name + '</div>'
+    + (dobStr ? '<div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;">' + dobStr + '</div>' : '')
+    + '</div>'
+    + '</div>'
+
+    // Fields
+    + '<div style="padding:4px 0;">'
+    + (fields.length ? fields.map((f, i) =>
+        '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 18px;' + (i > 0 ? 'border-top:1px solid #EEEAE3;' : '') + '">'
+        + '<div style="font-size:16px;margin-top:1px;">' + f.icon + '</div>'
+        + '<div>'
+        + '<div style="font-size:10px;font-weight:700;color:#A8A09A;text-transform:uppercase;letter-spacing:.06em;">' + f.label + '</div>'
+        + '<div style="font-size:14px;font-weight:500;color:' + (f.urgent ? '#C0392B' : '#1C1917') + ';margin-top:1px;line-height:1.4;">' + f.value + '</div>'
+        + '</div></div>'
+      ).join('') : '<div style="padding:16px 18px;font-size:13px;color:#A8A09A;font-style:italic;">No info added yet</div>')
+    + '</div>'
+
+    // Footer
+    + '<div style="padding:10px 18px 14px;border-top:1px solid #EEEAE3;">'
+    + '<div style="font-size:10px;color:#C8BFB5;text-align:center;">Family Health · ' + new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // Instructions
+    + '<div style="margin-top:14px;text-align:center;">'
+    + '<div style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;margin-bottom:4px;">Take a screenshot to share</div>'
+    + '<div style="color:rgba(255,255,255,0.5);font-size:12px;">then tap Share in your photo app</div>'
+    + '</div>'
+
+    // Close + Copy buttons
+    + '<div style="display:flex;gap:10px;margin-top:16px;width:100%;max-width:360px;">'
+    + '<button onclick="closShareCard()" style="flex:1;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Close</button>'
+    + '<button onclick="copyInfoCardText(currentPerson.id);toast(\'Copied ✓\')" style="flex:1;background:#fff;color:#1C1917;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Copy Text</button>'
+    + '</div>';
+
+  document.body.appendChild(overlay);
+
+  // Close on backdrop tap
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closShareCard();
+  });
+}
+
+function closShareCard() {
+  const el = document.getElementById('share-card-overlay');
+  if (el) el.remove();
+}
+
+function copyInfoCardText(personId) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+
+  const lines = [];
+  lines.push('═══════════════════════');
+  lines.push('  ' + p.name.toUpperCase());
+  if (p.dob) lines.push('  ' + fmtDate(p.dob) + ' · ' + age(p.dob) + ' old');
+  lines.push('═══════════════════════');
+
+  const fields = [
+    ['🚨 Allergies',     p.allergies],
+    ['🩺 Conditions',    p.diagnoses],
+    ['🩸 Blood Type',    p.blood_type],
+    ['📋 Medicare',      p.medicare_number],
+    ['🏥 Health Fund',   p.health_fund ? p.health_fund + (p.health_fund_number ? ' · ' + p.health_fund_number : '') : null],
+    ['📞 Emergency',     p.emergency_contact ? p.emergency_contact + (p.emergency_phone ? ' · ' + p.emergency_phone : '') : null],
+    ['💉 Immunisations', p.immunisations_current === false ? 'Outstanding ⚠' : (p.immunisations_current ? 'Up to date ✓' : null)],
+  ].filter(f => f[1]);
+
+  fields.forEach(f => {
+    lines.push(f[0] + ':');
+    lines.push('  ' + f[1]);
+    lines.push('');
+  });
+
+  lines.push('───────────────────────');
+  lines.push('Shared from Family Health');
+  lines.push(new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}));
+
+  const text = lines.join('\n');
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => toast('Copied ✓')).catch(() => {
+      prompt('Copy this text:', text);
+    });
+  } else {
+    prompt('Copy this text:', text);
+  }
+}
+
 
 // ── EXPORT ──
 function openExportModal() {
