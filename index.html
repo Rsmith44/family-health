@@ -1207,10 +1207,18 @@ function renderPeople(rows) {
     }
 
     // 2. Number of active to do items
+    const now2 = new Date(); now2.setHours(0,0,0,0);
+    const overdue = activeTodos.filter(t => t.due_date && new Date(t.due_date) < now2);
     const todoCount = activeTodos.length;
-    const todoText = todoCount === 0 ? 'To Do list complete' : `${todoCount} active To Do item${todoCount !== 1 ? 's' : ''}`;
-    const todoColor = todoCount === 0 ? 'var(--text-3)' : 'var(--text-2)';
-    parts.push(`<span style="font-size:12px;color:${todoColor};">${todoText}</span>`);
+    let todoText, todoColor, todoWeight;
+    if (todoCount === 0) {
+      todoText = 'To Do list complete'; todoColor = 'var(--text-3)'; todoWeight = '400';
+    } else if (overdue.length > 0) {
+      todoText = overdue.length + ' overdue To Do item' + (overdue.length !== 1 ? 's' : ''); todoColor = 'var(--rose)'; todoWeight = '600';
+    } else {
+      todoText = todoCount + ' active To Do item' + (todoCount !== 1 ? 's' : ''); todoColor = 'var(--text-2)'; todoWeight = '400';
+    }
+    parts.push(`<span style="font-size:12px;color:${todoColor};font-weight:${todoWeight};">${todoText}</span>`);
 
     const statusHtml = parts.join('<span style="color:var(--border);margin:0 5px;">·</span>');
 
@@ -3754,7 +3762,24 @@ function renderNotes() {
     return;
   }
 
-  var html = '<div style="background:var(--card);">';
+  // Colour palette for section headers (soft backgrounds)
+  var SECTION_COLOURS = [
+    {bg:'#E6F0EC',border:'#C0D8CA',text:'#1A4D35',dot:'#2A6049'},  // green
+    {bg:'#E8EFF8',border:'#C0CFDF',text:'#1A3A6B',dot:'#2C5282'},  // blue
+    {bg:'#F5E8EB',border:'#E0BDC4',text:'#7A2030',dot:'#9B3A4A'},  // rose
+    {bg:'#EEE8F7',border:'#D4C4E8',text:'#3D2070',dot:'#5B3A8E'},  // purple
+    {bg:'#F5EBE0',border:'#DEBFAA',text:'#7A3A10',dot:'#B56B2A'},  // amber
+    {bg:'#E4F2F2',border:'#B8D8D8',text:'#0F4040',dot:'#1A6B6B'},  // teal
+    {bg:'#FDF0E8',border:'#E8C8B0',text:'#7A3020',dot:'#C04030'},  // coral
+    {bg:'#EDF2E0',border:'#C8D8A8',text:'#2A4010',dot:'#4A7020'},  // olive
+  ];
+  function getSectionColour(name) {
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % SECTION_COLOURS.length;
+    return SECTION_COLOURS[Math.abs(h)];
+  }
+
+  var html = '<div style="padding:10px 14px;">';
   sections.forEach(function(sec, idx) {
     var notes = grouped[sec.name] || [];
     // Filter notes by person if filter active
@@ -3764,23 +3789,25 @@ function renderNotes() {
       ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
       : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
     var borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
-    // Section header row
-    html += '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="' + borderTop + 'display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:var(--card);">'
+    // Section header row — coloured background
+    var col = getSectionColour(sec.name);
+    var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
+    html += '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="' + sepStyle + 'display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';margin-bottom:' + (collapsed ? '0' : '0') + ';">'
       + '<div style="flex:1;">'
-      + '<div style="font-size:14px;font-weight:600;color:var(--text);">' + sec.name + '</div>'
+      + '<div style="font-size:14px;font-weight:700;color:' + col.text + ';">' + sec.name + '</div>'
       + '</div>'
-      + '<div style="font-size:12px;color:var(--text-3);margin-right:6px;">' + visibleNotes.length + ' note' + (visibleNotes.length !== 1 ? 's' : '') + '</div>'
-      + '<div style="color:var(--text-3);">' + chevron + '</div>'
+      + '<div style="font-size:12px;color:' + col.text + ';opacity:0.7;margin-right:6px;">' + visibleNotes.length + ' note' + (visibleNotes.length !== 1 ? 's' : '') + '</div>'
+      + '<div style="color:' + col.text + ';opacity:0.8;">' + chevron + '</div>'
       + '</div>';
 
-    // Section content (notes)
+    // Section content (notes) — white cards inside coloured section
     if (!collapsed) {
-      html += '<div style="background:var(--bg);border-top:1px solid var(--border);">';
+      html += '<div style="margin-top:2px;margin-bottom:4px;">';
       if (visibleNotes.length) {
         visibleNotes.forEach(function(item) {
           var n = item.note;
-          html += '<div onclick="editNote(\'' + n.id + '\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px 10px 20px;border-bottom:1px solid var(--border);cursor:pointer;">'
-            + '<div style="width:5px;height:5px;border-radius:50%;background:var(--text-3);flex-shrink:0;margin-top:6px;"></div>'
+          html += '<div onclick="editNote(\'' + n.id + '\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px 10px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;cursor:pointer;">'
+            + '<div style="width:5px;height:5px;border-radius:50%;background:' + col.dot + ';flex-shrink:0;margin-top:6px;"></div>'
             + '<div style="flex:1;">'
             + '<div style="font-size:13px;color:var(--text);line-height:1.5;">' + item.text.replace(/\n/g,'<br>') + '</div>'
             + (n.people && n.people.name && !notesPersonFilter ? '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">' + n.people.name + '</div>' : '')
@@ -3789,7 +3816,7 @@ function renderNotes() {
         });
       }
       // Add note row
-      html += '<div onclick="openAddNoteToSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:9px 14px 10px 20px;cursor:pointer;">'
+      html += '<div onclick="openAddNoteToSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 13px 6px 16px;cursor:pointer;">'
         + '<div style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
         + '<svg width="8" height="8" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
         + '</div>'
