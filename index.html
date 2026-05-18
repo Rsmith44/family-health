@@ -1184,8 +1184,9 @@ function renderPeople(rows) {
 
     // 2. Number of active to do items
     const todoCount = activeTodos.length;
-    const todoColor = todoCount > 0 ? 'var(--text-2)' : 'var(--text-3)';
-    parts.push(`<span style="font-size:12px;color:${todoColor};">${todoCount} to do item${todoCount !== 1 ? 's' : ''}</span>`);
+    const todoText = todoCount === 0 ? 'To Do list complete' : `${todoCount} active To Do item${todoCount !== 1 ? 's' : ''}`;
+    const todoColor = todoCount === 0 ? 'var(--text-3)' : 'var(--text-2)';
+    parts.push(`<span style="font-size:12px;color:${todoColor};">${todoText}</span>`);
 
     const statusHtml = parts.join('<span style="color:var(--border);margin:0 5px;">·</span>');
 
