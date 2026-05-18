@@ -1166,34 +1166,30 @@ function renderPeople(rows) {
   if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👨‍👩‍👧‍👦</div>No family members yet</div>'; return; }
   const now = new Date();
   el.innerHTML = rows.map(p => {
-    const activeMeds = data.medications.filter(m => m.person_id === p.id && m.status === 'Active');
     const upcoming = data.visits.filter(v => v.person_id === p.id && v.visit_date && visitDate(v.visit_date) >= now)
       .sort((a,b) => visitDate(a.visit_date) - visitDate(b.visit_date));
-    const overdueTodos = todosData.filter(t => t.person_id === p.id && !t.completed && t.due_date && new Date(t.due_date) < now);
+    const activeTodos = todosData.filter(t => t.person_id === p.id && !t.completed);
 
-    // Build status line
     const parts = [];
+
+    // 1. Next visit date
     if (upcoming.length) {
-      const next = upcoming[0];
-      const d = visitDate(next.visit_date);
+      const d = visitDate(upcoming[0].visit_date);
       const dayDiff = Math.round((d - now) / (1000*60*60*24));
       const dateLabel = dayDiff === 0 ? 'Today' : dayDiff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
-      parts.push({ text: (next.doctors?.name || 'Visit') + ' · ' + dateLabel, color: 'var(--green)', urgent: false });
+      parts.push(`<span style="font-size:12px;color:var(--text-2);">Next visit ${dateLabel}</span>`);
+    } else {
+      parts.push(`<span style="font-size:12px;color:var(--text-3);">No upcoming visits</span>`);
     }
-    if (overdueTodos.length) {
-      parts.push({ text: overdueTodos.length + ' overdue task' + (overdueTodos.length > 1 ? 's' : ''), color: '#9B3A4A', urgent: true });
-    } else if (activeMeds.length) {
-      parts.push({ text: activeMeds.length + ' active med' + (activeMeds.length > 1 ? 's' : ''), color: 'var(--text-3)', urgent: false });
-    }
-    if (!parts.length) parts.push({ text: 'All clear', color: 'var(--text-3)', urgent: false });
 
-    const statusHtml = parts.map(pt =>
-      `<span style="font-size:12px;color:${pt.color};font-weight:${pt.urgent?'600':'400'};">${pt.text}</span>`
-    ).join('<span style="color:var(--border);margin:0 4px;">·</span>');
+    // 2. Number of active to do items
+    const todoCount = activeTodos.length;
+    const todoColor = todoCount > 0 ? 'var(--text-2)' : 'var(--text-3)';
+    parts.push(`<span style="font-size:12px;color:${todoColor};">${todoCount} to do item${todoCount !== 1 ? 's' : ''}</span>`);
 
-    const borderLeft = overdueTodos.length ? 'border-left:3px solid #9B3A4A;' : '';
+    const statusHtml = parts.join('<span style="color:var(--border);margin:0 5px;">·</span>');
 
-    return `<div class="person-card" onclick="openPerson('${p.id}')" style="${borderLeft}">
+    return `<div class="person-card" onclick="openPerson('${p.id}')">
       <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
       <div class="person-info">
         <div class="person-name">${p.name}</div>
@@ -1250,15 +1246,14 @@ async function openPerson(id) {
       </div>
     </div>`;
 
-    // Quick info strip (allergies, blood type, health fund)
+    // Quick info strip — allergies and diagnoses only
     const strips = [];
-    if (p.allergies) strips.push(`<div style="background:#F5E8EB;border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:#9B3A4A;text-transform:uppercase;letter-spacing:.06em;">Allergies</div><div style="font-size:12px;font-weight:600;color:#7A2030;margin-top:1px;">${p.allergies}</div></div>`);
-    if (p.blood_type) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Blood Type</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.blood_type}</div></div>`);
-    if (p.health_fund) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Health Fund</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.health_fund}</div></div>`);
-    if (p.medicare_number) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">Medicare</div><div style="font-size:12px;font-weight:600;color:var(--text);margin-top:1px;">${p.medicare_number}</div></div>`);
+    if (p.allergies) strips.push(`<div style="background:#F5E8EB;border-radius:8px;padding:7px 10px;border:1px solid #E8C4C4;"><div style="font-size:9px;font-weight:700;color:#9B3A4A;text-transform:uppercase;letter-spacing:.06em;">🚨 Allergies</div><div style="font-size:12px;font-weight:600;color:#7A2030;margin-top:2px;line-height:1.4;">${p.allergies}</div></div>`);
+    if (p.diagnoses) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">🩺 Conditions</div><div style="font-size:12px;font-weight:500;color:var(--text);margin-top:2px;line-height:1.4;">${p.diagnoses}</div></div>`);
 
     if (strips.length) {
-      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px 14px 0;">${strips.join('')}</div>`;
+      const cols = strips.length === 1 ? '1fr' : '1fr 1fr';
+      html += `<div style="display:grid;grid-template-columns:${cols};gap:7px;padding:12px 14px 0;">${strips.join('')}</div>`;
     }
 
     // Main section menu
