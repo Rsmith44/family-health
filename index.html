@@ -3764,19 +3764,49 @@ function renderNotes() {
 
   // Colour palette for section headers (soft backgrounds)
   var SECTION_COLOURS = [
-    {bg:'#E6F0EC',border:'#C0D8CA',text:'#1A4D35',dot:'#2A6049'},  // green
-    {bg:'#E8EFF8',border:'#C0CFDF',text:'#1A3A6B',dot:'#2C5282'},  // blue
-    {bg:'#F5E8EB',border:'#E0BDC4',text:'#7A2030',dot:'#9B3A4A'},  // rose
-    {bg:'#EEE8F7',border:'#D4C4E8',text:'#3D2070',dot:'#5B3A8E'},  // purple
-    {bg:'#F5EBE0',border:'#DEBFAA',text:'#7A3A10',dot:'#B56B2A'},  // amber
-    {bg:'#E4F2F2',border:'#B8D8D8',text:'#0F4040',dot:'#1A6B6B'},  // teal
-    {bg:'#FDF0E8',border:'#E8C8B0',text:'#7A3020',dot:'#C04030'},  // coral
-    {bg:'#EDF2E0',border:'#C8D8A8',text:'#2A4010',dot:'#4A7020'},  // olive
+    {bg:'#E6F0EC',border:'#C0D8CA',text:'#1A4D35',dot:'#2A6049'},  // 1  green
+    {bg:'#E8EFF8',border:'#C0CFDF',text:'#1A3A6B',dot:'#2C5282'},  // 2  blue
+    {bg:'#F5E8EB',border:'#E0BDC4',text:'#7A2030',dot:'#9B3A4A'},  // 3  rose
+    {bg:'#EEE8F7',border:'#D4C4E8',text:'#3D2070',dot:'#5B3A8E'},  // 4  purple
+    {bg:'#F5EBE0',border:'#DEBFAA',text:'#7A3A10',dot:'#B56B2A'},  // 5  amber
+    {bg:'#E4F2F2',border:'#B8D8D8',text:'#0F4040',dot:'#1A6B6B'},  // 6  teal
+    {bg:'#FDF0E8',border:'#E8C8B0',text:'#7A3020',dot:'#C04030'},  // 7  coral
+    {bg:'#EDF2E0',border:'#C8D8A8',text:'#2A4010',dot:'#4A7020'},  // 8  olive
+    {bg:'#E8F4FD',border:'#B8D8EE',text:'#0A3050',dot:'#1560A0'},  // 9  sky blue
+    {bg:'#FEF0F5',border:'#F0C0D8',text:'#6A1040',dot:'#B02060'},  // 10 pink
+    {bg:'#F0F8E8',border:'#C8E0A8',text:'#204010',dot:'#407020'},  // 11 lime
+    {bg:'#FFF4E0',border:'#F0D098',text:'#604010',dot:'#A06020'},  // 12 golden
+    {bg:'#EBF5F0',border:'#A8D8C0',text:'#0A3828',dot:'#1A6848'},  // 13 emerald
+    {bg:'#F8EEFF',border:'#DDBCF8',text:'#3A106A',dot:'#7030B8'},  // 14 violet
+    {bg:'#FFF0E8',border:'#F8C8A8',text:'#602010',dot:'#B03820'},  // 15 burnt orange
+    {bg:'#E8F0FF',border:'#B0C8F8',text:'#102060',dot:'#2040B0'},  // 16 indigo
+    {bg:'#F5FDE8',border:'#C8EE98',text:'#284008',dot:'#508018'},  // 17 yellow-green
+    {bg:'#FDEEF8',border:'#F0B8E0',text:'#580848',dot:'#980878'},  // 18 magenta
+    {bg:'#E8FAFA',border:'#98DEDE',text:'#082830',dot:'#106878'},  // 19 cyan
+    {bg:'#FDF8E8',border:'#F0E098',text:'#504008',dot:'#988010'},  // 20 mustard
+    {bg:'#F0EEF8',border:'#C8C0E8',text:'#281850',dot:'#483888'},  // 21 slate purple
+    {bg:'#EEFAF0',border:'#A8E8B8',text:'#083818',dot:'#187830'},  // 22 mint
+    {bg:'#FEF4E8',border:'#F0C890',text:'#582808',dot:'#A05010'},  // 23 caramel
+    {bg:'#E8F8FC',border:'#A0D8E8',text:'#082038',dot:'#106890'},  // 24 ocean
+    {bg:'#FCF0F0',border:'#F0B8B8',text:'#601010',dot:'#A82020'},  // 25 blush
+    {bg:'#F0F8F0',border:'#B8E0B8',text:'#103010',dot:'#206020'},  // 26 sage
+    {bg:'#FCF4FE',border:'#E8C0F8',text:'#400858',dot:'#7818A8'},  // 27 lavender
+    {bg:'#FFF8E8',border:'#F8E098',text:'#503800',dot:'#907000'},  // 28 honey
+    {bg:'#E8F4F8',border:'#A8D0E0',text:'#082838',dot:'#106880'},  // 29 steel blue
+    {bg:'#FEE8EC',border:'#F8B8C0',text:'#600818',dot:'#A01830'},  // 30 crimson
+    {bg:'#EEFCF4',border:'#90E8B8',text:'#063020',dot:'#108840'},  // 31 seafoam
+    {bg:'#F8F0E8',border:'#E8C898',text:'#402008',dot:'#784010'},  // 32 sandstone
+    {bg:'#EEF4FC',border:'#B0C8F0',text:'#102048',dot:'#204890'},  // 33 periwinkle
+    {bg:'#FEF8F0',border:'#F8D8A8',text:'#583010',dot:'#A05820'},  // 34 peach
+    {bg:'#F0FEEE',border:'#B8F0A8',text:'#184008',dot:'#308018'},  // 35 spring
+    {bg:'#FCE8F8',border:'#F0A8E0',text:'#500840',dot:'#900870'},  // 36 orchid
+    {bg:'#E8ECFC',border:'#A8B8F0',text:'#101850',dot:'#203090'},  // 37 cobalt
+    {bg:'#FEF0E8',border:'#F8C0A0',text:'#581808',dot:'#A02808'},  // 38 terracotta
+    {bg:'#EEFCFC',border:'#98E8E8',text:'#062828',dot:'#108888'},  // 39 aqua
+    {bg:'#F4F4EE',border:'#D0D0B8',text:'#303018',dot:'#585830'},  // 40 warm grey
   ];
-  function getSectionColour(name) {
-    var h = 0;
-    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % SECTION_COLOURS.length;
-    return SECTION_COLOURS[Math.abs(h)];
+  function getSectionColour(idx) {
+    return SECTION_COLOURS[idx % SECTION_COLOURS.length];
   }
 
   var html = '<div style="padding:10px 14px;">';
@@ -3790,7 +3820,7 @@ function renderNotes() {
       : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
     var borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
     // Section header row — coloured background
-    var col = getSectionColour(sec.name);
+    var col = getSectionColour(idx);
     var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
     html += '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="' + sepStyle + 'display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';margin-bottom:' + (collapsed ? '0' : '0') + ';">'
       + '<div style="flex:1;">'
