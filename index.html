@@ -118,6 +118,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
 .bottom-nav { display: flex; background: rgba(247,245,240,0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border); padding: 10px 0 env(safe-area-inset-bottom, 20px); flex-shrink: 0; }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; border: none; background: none; transition: transform 0.1s; }
+.nav-item svg { transition: filter 0.15s, opacity 0.15s; filter: grayscale(1); opacity: 0.35; }
+.nav-item.active svg { filter: none; opacity: 1; }
 .nav-item:active { transform: scale(0.88); }
 .nav-label { font-size: 10px; font-weight: 500; color: var(--text-3); transition: color 0.15s; font-family: 'DM Sans', sans-serif; }
 .nav-item svg { color: var(--text-3); transition: color 0.15s; }
@@ -251,8 +253,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="screen" id="screen-doctors">
     <div class="header">
-      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Doctors</div><div class="header-sub" id="doctors-sub">Your care team</div></div>
+      <button class="header-back" id="back-from-doctors" onclick="openHamburger()">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-left" style="flex:1;padding-left:4px;"><div class="header-title">Doctors</div><div class="header-sub" id="doctors-sub">Your care team</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -277,8 +281,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="screen" id="screen-medications">
     <div class="header">
-      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
+      <button class="header-back" id="back-from-meds" onclick="openHamburger()">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-left" style="flex:1;padding-left:4px;"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -454,19 +460,60 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <nav class="bottom-nav">
     <button class="nav-item active" id="nav-family-btn" onclick="showTab('home',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <svg width="24" height="22" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Back person (darker) -->
+        <circle cx="18" cy="7" r="4" fill="#C9956A"/>
+        <path d="M11 22v-2a5 5 0 015-5h5a5 5 0 015 5v2" fill="#C9956A"/>
+        <!-- Front person (lighter/yellow) -->
+        <circle cx="10" cy="8" r="4.5" fill="#F5A623"/>
+        <path d="M1 23v-2a6 6 0 016-6h6a6 6 0 016 6v2" fill="#F5A623"/>
+      </svg>
       <span class="nav-label">Family</span>
     </button>
     <button class="nav-item" id="nav-todo-btn" onclick="showTab('todos',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Checkbox square -->
+        <rect x="3" y="3" width="18" height="18" rx="3" fill="#1C1917"/>
+        <!-- Tick -->
+        <path d="M7.5 12l3.5 3.5 6-7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       <span class="nav-label">To Do</span>
     </button>
     <button class="nav-item" id="nav-notes-btn" onclick="showTab('notes',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Notepad body -->
+        <rect x="3" y="2" width="14" height="18" rx="2" fill="#FDE8D0"/>
+        <rect x="3" y="2" width="14" height="18" rx="2" stroke="#E8A87C" stroke-width="1"/>
+        <!-- Lines -->
+        <line x1="6" y1="8" x2="13" y2="8" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="6" y1="11" x2="13" y2="11" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="6" y1="14" x2="11" y2="14" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- Pen -->
+        <path d="M14 16l5-5 2 2-5 5z" fill="#E8691A"/>
+        <path d="M19 11l2 2" stroke="#C0510E" stroke-width="1"/>
+        <path d="M14 16l-1.5 3.5 3.5-1.5z" fill="#C0510E"/>
+      </svg>
       <span class="nav-label">Notes</span>
     </button>
     <button class="nav-item" id="nav-visits-btn" onclick="showTab('visits',this)">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Calendar body -->
+        <rect x="2" y="4" width="20" height="18" rx="3" fill="#EDE9FF"/>
+        <rect x="2" y="4" width="20" height="18" rx="3" stroke="#9B8EDF" stroke-width="1"/>
+        <!-- Header bar -->
+        <rect x="2" y="4" width="20" height="6" rx="3" fill="#9B8EDF"/>
+        <rect x="2" y="7" width="20" height="3" fill="#9B8EDF"/>
+        <!-- Date pegs -->
+        <line x1="8" y1="2" x2="8" y2="7" stroke="#9B8EDF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="2" x2="16" y2="7" stroke="#9B8EDF" stroke-width="2" stroke-linecap="round"/>
+        <!-- Dots grid -->
+        <circle cx="7" cy="14" r="1.5" fill="#7C6FCD"/>
+        <circle cx="12" cy="14" r="1.5" fill="#7C6FCD"/>
+        <circle cx="17" cy="14" r="1.5" fill="#7C6FCD"/>
+        <circle cx="7" cy="19" r="1.5" fill="#7C6FCD"/>
+        <circle cx="12" cy="19" r="1.5" fill="#7C6FCD"/>
+        <circle cx="17" cy="19" r="1.5" fill="#B8B0E8"/>
+      </svg>
       <span class="nav-label">Visits</span>
     </button>
   </nav>
@@ -1117,12 +1164,41 @@ function renderPeople(rows) {
   const el = document.getElementById('people-list');
   document.getElementById('home-sub').textContent = `${rows.length} member${rows.length!==1?'s':''}`;
   if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👨‍👩‍👧‍👦</div>No family members yet</div>'; return; }
-  el.innerHTML = '<div class="section-label">Family Members</div>' + rows.map(p => {
-    const meds = data.medications.filter(m=>m.person_id===p.id && m.status==='Active');
-    const upcoming = data.visits.filter(v=>v.person_id===p.id && v.visit_date && visitDate(v.visit_date)>=new Date());
-    return `<div class="person-card" onclick="openPerson('${p.id}')">
+  const now = new Date();
+  el.innerHTML = rows.map(p => {
+    const activeMeds = data.medications.filter(m => m.person_id === p.id && m.status === 'Active');
+    const upcoming = data.visits.filter(v => v.person_id === p.id && v.visit_date && visitDate(v.visit_date) >= now)
+      .sort((a,b) => visitDate(a.visit_date) - visitDate(b.visit_date));
+    const overdueTodos = todosData.filter(t => t.person_id === p.id && !t.completed && t.due_date && new Date(t.due_date) < now);
+
+    // Build status line
+    const parts = [];
+    if (upcoming.length) {
+      const next = upcoming[0];
+      const d = visitDate(next.visit_date);
+      const dayDiff = Math.round((d - now) / (1000*60*60*24));
+      const dateLabel = dayDiff === 0 ? 'Today' : dayDiff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+      parts.push({ text: (next.doctors?.name || 'Visit') + ' · ' + dateLabel, color: 'var(--green)', urgent: false });
+    }
+    if (overdueTodos.length) {
+      parts.push({ text: overdueTodos.length + ' overdue task' + (overdueTodos.length > 1 ? 's' : ''), color: '#9B3A4A', urgent: true });
+    } else if (activeMeds.length) {
+      parts.push({ text: activeMeds.length + ' active med' + (activeMeds.length > 1 ? 's' : ''), color: 'var(--text-3)', urgent: false });
+    }
+    if (!parts.length) parts.push({ text: 'All clear', color: 'var(--text-3)', urgent: false });
+
+    const statusHtml = parts.map(pt =>
+      `<span style="font-size:12px;color:${pt.color};font-weight:${pt.urgent?'600':'400'};">${pt.text}</span>`
+    ).join('<span style="color:var(--border);margin:0 4px;">·</span>');
+
+    const borderLeft = overdueTodos.length ? 'border-left:3px solid #9B3A4A;' : '';
+
+    return `<div class="person-card" onclick="openPerson('${p.id}')" style="${borderLeft}">
       <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-      <div class="person-info"><div class="person-name">${p.name}</div></div>
+      <div class="person-info">
+        <div class="person-name">${p.name}</div>
+        <div style="margin-top:2px;">${statusHtml}</div>
+      </div>
       <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
@@ -2030,11 +2106,7 @@ async function openAppointmentMode(visitId, from) {
   const typeBg  = { pre:'#E8EFF8', post:'#E6F0EC', note:'#EEE8F7' };
   const typeCol = { pre:'#2C5282', post:'#1A4D35', note:'#5B3A8E' };
 
-  let html = '<div style="padding:16px 16px 8px;">'
-    + '<div style="padding-bottom:8px;">'
-    + '<button onclick="document.getElementById(\'appt-mode-back-btn\').click()" style="display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:var(--green);font-size:13px;font-weight:500;font-family:\'DM Sans\',sans-serif;cursor:pointer;padding:0;">'
-    + '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back'
-    + '</button></div>';
+  let html = '<div style="padding:16px 16px 8px;">';
 
   // BRIEFING
   html += '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Briefing</div>';
