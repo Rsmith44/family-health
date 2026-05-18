@@ -446,15 +446,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <div class="screen" id="screen-notes">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div><div class="header-sub" id="notes-sub">All notes</div></div>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div></div>
+      <button class="icon-btn" onclick="openAddNoteSection()" style="margin-right:4px;" title="Add section">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
     </div>
-    <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="notes-person-pills"></div>
-    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
-      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
-        <input type="checkbox" id="show-hidden-notes" onchange="toggleHiddenNotes(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
-        Show hidden
-      </label>
-    </div>
+    <div id="notes-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
@@ -673,16 +670,32 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="modal-header"><div class="modal-title" id="modal-note-title">Add Note</div><button class="modal-close" onclick="closeModal('modal-note')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="note-id">
+      <input type="hidden" id="note-section">
       <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
-      <div class="field"><label>Person *</label><select id="note-person"><option value="">Select person...</option></select></div>
-      <div class="field"><label>Doctor (optional)</label><select id="note-doctor"><option value="">Select doctor...</option></select></div>
-      <div class="field"><label>Visit (optional)</label><select id="note-visit"><option value="">Select visit...</option></select></div>
-      <div class="field"><label>Medication (optional)</label><select id="note-medication"><option value="">Select medication...</option></select></div>
+      <div class="field"><label>Person</label><select id="note-person"><option value="">Everyone</option></select></div>
       <button class="btn-primary" onclick="saveNote()">Save Note</button>
       <button class="btn-danger" id="delete-note-btn" style="display:none" onclick="deleteNote()">Delete Note</button>
     </div>
   </div>
 </div>
+<!-- ADD NOTE SECTION MODAL -->
+<div class="modal-overlay" id="modal-note-section">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-note-section-title">New Section</div>
+      <button class="modal-close" onclick="closeModal('modal-note-section')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="note-section-editing">
+      <div class="field"><label>Section Name *</label><input type="text" id="note-section-name" placeholder="e.g. Dr Patel, Reminders, School..."></div>
+      <div class="field"><label>Person (optional)</label><select id="note-section-person"><option value="">Everyone</option></select></div>
+      <button class="btn-primary" onclick="saveNoteSection()">Save Section</button>
+      <button class="btn-danger" id="delete-note-section-btn" style="display:none" onclick="deleteNoteSection()">Delete Section</button>
+    </div>
+  </div>
+</div>
+
 <!-- CUSTOM SECTION MODAL -->
 <div class="modal-overlay" id="modal-section">
   <div class="modal-sheet">
@@ -1711,6 +1724,7 @@ async function openAddModal() {
     document.getElementById('modal-note-title').textContent='Add Note';
     document.getElementById('note-id').value='';
     document.getElementById('note-content').value='';
+    document.getElementById('note-section').value='General';
     document.getElementById('delete-note-btn').style.display='none';
     if (!data.people.length) await loadAll();
     populateNoteSelects(typeof notesPersonFilter!=='undefined'?notesPersonFilter:null,null,null,null);
@@ -3620,79 +3634,328 @@ function renderVisitsPersonPills(){
 function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
 
 // ── NOTES ──
-var notesData=[],notesPersonFilter=null,showHiddenNotes=false;
-async function loadNotes(){
-  var el=document.getElementById('notes-list');
-  if(el)el.innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
-  if(!data.people.length)await loadAll();
-  var res=await sb.from('notes').select('*, people(name), doctors(name), visits(title), medications(name)').order('created_at',{ascending:false});
-  if(res.error){if(el)el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.<br><span style="font-size:12px">Run notes.sql in Supabase</span></div>';return;}
-  notesData=res.data||[];renderNotesPersonPills();renderNotes();
+
+// ── NOTES (section-based) ──
+// Sections are stored as notes with content "[SECTION:name]" for a person (or null for everyone).
+// Regular notes carry their section name as a prefix "[S:name] " in the content.
+// Notes without prefix belong to "General".
+
+var notesData = [], notesPersonFilter = null, showHiddenNotes = false;
+var notesSectionCollapsed = {}; // sectionKey -> bool
+
+function parseNoteSection(content) {
+  var m = content.match(/^\[S:([^\]]+)\] ([\s\S]*)$/);
+  if (m) return { section: m[1], text: m[2] };
+  return { section: 'General', text: content };
 }
-function renderNotesPersonPills(){
-  var el=document.getElementById('notes-person-pills');if(!el)return;
-  var f=notesPersonFilter;
-  var html='<button onclick="setNotesPersonFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p){
-    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
-    html+='<button onclick="setNotesPersonFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
+
+function buildNoteContent(section, text) {
+  if (!section || section === 'General') return text;
+  return '[S:' + section + '] ' + text;
+}
+
+function getSections() {
+  // Returns ordered list of section names from notesData
+  var sections = [];
+  var seen = new Set();
+  // First pass: explicit [SECTION:] marker notes
+  notesData.filter(n => n.content && n.content.match(/^\[SECTION:[^\]]+\]$/)).forEach(n => {
+    var m = n.content.match(/^\[SECTION:([^\]]+)\]$/);
+    if (m && !seen.has(m[1])) { sections.push({ name: m[1], personId: n.person_id, noteId: n.id }); seen.add(m[1]); }
   });
-  el.innerHTML=html;
+  // Second pass: any section names found in regular notes
+  notesData.filter(n => n.content && !n.content.match(/^\[SECTION:/) && !n.content.match(/^\[EVENT:/)).forEach(n => {
+    var parsed = parseNoteSection(n.content);
+    if (!seen.has(parsed.section)) { sections.push({ name: parsed.section, personId: null, noteId: null }); seen.add(parsed.section); }
+  });
+  // Ensure General is always present if there are any notes
+  if (!seen.has('General') && notesData.filter(n => !n.content.match(/^\[SECTION:/) && !n.content.match(/^\[EVENT:/)).length > 0) {
+    sections.unshift({ name: 'General', personId: null, noteId: null });
+  }
+  return sections;
 }
-function renderNotes(){
-  var el=document.getElementById('notes-list');if(!el)return;
-  var all=notesPersonFilter?notesData.filter(n=>n.person_id==notesPersonFilter):notesData;
-  var rows=showHiddenNotes?all:all.filter(n=>!n.hidden);
-  var hc=all.filter(n=>n.hidden).length;
-  var sub=document.getElementById('notes-sub');
-  if(sub)sub.textContent=all.length+' note'+(all.length!==1?'s':'')+(hc?' · '+hc+' hidden':'');
-  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>'+(hc&&!showHiddenNotes?'No visible notes':'No notes yet<br><span style="font-size:12px">Tap + to add one</span>')+'</div>';return;}
-  var grouped={};
-  rows.forEach(n=>{var k=new Date(n.created_at).toLocaleDateString('en-AU',{month:'long',year:'numeric'});if(!grouped[k])grouped[k]=[];grouped[k].push(n);});
-  el.innerHTML=Object.entries(grouped).map(e=>'<div class="section-label">'+e[0]+'</div>'+e[1].map(n=>{
-    var person=n.people?n.people.name:null,pcolor=person?avatarColor(person):'var(--text-3)',nid=n.id;
-    var chips='';
-    if(n.doctors&&n.doctors.name)chips+='<span class="chip chip-blue">🩺 '+n.doctors.name+'</span> ';
-    if(n.visits&&n.visits.title)chips+='<span class="chip chip-teal">📋 '+n.visits.title+'</span> ';
-    if(n.medications&&n.medications.name)chips+='<span class="chip chip-amber">💊 '+n.medications.name+'</span> ';
-    return '<div class="visit-card" style="margin-bottom:8px;'+(n.hidden?'opacity:0.45;':'')+'">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-      +'<div style="font-size:11px;color:var(--text-3);">'+fmtDateTime(n.created_at)+(n.hidden?' <span style="font-size:9px;background:var(--surface);color:var(--text-3);padding:1px 5px;border-radius:8px;">hidden</span>':'')+'</div>'
-      +'<button onclick="toggleNoteHidden(\''+nid+'\','+n.hidden+')" style="background:'+(n.hidden?'var(--green-bg)':'var(--surface)')+';border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:'+(n.hidden?'var(--green)':'var(--text-3)')+';cursor:pointer;">'+(n.hidden?'Show':'Hide')+'</button>'
-      +'</div>'
-      +'<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:4px;cursor:pointer;" onclick="editNote(\''+nid+'\')">'+(n.content||'').replace(/\n/g,'<br>')+'</div>'
-      +(chips?'<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">'+chips+'</div>':'')
-      +(person?'<div style="margin-top:5px;display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:50%;background:'+pcolor+';display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:white;">'+initials(person)+'</span><span style="font-size:11px;font-weight:600;color:'+pcolor+';">'+person+'</span></div>':'')
-      +'</div>';
-  }).join('')).join('');
+
+async function loadNotes() {
+  var el = document.getElementById('notes-list');
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  if (!data.people.length) await loadAll();
+  var res = await sb.from('notes')
+    .select('id, content, person_id, hidden, created_at, people(name)')
+    .order('created_at', { ascending: true });
+  if (res.error) {
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.</div>';
+    return;
+  }
+  notesData = res.data || [];
+  renderNotesPersonPills();
+  renderNotes();
 }
-function setNotesPersonFilter(p){notesPersonFilter=p||null;renderNotesPersonPills();renderNotes();}
-function toggleHiddenNotes(c){showHiddenNotes=c;renderNotes();}
-async function toggleNoteHidden(id,cur){var r=await sb.from('notes').update({hidden:!cur}).eq('id',id);if(r.error){toast('Error');return;}var n=notesData.find(x=>x.id===id);if(n)n.hidden=!cur;renderNotes();toast(cur?'Note visible ✓':'Note hidden');}
-function populateNoteSelects(pId,dId,vId,mId){
-  var ps=document.getElementById('note-person'),ds=document.getElementById('note-doctor'),vs=document.getElementById('note-visit'),ms=document.getElementById('note-medication');
-  if(!ps)return;
-  ps.innerHTML='<option value="">Select person...</option>'+data.people.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  ds.innerHTML='<option value="">Select doctor...</option>'+data.doctors.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
-  ms.innerHTML='<option value="">Select medication...</option>'+data.medications.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
-  if(pId){ps.value=pId;filterNoteVisits(pId);}else{vs.innerHTML='<option value="">Select visit...</option>';}
-  if(dId)ds.value=dId; if(vId)vs.value=vId; if(mId)ms.value=mId;
-  ps.onchange=function(){filterNoteVisits(ps.value);};
+
+function renderNotesPersonPills() {
+  var el = document.getElementById('notes-person-pills');
+  if (!el) return;
+  var f = notesPersonFilter;
+  // All button styled as box like mockup
+  var allBg = !f ? 'var(--green-bg)' : 'var(--surface)';
+  var allBorder = !f ? '2px solid var(--green)' : '1px solid var(--border)';
+  var html = '<button onclick="setNotesPersonFilter(null)" style="width:46px;height:46px;border-radius:12px;background:' + allBg + ';border:' + allBorder + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;flex-shrink:0;">'
+    + '<svg width="16" height="16" fill="none" stroke="' + (!f ? 'var(--green)' : 'var(--text-3)') + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
+    + '<span style="font-size:9px;font-weight:700;color:' + (!f ? 'var(--green)' : 'var(--text-3)') + ';">All</span>'
+    + '</button>';
+  data.people.forEach(function(p) {
+    var isActive = f == p.id;
+    var bg = isActive ? avatarColor(p.name) : 'var(--surface)';
+    var border = isActive ? '2px solid ' + avatarColor(p.name) : '1px solid var(--border)';
+    html += '<div onclick="setNotesPersonFilter(\'' + p.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">' + initials(p.name) + '</div>'
+      + '<div style="font-size:9px;color:' + (isActive ? avatarColor(p.name) : 'var(--text-3)') + ';font-weight:' + (isActive ? '600' : '400') + ';">' + p.name.split(' ')[0] + '</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
 }
-function filterNoteVisits(pId){var vs=document.getElementById('note-visit');if(!vs)return;var cur=vs.value,f=pId?data.visits.filter(v=>v.person_id===pId):data.visits;vs.innerHTML='<option value="">Select visit...</option>'+f.slice(0,50).map(v=>'<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>').join('');if(cur)vs.value=cur;}
-async function saveNote(){
-  var id=document.getElementById('note-id').value,nc=document.getElementById('note-content').value.trim();
-  if(!nc){toast('Please enter a note');return;}
-  var pId=document.getElementById('note-person').value||null;
-  if(!pId){toast('Please select a person');return;}
-  var payload={content:nc,person_id:pId,doctor_id:document.getElementById('note-doctor').value||null,visit_id:document.getElementById('note-visit').value||null,medication_id:document.getElementById('note-medication').value||null};
-  if(!id)payload.family_group_id=currentFamilyGroupId;
-  var r=id?await sb.from('notes').update(Object.assign({updated_at:new Date().toISOString()},payload)).eq('id',id):await sb.from('notes').insert(payload);
-  if(r.error){toast('Error: '+r.error.message);return;}
-  closeModal('modal-note');toast(id?'Note updated ✓':'Note saved ✓');await loadNotes();
+
+function renderNotes() {
+  var el = document.getElementById('notes-list');
+  if (!el) return;
+
+  // Filter out EVENT and SECTION marker notes, apply person filter
+  var allNotes = notesData.filter(function(n) {
+    if (!n.content) return false;
+    if (n.content.match(/^\[EVENT:/)) return false;
+    if (n.content.match(/^\[SECTION:[^\]]+\]$/)) return false;
+    if (notesPersonFilter && n.person_id != notesPersonFilter) return false;
+    return true;
+  });
+
+  if (!allNotes.length && !getSections().length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add a section</span></div>';
+    return;
+  }
+
+  // Group notes by section
+  var grouped = {};
+  allNotes.forEach(function(n) {
+    var parsed = parseNoteSection(n.content);
+    if (!grouped[parsed.section]) grouped[parsed.section] = [];
+    grouped[parsed.section].push({ note: n, text: parsed.text });
+  });
+
+  // Get ordered sections (includes empty ones from SECTION markers)
+  var sections = getSections();
+  // Add any sections that have notes but no marker
+  Object.keys(grouped).forEach(function(s) {
+    if (!sections.find(function(x) { return x.name === s; })) {
+      sections.push({ name: s, personId: null, noteId: null });
+    }
+  });
+
+  if (!sections.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add a section</span></div>';
+    return;
+  }
+
+  var html = '<div style="background:var(--card);">';
+  sections.forEach(function(sec, idx) {
+    var notes = grouped[sec.name] || [];
+    // Filter notes by person if filter active
+    var visibleNotes = notes;
+    var collapsed = notesSectionCollapsed[sec.name] !== false; // default collapsed
+    var chevron = collapsed
+      ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+      : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
+    var borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
+    // Section header row
+    html += '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="' + borderTop + 'display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:var(--card);">'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:14px;font-weight:600;color:var(--text);">' + sec.name + '</div>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text-3);margin-right:6px;">' + visibleNotes.length + ' note' + (visibleNotes.length !== 1 ? 's' : '') + '</div>'
+      + '<div style="color:var(--text-3);">' + chevron + '</div>'
+      + '</div>';
+
+    // Section content (notes)
+    if (!collapsed) {
+      html += '<div style="background:var(--bg);border-top:1px solid var(--border);">';
+      if (visibleNotes.length) {
+        visibleNotes.forEach(function(item) {
+          var n = item.note;
+          html += '<div onclick="editNote(\'' + n.id + '\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px 10px 20px;border-bottom:1px solid var(--border);cursor:pointer;">'
+            + '<div style="width:5px;height:5px;border-radius:50%;background:var(--text-3);flex-shrink:0;margin-top:6px;"></div>'
+            + '<div style="flex:1;">'
+            + '<div style="font-size:13px;color:var(--text);line-height:1.5;">' + item.text.replace(/\n/g,'<br>') + '</div>'
+            + (n.people && n.people.name && !notesPersonFilter ? '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">' + n.people.name + '</div>' : '')
+            + '</div>'
+            + '</div>';
+        });
+      }
+      // Add note row
+      html += '<div onclick="openAddNoteToSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:9px 14px 10px 20px;cursor:pointer;">'
+        + '<div style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+        + '<svg width="8" height="8" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+        + '</div>'
+        + '<div style="font-size:13px;color:var(--text-3);">Add note...</div>'
+        + '</div>'
+        + '</div>';
+    }
+  });
+  html += '</div>';
+  el.innerHTML = html;
 }
-async function deleteNote(){if(!confirm('Delete this note?'))return;await sb.from('notes').delete().eq('id',document.getElementById('note-id').value);closeModal('modal-note');toast('Deleted');await loadNotes();}
-function editNote(id){var n=notesData.find(x=>x.id===id);if(!n)return;document.getElementById('modal-note-title').textContent='Edit Note';document.getElementById('note-id').value=n.id;document.getElementById('note-content').value=n.content||'';document.getElementById('delete-note-btn').style.display='block';populateNoteSelects(n.person_id,n.doctor_id,n.visit_id,n.medication_id);openModal('modal-note');}
+
+function toggleNotesSection(sectionName) {
+  notesSectionCollapsed[sectionName] = notesSectionCollapsed[sectionName] === false ? true : false;
+  renderNotes();
+}
+
+function setNotesPersonFilter(p) { notesPersonFilter = p || null; renderNotesPersonPills(); renderNotes(); }
+function toggleHiddenNotes(c) { showHiddenNotes = c; renderNotes(); }
+
+// Open + button → add new section
+function openAddNoteSection() {
+  document.getElementById('modal-note-section-title').textContent = 'New Section';
+  document.getElementById('note-section-name').value = '';
+  document.getElementById('note-section-editing').value = '';
+  document.getElementById('delete-note-section-btn').style.display = 'none';
+  var sel = document.getElementById('note-section-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  openModal('modal-note-section');
+  setTimeout(function() { document.getElementById('note-section-name').focus(); }, 300);
+}
+
+// Edit an existing section (long-press or rename button)
+function editNoteSection(sectionName) {
+  document.getElementById('modal-note-section-title').textContent = 'Edit Section';
+  document.getElementById('note-section-name').value = sectionName;
+  document.getElementById('note-section-editing').value = sectionName;
+  document.getElementById('delete-note-section-btn').style.display = 'block';
+  var sel = document.getElementById('note-section-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  // Find marker note for this section
+  var marker = notesData.find(function(n) { return n.content === '[SECTION:' + sectionName + ']'; });
+  if (marker && marker.person_id) sel.value = marker.person_id;
+  openModal('modal-note-section');
+}
+
+async function saveNoteSection() {
+  var name = document.getElementById('note-section-name').value.trim();
+  if (!name) { toast('Please enter a section name'); return; }
+  var personId = document.getElementById('note-section-person').value || null;
+  var editing = document.getElementById('note-section-editing').value;
+
+  if (editing) {
+    // Rename: update all notes with this section prefix
+    var toUpdate = notesData.filter(function(n) {
+      return n.content && n.content.startsWith('[S:' + editing + '] ');
+    });
+    for (var i = 0; i < toUpdate.length; i++) {
+      var newContent = '[S:' + name + '] ' + toUpdate[i].content.substring('[S:' + editing + '] '.length);
+      await sb.from('notes').update({ content: newContent }).eq('id', toUpdate[i].id);
+    }
+    // Update or remove marker
+    var marker = notesData.find(function(n) { return n.content === '[SECTION:' + editing + ']'; });
+    if (marker) {
+      await sb.from('notes').update({ content: '[SECTION:' + name + ']', person_id: personId }).eq('id', marker.id);
+    }
+  } else {
+    // Create new section marker note
+    await sb.from('notes').insert({
+      content: '[SECTION:' + name + ']',
+      person_id: personId,
+      family_group_id: currentFamilyGroupId,
+      hidden: false
+    });
+  }
+  closeModal('modal-note-section');
+  toast(editing ? 'Section renamed ✓' : 'Section created ✓');
+  await loadNotes();
+}
+
+async function deleteNoteSection() {
+  var name = document.getElementById('note-section-editing').value;
+  if (!name) return;
+  if (!confirm('Delete "' + name + '" section? Notes inside will move to General.')) return;
+  // Move notes to General (remove section prefix)
+  var toUpdate = notesData.filter(function(n) {
+    return n.content && n.content.startsWith('[S:' + name + '] ');
+  });
+  for (var i = 0; i < toUpdate.length; i++) {
+    var newContent = toUpdate[i].content.substring('[S:' + name + '] '.length);
+    await sb.from('notes').update({ content: newContent }).eq('id', toUpdate[i].id);
+  }
+  // Delete marker
+  var marker = notesData.find(function(n) { return n.content === '[SECTION:' + name + ']'; });
+  if (marker) await sb.from('notes').delete().eq('id', marker.id);
+  closeModal('modal-note-section');
+  toast('Section deleted');
+  await loadNotes();
+}
+
+// Open "Add note" pre-filled to a section
+function openAddNoteToSection(sectionName) {
+  document.getElementById('modal-note-title').textContent = 'Add Note';
+  document.getElementById('note-id').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-section').value = sectionName;
+  document.getElementById('delete-note-btn').style.display = 'none';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  // Pre-fill person if filter active
+  if (notesPersonFilter) sel.value = notesPersonFilter;
+  openModal('modal-note');
+  setTimeout(function() { document.getElementById('note-content').focus(); }, 300);
+}
+
+async function saveNote() {
+  var id = document.getElementById('note-id').value;
+  var text = document.getElementById('note-content').value.trim();
+  if (!text) { toast('Please enter a note'); return; }
+  var pId = document.getElementById('note-person').value || null;
+  var section = document.getElementById('note-section').value || 'General';
+  var content = buildNoteContent(section, text);
+  var payload = { content: content, person_id: pId };
+  if (!id) payload.family_group_id = currentFamilyGroupId;
+  var r = id
+    ? await sb.from('notes').update(Object.assign({ updated_at: new Date().toISOString() }, payload)).eq('id', id)
+    : await sb.from('notes').insert(payload);
+  if (r.error) { toast('Error: ' + r.error.message); return; }
+  closeModal('modal-note');
+  toast(id ? 'Note updated ✓' : 'Note saved ✓');
+  await loadNotes();
+}
+
+async function deleteNote() {
+  if (!confirm('Delete this note?')) return;
+  await sb.from('notes').delete().eq('id', document.getElementById('note-id').value);
+  closeModal('modal-note');
+  toast('Deleted');
+  await loadNotes();
+}
+
+function editNote(id) {
+  var n = notesData.find(function(x) { return x.id === id; });
+  if (!n) return;
+  var parsed = parseNoteSection(n.content);
+  document.getElementById('modal-note-title').textContent = 'Edit Note';
+  document.getElementById('note-id').value = n.id;
+  document.getElementById('note-content').value = parsed.text;
+  document.getElementById('note-section').value = parsed.section;
+  document.getElementById('delete-note-btn').style.display = 'block';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  if (n.person_id) sel.value = n.person_id;
+  openModal('modal-note');
+}
+
+// Stub kept for compatibility (called from openAddModal in notes tab)
+function populateNoteSelects(pId, dId, vId, mId) {
+  var sel = document.getElementById('note-person');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  if (pId) sel.value = pId;
+}
+function filterNoteVisits(pId) {} // no-op, kept for compatibility
+function toggleNoteHidden(id, cur) {} // no-op, simplified
+
 
 // ── IMPORTANT INFO ──
 function buildImportantInfoCard(p){
