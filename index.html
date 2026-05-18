@@ -36,6 +36,20 @@
   --safe-bottom: env(safe-area-inset-bottom, 20px);
   --nav-h: calc(60px + env(safe-area-inset-bottom, 34px));
 }
+/* ── LARGE FONT MODE ── */
+body.large-font { font-size: 17px; }
+body.large-font .person-name, body.large-font .list-title, body.large-font .visit-title,
+body.large-font .detail-name, body.large-font .header-title { font-size: 19px; }
+body.large-font .list-sub, body.large-font .visit-meta,
+body.large-font .prop-label, body.large-font .prop-value { font-size: 15px; }
+body.large-font .nav-label { font-size: 12px; }
+body.large-font .section-label { font-size: 13px; }
+body.large-font input, body.large-font textarea, body.large-font select,
+body.large-font button { font-size: 16px !important; }
+body.large-font .btn-primary { font-size: 17px !important; }
+body.large-font .chip, body.large-font .badge { font-size: 12px; }
+body.large-font .modal-title { font-size: 19px; }
+body.large-font label { font-size: 14px; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); position: fixed; width: 100%; height: 100%; overflow: hidden; }
 #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
@@ -857,7 +871,17 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;font-size:11px;">Family Group</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Display</div>
+      <div style="background:var(--surface);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">Larger Text</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px;">For easier reading</div>
+        </div>
+        <button id="font-size-toggle" onclick="toggleFontSize()" style="width:50px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background 0.2s;font-size:0;">
+          <div id="font-size-knob" style="width:22px;height:22px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);position:absolute;top:3px;transition:left 0.2s;"></div>
+        </button>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">Family Group</div>
       <div class="field">
         <label>Family Group Name</label>
         <input type="text" id="settings-group-name" placeholder="e.g. Smith Family">
@@ -983,6 +1007,7 @@ sb.auth.getSession().then(({ data: { session } }) => {
   else showLogin();
 });
 
+applyFontSize();
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT') { currentFamilyGroupId = null; showLogin(); }
 });
@@ -2702,6 +2727,22 @@ function refreshPinnedStrips(personId, pinned, p) {
 }
 
 
+
+// ── FONT SIZE ──
+function applyFontSize() {
+  const large = localStorage.getItem('largeFontMode') === '1';
+  document.body.classList.toggle('large-font', large);
+  const toggle = document.getElementById('font-size-toggle');
+  const knob = document.getElementById('font-size-knob');
+  if (toggle) toggle.style.background = large ? 'var(--green)' : '#CBD5E0';
+  if (knob) knob.style.left = large ? '25px' : '3px';
+}
+function toggleFontSize() {
+  const large = localStorage.getItem('largeFontMode') === '1';
+  localStorage.setItem('largeFontMode', large ? '0' : '1');
+  applyFontSize();
+}
+
 // ── EXPORT ──
 function openExportModal() {
   // Populate selects
@@ -3136,6 +3177,7 @@ async function openSettingsModal() {
   // Load current group name
   const { data: fg } = await sb.from('family_groups').select('name').eq('id', currentFamilyGroupId).single();
   document.getElementById('settings-group-name').value = fg?.name || '';
+  applyFontSize();
   openModal('modal-settings');
 }
 
