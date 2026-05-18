@@ -242,11 +242,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="header-back" id="back-from-person" onclick="goBack('home')">
         <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Family
       </button>
-      <div class="header-actions">
-        <button class="icon-btn" id="edit-person-btn" onclick="editCurrentPerson()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-        </button>
-      </div>
+      <div style="width:36px"></div>
     </div>
     <div class="scroll-full" id="person-detail"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
@@ -1242,19 +1238,33 @@ async function openPerson(id) {
           <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">${p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : 'No DOB recorded'}</div>
         </div>
         <div style="margin-left:auto;">
-          <button onclick="editCurrentPerson()" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Edit</button>
+          <button onclick="togglePersonPinMode('${id}')" id="pin-toggle-btn-${id}" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Edit</button>
         </div>
       </div>
     </div>`;
 
-    // Quick info strip — allergies and diagnoses only
-    const strips = [];
-    if (p.allergies) strips.push(`<div style="background:#F5E8EB;border-radius:8px;padding:7px 10px;border:1px solid #E8C4C4;"><div style="font-size:9px;font-weight:700;color:#9B3A4A;text-transform:uppercase;letter-spacing:.06em;">🚨 Allergies</div><div style="font-size:12px;font-weight:600;color:#7A2030;margin-top:2px;line-height:1.4;">${p.allergies}</div></div>`);
-    if (p.diagnoses) strips.push(`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;"><div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;">🩺 Conditions</div><div style="font-size:12px;font-weight:500;color:var(--text);margin-top:2px;line-height:1.4;">${p.diagnoses}</div></div>`);
+    // Pinned fields — read from custom_sections __pinned__ entry
+    const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+    const pinnedFields = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
 
+    const allFields = [
+      { key:'allergies',        label:'🚨 Allergies',    value:p.allergies,        bg:'#F5E8EB', border:'#E8C4C4', textColor:'#7A2030', labelColor:'#9B3A4A' },
+      { key:'diagnoses',        label:'🩺 Conditions',   value:p.diagnoses,        bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+      { key:'blood_type',       label:'🩸 Blood Type',   value:p.blood_type,       bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+      { key:'medicare_number',  label:'📋 Medicare',     value:p.medicare_number,  bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+      { key:'health_fund',      label:'🏥 Health Fund',  value:p.health_fund ? p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:'') : null, bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+      { key:'emergency_contact',label:'📞 Emergency',    value:p.emergency_contact ? p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:'') : null, bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+    ];
+
+    const strips = allFields.filter(f => pinnedFields.includes(f.key) && f.value);
     if (strips.length) {
       const cols = strips.length === 1 ? '1fr' : '1fr 1fr';
-      html += `<div style="display:grid;grid-template-columns:${cols};gap:7px;padding:12px 14px 0;">${strips.join('')}</div>`;
+      html += '<div class="pinned-strips" style="display:grid;grid-template-columns:' + cols + ';gap:7px;padding:12px 14px 0;">'
+        + strips.map(f => '<div style="background:' + f.bg + ';border-radius:8px;padding:7px 10px;border:1px solid ' + f.border + ';">'
+          + '<div style="font-size:9px;font-weight:700;color:' + f.labelColor + ';text-transform:uppercase;letter-spacing:.06em;">' + f.label + '</div>'
+          + '<div style="font-size:12px;font-weight:500;color:' + f.textColor + ';margin-top:2px;line-height:1.4;">' + f.value + '</div>'
+          + '</div>').join('')
+        + '</div>';
     }
 
     // Main section menu
@@ -2537,6 +2547,158 @@ function openPersonInfoCard(personId) {
     + '</div>'
     + (person.notes ? '<div style="margin-top:14px;"><div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">General Notes</div><div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.6;">' + person.notes + '</div></div>' : '')
     + '</div>';
+}
+
+
+
+// ── PERSON PINNED FIELDS ──
+
+async function togglePersonPinMode(personId) {
+  const pinSection = document.getElementById('pin-section-' + personId);
+  const btn = document.getElementById('pin-toggle-btn-' + personId);
+
+  if (pinSection) {
+    // Already in pin mode - close it
+    pinSection.remove();
+    if (btn) btn.textContent = 'Edit';
+    return;
+  }
+
+  if (btn) btn.textContent = 'Done';
+
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+
+  const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+  const pinned = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
+
+  const allFields = [
+    { key:'allergies',         label:'🚨 Allergies',        value:p.allergies },
+    { key:'diagnoses',         label:'🩺 Conditions',        value:p.diagnoses },
+    { key:'blood_type',        label:'🩸 Blood Type',        value:p.blood_type },
+    { key:'medicare_number',   label:'📋 Medicare',          value:p.medicare_number },
+    { key:'health_fund',       label:'🏥 Health Fund',       value:p.health_fund },
+    { key:'emergency_contact', label:'📞 Emergency Contact', value:p.emergency_contact },
+  ];
+
+  // Only show fields that have data
+  const fieldsWithData = allFields.filter(f => f.value);
+  if (!fieldsWithData.length) {
+    const area = document.getElementById('person-detail');
+    // Insert after the strips area - find the main section menu and insert before it
+    const menuEl = document.querySelector('#person-detail .person-section-menu');
+    const msg = document.createElement('div');
+    msg.style.cssText = 'padding:10px 14px;font-size:13px;color:var(--text-3);font-style:italic;';
+    msg.textContent = 'No info filled in yet. Add details by tapping Edit Person.';
+    if (menuEl) menuEl.parentNode.insertBefore(msg, menuEl);
+    return;
+  }
+
+  // Build the pin section
+  const section = document.createElement('div');
+  section.id = 'pin-section-' + personId;
+  section.style.cssText = 'padding:10px 14px 0;';
+  section.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Pin to top</div>'
+    + '<div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">'
+    + fieldsWithData.map((f, i) => {
+      const isPinned = pinned.includes(f.key);
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;' + (i > 0 ? 'border-top:1px solid var(--border);' : '') + '">'
+        + '<div style="flex:1;">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--text);">' + f.label + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">' + f.value + '</div>'
+        + '</div>'
+        + '<button onclick="togglePinField(\'' + personId + '\',\'' + f.key + '\')" id="pin-btn-' + personId + '-' + f.key + '" style="background:' + (isPinned ? 'var(--green)' : 'var(--surface)') + ';border:1px solid ' + (isPinned ? 'var(--green)' : 'var(--border)') + ';border-radius:8px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:' + (isPinned ? '#fff' : 'var(--text-3)') + ';font-family:\'DM Sans\',sans-serif;">'
+        + '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L8 8H3l4 4-1.5 7L12 16l6.5 3L17 12l4-4h-5z"/></svg>'
+        + (isPinned ? 'Pinned' : 'Pin')
+        + '</button>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+
+  // Insert pin section: find the strips div (padding:12px 14px 0) or the main menu
+  const detailEl = document.getElementById('person-detail');
+  // Find the section menu div (first child with class or the grid div)
+  const allDivs = detailEl.querySelectorAll('div[style*="padding:14px 14px 0"]');
+  if (allDivs.length > 0) {
+    allDivs[0].parentNode.insertBefore(section, allDivs[0]);
+  } else {
+    detailEl.appendChild(section);
+  }
+}
+
+async function togglePinField(personId, fieldKey) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+
+  const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+  let pinned = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
+
+  if (pinned.includes(fieldKey)) {
+    pinned = pinned.filter(f => f !== fieldKey);
+  } else {
+    pinned.push(fieldKey);
+  }
+
+  // Save to custom_sections
+  const sections = (p.custom_sections||[]).filter(s => s.name !== '__pinned__');
+  sections.push({ name: '__pinned__', content: pinned.join(',') });
+
+  const { error } = await sb.from('people').update({ custom_sections: sections }).eq('id', personId);
+  if (error) { toast('Error saving: ' + error.message); return; }
+
+  // Update person in local data
+  p.custom_sections = sections;
+
+  // Update pin button appearance
+  const btn = document.getElementById('pin-btn-' + personId + '-' + fieldKey);
+  if (btn) {
+    const isPinned = pinned.includes(fieldKey);
+    btn.style.background = isPinned ? 'var(--green)' : 'var(--surface)';
+    btn.style.border = '1px solid ' + (isPinned ? 'var(--green)' : 'var(--border)');
+    btn.style.color = isPinned ? '#fff' : 'var(--text-3)';
+    btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L8 8H3l4 4-1.5 7L12 16l6.5 3L17 12l4-4h-5z"/></svg>' + (isPinned ? 'Pinned' : 'Pin');
+  }
+
+  // Refresh the pinned strips at top of page
+  refreshPinnedStrips(personId, pinned, p);
+}
+
+function refreshPinnedStrips(personId, pinned, p) {
+  // Find and remove existing strips grid
+  const detailEl = document.getElementById('person-detail');
+  const existingStrips = detailEl.querySelector('.pinned-strips');
+  if (existingStrips) existingStrips.remove();
+
+  const allFields = [
+    { key:'allergies',         label:'🚨 Allergies',    value:p.allergies,        bg:'#F5E8EB', border:'#E8C4C4', textColor:'#7A2030', labelColor:'#9B3A4A' },
+    { key:'diagnoses',         label:'🩺 Conditions',   value:p.diagnoses,        bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+    { key:'blood_type',        label:'🩸 Blood Type',   value:p.blood_type,       bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+    { key:'medicare_number',   label:'📋 Medicare',     value:p.medicare_number,  bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+    { key:'health_fund',       label:'🏥 Health Fund',  value:p.health_fund ? p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:'') : null, bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+    { key:'emergency_contact', label:'📞 Emergency',    value:p.emergency_contact ? p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:'') : null, bg:'var(--card)', border:'var(--border)', textColor:'var(--text)', labelColor:'var(--text-3)' },
+  ];
+
+  const strips = allFields.filter(f => pinned.includes(f.key) && f.value);
+  if (!strips.length) return;
+
+  const div = document.createElement('div');
+  div.className = 'pinned-strips';
+  const cols = strips.length === 1 ? '1fr' : '1fr 1fr';
+  div.style.cssText = 'display:grid;grid-template-columns:' + cols + ';gap:7px;padding:12px 14px 0;';
+  div.innerHTML = strips.map(f =>
+    '<div style="background:' + f.bg + ';border-radius:8px;padding:7px 10px;border:1px solid ' + f.border + ';">'
+    + '<div style="font-size:9px;font-weight:700;color:' + f.labelColor + ';text-transform:uppercase;letter-spacing:.06em;">' + f.label + '</div>'
+    + '<div style="font-size:12px;font-weight:500;color:' + f.textColor + ';margin-top:2px;line-height:1.4;">' + f.value + '</div>'
+    + '</div>'
+  ).join('');
+
+  // Insert after hero (first child of person-detail)
+  const firstDiv = detailEl.querySelector('div[style*="background:"]');
+  if (firstDiv && firstDiv.nextSibling) {
+    firstDiv.parentNode.insertBefore(div, firstDiv.nextSibling);
+  } else {
+    detailEl.insertBefore(div, detailEl.firstChild.nextSibling);
+  }
 }
 
 
