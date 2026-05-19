@@ -989,7 +989,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  Promise.all([loadAll(), loadTodos()]).then(() => { renderPeople(data.people); });
+  loadAll().then(() => loadTodos()).then(() => { renderPeople(data.people); });
   loadDoctorTypes();
 }
 
@@ -3494,7 +3494,6 @@ function renderTodos() {
 
   // Build rows - active only by default (no completed shown)
   let rows = todosData.filter(t => !t.completed);
-  toast('renderTodos: todosData=' + todosData.length + ' active=' + rows.length + ' sample=' + (todosData[0] ? String(todosData[0].completed) + '/' + typeof todosData[0].completed : 'none'));
   if (todoPersonFilter) rows = rows.filter(t => t.person_id == todoPersonFilter);
 
   // Sort by due_date within each group
