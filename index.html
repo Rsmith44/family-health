@@ -989,11 +989,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  toast('FG: ' + (currentFamilyGroupId ? currentFamilyGroupId.substring(0,8) : 'NULL'));
-  Promise.all([loadAll(), loadTodos()]).then(() => {
-    toast('Todos loaded: ' + todosData.length + ' rows');
-    renderPeople(data.people);
-  });
+  Promise.all([loadAll(), loadTodos()]).then(() => { renderPeople(data.people); });
   loadDoctorTypes();
 }
 
@@ -3447,10 +3443,12 @@ async function loadTodos() {
   try {
     const { data: rows, error } = await sb.from('todos')
       .select('*, people(name), doctors(name), visits(title)')
-      .eq('family_group_id', currentFamilyGroupId)
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
-    todosData = rows || [];
+    const allRows = rows || [];
+    // Filter to only this family's todos by matching person_id to loaded people
+    const familyPersonIds = new Set(data.people.map(p => p.id));
+    todosData = allRows.filter(t => !t.person_id || familyPersonIds.has(t.person_id));
     renderTodoPersonPills();
     renderTodos();
   } catch(err) {
