@@ -920,7 +920,8 @@ function showLoginError(msg) {
 
 async function afterSignIn() {
   // Check if user has a family group
-  const { data: membership } = await sb.from('family_group_members').select('family_group_id').limit(1).single();
+  const { data: { user: fgUser } } = await sb.auth.getUser();
+  const { data: membership } = await sb.from('family_group_members').select('family_group_id').eq('user_id', fgUser.id).limit(1).single();
   if (membership) {
     currentFamilyGroupId = membership.family_group_id;
     // Check for pending invites for this user's email
