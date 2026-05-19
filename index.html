@@ -3531,7 +3531,7 @@ function renderTodos() {
     var person = data.people.find(p => p.id === key);
     var personName = person ? person.name : 'Unassigned';
     var col = SECTION_COLOURS[idx % SECTION_COLOURS.length];
-    var collapsed = todosSectionCollapsed[key] !== false; // default collapsed
+    var collapsed = todosSectionCollapsed[key] === true; // default expanded
     var chevron = collapsed
       ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
       : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
