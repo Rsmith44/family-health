@@ -312,7 +312,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Visits</div><div class="header-sub" id="visits-sub">Appointments &amp; history</div></div>
     </div>
-    <div style="padding:0 16px 8px;overflow-x:auto;display:flex;gap:7px;" id="visits-person-pills"></div>
+    <div style="padding:0 16px 8px;overflow-x:auto;display:flex;gap:7px;" id="visits-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
       <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
         <input type="checkbox" id="show-past-visits" onchange="togglePastVisits(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
@@ -431,14 +431,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       </div>
 
     </div>
-    <!-- Person filter pills -->
-    <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="todo-person-pills"></div>
-    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
-      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
-        <input type="checkbox" id="show-completed-todos" onchange="toggleShowCompleted(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
-        Show completed
-      </label>
-    </div>
+    <div id="todo-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div class="scroll" id="todos-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
@@ -447,7 +440,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div></div>
-      <div style="width:36px"></div>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--text-3);cursor:pointer;margin-right:8px;white-space:nowrap;">
+        <input type="checkbox" id="show-hidden-notes" onchange="toggleHiddenNotes(this.checked)" style="width:14px;height:14px;cursor:pointer;accent-color:var(--green);">
+        Show hidden
+      </label>
     </div>
     <div id="notes-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
@@ -3462,96 +3458,127 @@ function renderTodoPersonPills() {
   var el = document.getElementById('todo-person-pills');
   if (!el || !data.people.length) return;
   var f = todoPersonFilter;
-  var evBg = !f ? 'var(--green)' : 'var(--card)';
-  var evCol = !f ? 'white' : 'var(--text-3)';
-  var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = '<button onclick="setTodoPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  var allActive = !f;
+  var allBg = allActive ? 'var(--surface)' : 'var(--green-bg)';
+  var allBorder = allActive ? '2px solid var(--border)' : '2px solid var(--green)';
+  var allIconColor = allActive ? 'var(--text-3)' : 'var(--green)';
+  var html = '<button onclick="setTodoPersonFilter(null)" style="width:46px;height:46px;border-radius:12px;background:' + allBg + ';border:' + allBorder + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;flex-shrink:0;font-family:inherit;">'
+    + '<svg width="16" height="16" fill="none" stroke="' + allIconColor + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
+    + '<span style="font-size:9px;font-weight:700;color:' + allIconColor + ';">All</span>'
+    + '</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    var col = isActive ? 'white' : 'var(--text)';
-    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setTodoPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    var color = avatarColor(p.name);
+    var bg = isActive ? 'var(--surface)' : color;
+    var border = isActive ? '2px solid var(--border)' : '2px solid ' + color;
+    var textColor = isActive ? 'var(--text-3)' : color;
+    var initColor = isActive ? 'var(--text-3)' : '#fff';
+    html += '<div onclick="setTodoPersonFilter(\'' + p.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:' + initColor + ';">' + initials(p.name) + '</div>'
+      + '<div style="font-size:9px;color:' + textColor + ';font-weight:600;">' + p.name.split(' ')[0] + '</div>'
+      + '</div>';
   });
   el.innerHTML = html;
 }
+var todosSectionCollapsed = {};
 
 function renderTodos() {
   const el = document.getElementById('todos-list');
   if (!el) return;
 
-  let rows = todosData;
+  const now = new Date(); now.setHours(0,0,0,0);
 
-  // Filter by person
+  // Build rows - active only by default (no completed shown)
+  let rows = todosData.filter(t => !t.completed);
   if (todoPersonFilter) rows = rows.filter(t => t.person_id == todoPersonFilter);
 
-  // Filter by status
-  if (todoFilter === 'active') rows = rows.filter(t => !t.completed);
-  else if (todoFilter === 'completed') rows = rows.filter(t => t.completed);
-  // 'all' - toggle button controls whether completed are shown
-  else if (!showCompleted) rows = rows.filter(t => !t.completed);
-
-  // Sort: by person name first, then by due_date
+  // Sort by due_date within each group
   rows = [...rows].sort((a, b) => {
-    const pa = data.people.find(p => p.id === a.person_id)?.name || '';
-    const pb = data.people.find(p => p.id === b.person_id)?.name || '';
-    if (pa !== pb) return pa.localeCompare(pb);
     if (!a.due_date && !b.due_date) return 0;
     if (!a.due_date) return 1;
     if (!b.due_date) return -1;
     return a.due_date.localeCompare(b.due_date);
   });
 
-  const total = todosData.filter(t => !todoPersonFilter || t.person_id == todoPersonFilter).length;
-  const completed = todosData.filter(t => (!todoPersonFilter || t.person_id == todoPersonFilter) && t.completed).length;
   const sub = document.getElementById('todos-sub');
-  if (sub) sub.textContent = total + ' item' + (total !== 1 ? 's' : '') + (completed ? ' · ' + completed + ' completed' : '');
-
-
+  const overdueCount = rows.filter(t => t.due_date && new Date(t.due_date) < now).length;
+  if (sub) sub.textContent = rows.length + ' active' + (overdueCount ? ' · ' + overdueCount + ' overdue' : '');
 
   if (!rows.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>' +
-      (todoFilter === 'completed' ? 'No completed items' :
-       todoFilter === 'active' ? 'No active items — all done!' :
-       'No to do items yet<br><span style="font-size:12px">Tap + to add one</span>') + '</div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>All done!<br><span style="font-size:12px">No active to do items</span></div>';
     return;
   }
 
-  // Group by person
+  // When filtering to one person — flat list, no grouping
+  if (todoPersonFilter) {
+    el.innerHTML = '<div style="padding:10px 14px;">' + rows.map(t => todoItemHtml(t, now)).join('') + '</div>';
+    return;
+  }
+
+  // Group by person (notes-tab style: coloured header, white items, collapsed)
   const grouped = {};
+  const order = [];
   rows.forEach(t => {
-    const key = t.people?.name || 'Unassigned';
-    if (!grouped[key]) grouped[key] = [];
+    const key = t.person_id || '__none__';
+    if (!grouped[key]) { grouped[key] = []; order.push(key); }
     grouped[key].push(t);
   });
 
-  el.innerHTML = Object.entries(grouped).map(([personName, items]) => {
-    const person = data.people.find(p => p.name === personName);
-    const color = person ? avatarColor(person.name) : 'var(--text-3)';
-    return '<div class="section-label" style="display:flex;align-items:center;gap:6px;">' +
-      '<span style="width:18px;height:18px;border-radius:50%;background:' + color + ';display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + (person ? initials(person.name) : '?') + '</span>' +
-      personName + '</div>' +
-      items.map(t => {
-        const isOverdue = t.due_date && !t.completed && new Date(t.due_date) < new Date();
-        const isDueToday = t.due_date && !t.completed && new Date(t.due_date).toDateString() === new Date().toDateString();
-        return '<div class="visit-card" style="' + (t.completed ? 'opacity:0.5;' : '') + 'margin-bottom:8px;" onclick="editTodo(\'' + t.id + '\')">' +
-          '<div style="display:flex;align-items:flex-start;gap:12px;">' +
-          '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" title="' + (t.completed ? 'Mark as active' : 'Mark as complete') + '" style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (t.completed ? 'var(--green)' : 'var(--border)') + ';background:' + (t.completed ? 'var(--green)' : 'white') + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all 0.15s;">' +
-          (t.completed ? '<svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : '') +
-          '</div>' +
-          '<div style="flex:1;min-width:0;">' +
-          '<div style="font-size:15px;font-weight:600;' + (t.completed ? 'text-decoration:line-through;color:var(--text-3);' : '') + '">' + t.title + '</div>' +
-          (t.due_date ? '<div style="font-size:12px;margin-top:3px;color:' + (isOverdue ? '#C0392B' : isDueToday ? 'var(--amber)' : 'var(--text-3)') + ';">' +
-            (isOverdue ? '⚠ Overdue · ' : isDueToday ? '📅 Due today · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') +
-          '<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">' +
-          (t.doctors?.name ? '<span class="chip chip-blue">🩺 ' + t.doctors.name + '</span>' : '') +
-          (t.visits?.title ? '<span class="chip chip-teal">📋 ' + t.visits.title + '</span>' : '') +
-          '</div>' +
-          (t.notes ? '<div style="font-size:12px;color:var(--text-3);margin-top:4px;">' + t.notes.slice(0, 80) + (t.notes.length > 80 ? '...' : '') + '</div>' : '') +
-          '</div></div></div>';
-      }).join('');
-  }).join('');
+  // Use SECTION_COLOURS for person groups
+  var html = '<div style="padding:10px 14px;">';
+  order.forEach(function(key, idx) {
+    var items = grouped[key];
+    var person = data.people.find(p => p.id === key);
+    var personName = person ? person.name : 'Unassigned';
+    var col = SECTION_COLOURS[idx % SECTION_COLOURS.length];
+    var collapsed = todosSectionCollapsed[key] !== false; // default collapsed
+    var chevron = collapsed
+      ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+      : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
+    var overdue = items.filter(t => t.due_date && new Date(t.due_date) < now).length;
+    var overdueTag = overdue ? '<span style="font-size:11px;font-weight:600;color:#C0392B;background:#FDE8EB;border-radius:20px;padding:2px 8px;margin-left:6px;">' + overdue + ' overdue</span>' : '';
+    var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
+
+    // Section header
+    html += '<div style="' + sepStyle + 'display:flex;align-items:center;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';">';
+    html += '<div onclick="toggleTodosSection(\'' + key + '\')" style="flex:1;display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-size:16px;font-weight:700;color:' + col.text + ';">' + personName + overdueTag + '</div>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:' + col.text + ';opacity:0.7;margin-right:8px;">' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</div>';
+    html += '<div style="color:' + col.text + ';opacity:0.8;">' + chevron + '</div>';
+    html += '</div></div>';
+
+    // Items
+    if (!collapsed) {
+      html += '<div style="margin-top:2px;margin-bottom:4px;">';
+      items.forEach(t => { html += todoItemHtml(t, now); });
+      html += '</div>';
+    }
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function toggleTodosSection(key) {
+  todosSectionCollapsed[key] = todosSectionCollapsed[key] === false ? true : false;
+  renderTodos();
+}
+
+function todoItemHtml(t, now) {
+  const isOverdue = t.due_date && new Date(t.due_date) < now;
+  const isDueToday = t.due_date && !isOverdue && new Date(t.due_date).toDateString() === new Date().toDateString();
+  const dateColor = isOverdue ? '#C0392B' : isDueToday ? 'var(--amber)' : 'var(--text-3)';
+  const dateLabel = isOverdue ? '⚠ Overdue' : isDueToday ? 'Due today' : fmtDate(t.due_date);
+
+  return '<div onclick="editTodo(\'' + t.id + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 13px 10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;cursor:pointer;">'
+    + '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;"></div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:14px;font-weight:500;color:var(--text);line-height:1.4;">' + t.title + '</div>'
+    + (t.notes ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + t.notes.slice(0,80) + (t.notes.length > 80 ? '…' : '') + '</div>' : '')
+    + '</div>'
+    + (t.due_date ? '<div style="font-size:11px;font-weight:500;color:' + dateColor + ';text-align:right;white-space:nowrap;flex-shrink:0;">' + dateLabel + (isOverdue || isDueToday ? '' : '<br><span style=\"font-size:10px;font-weight:400;\">' + fmtDate(t.due_date) + '</span>') + '</div>' : '')
+    + '</div>';
 }
 
 function setTodoPersonFilter(personId) {
@@ -3714,18 +3741,32 @@ function openVisitFromDashboard(id){var b=document.getElementById('nav-visits-bt
 // ── VISIT FILTER ──
 window.visitsPersonFilter=null;
 function togglePastVisits(showPast){visitFilter=showPast?'all':'upcoming';var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
-function renderVisitsPersonPills(){
-  var el=document.getElementById('visits-person-pills');
-  if(!el||!data.people.length)return;
-  var f=window.visitsPersonFilter;
-  var html='<button onclick="setVisitsFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p){
-    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
-    html+='<button onclick="setVisitsFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
+function renderVisitsPersonPills() {
+  var el = document.getElementById('visits-person-pills');
+  if (!el || !data.people.length) return;
+  var f = window.visitsPersonFilter;
+  var allActive = !f;
+  var allBg = allActive ? 'var(--surface)' : 'var(--green-bg)';
+  var allBorder = allActive ? '2px solid var(--border)' : '2px solid var(--green)';
+  var allIconColor = allActive ? 'var(--text-3)' : 'var(--green)';
+  var html = '<button onclick="setVisitsFilter(null)" style="width:46px;height:46px;border-radius:12px;background:' + allBg + ';border:' + allBorder + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;flex-shrink:0;font-family:inherit;">'
+    + '<svg width="16" height="16" fill="none" stroke="' + allIconColor + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
+    + '<span style="font-size:9px;font-weight:700;color:' + allIconColor + ';">All</span>'
+    + '</button>';
+  data.people.forEach(function(p) {
+    var isActive = f == p.id;
+    var color = avatarColor(p.name);
+    var bg = isActive ? 'var(--surface)' : color;
+    var border = isActive ? '2px solid var(--border)' : '2px solid ' + color;
+    var textColor = isActive ? 'var(--text-3)' : color;
+    var initColor = isActive ? 'var(--text-3)' : '#fff';
+    html += '<div onclick="setVisitsFilter(\'' + p.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:' + initColor + ';">' + initials(p.name) + '</div>'
+      + '<div style="font-size:9px;color:' + textColor + ';font-weight:600;">' + p.name.split(' ')[0] + '</div>'
+      + '</div>';
   });
-  el.innerHTML=html;
-}
-function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
+  el.innerHTML = html;
+}function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
 
 // ── NOTES ──
 
@@ -3825,6 +3866,7 @@ function renderNotes() {
     if (n.content.match(/^\[EVENT:/)) return false;
     if (n.content.match(/^\[SECTION:[^\]]+\]$/)) return false;
     if (notesPersonFilter && n.person_id != notesPersonFilter) return false;
+    if (n.hidden && !showHiddenNotes) return false;
     return true;
   });
 
@@ -3940,12 +3982,15 @@ function renderNotes() {
       if (visibleNotes.length) {
         visibleNotes.forEach(function(item) {
           var n = item.note;
-          html += '<div onclick="editNote(\'' + n.id + '\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px 10px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;cursor:pointer;">'
+          html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px 10px 16px;background:' + (n.hidden ? 'var(--surface)' : 'var(--card)') + ';border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;' + (n.hidden ? 'opacity:0.6;' : '') + '">'
             + '<div style="width:5px;height:5px;border-radius:50%;background:' + col.dot + ';flex-shrink:0;margin-top:6px;"></div>'
-            + '<div style="flex:1;">'
+            + '<div onclick="editNote(\'' + n.id + '\')" style="flex:1;cursor:pointer;">'
             + '<div style="font-size:13px;color:var(--text);line-height:1.5;">' + item.text.replace(/\n/g,'<br>') + '</div>'
             + (n.people && n.people.name && !notesPersonFilter ? '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">' + n.people.name + '</div>' : '')
             + '</div>'
+            + '<button onclick="event.stopPropagation();toggleNoteHidden(\'' + n.id + '\',' + (n.hidden ? 'true' : 'false') + ')" title="' + (n.hidden ? 'Show note' : 'Hide note') + '" style="background:none;border:none;cursor:pointer;padding:2px 0 0 6px;flex-shrink:0;opacity:' + (n.hidden ? '1' : '0.3') + ';transition:opacity 0.15s;" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + (n.hidden ? '1' : '0.3') + '\'">'
+            + '<svg width="14" height="14" fill="none" stroke="' + (n.hidden ? 'var(--text-3)' : 'var(--text-3)') + '" stroke-width="2" viewBox="0 0 24 24">' + (n.hidden ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>') + '</svg>'
+            + '</button>'
             + '</div>';
         });
       }
@@ -3962,7 +4007,13 @@ function toggleNotesSection(sectionName) {
 }
 
 function setNotesPersonFilter(p) { notesPersonFilter = p || null; renderNotesPersonPills(); renderNotes(); }
-function toggleHiddenNotes(c) { showHiddenNotes = c; renderNotes(); }
+function toggleHiddenNotes(c) {
+  showHiddenNotes = c;
+  // Sync checkbox state
+  var cb = document.getElementById('show-hidden-notes');
+  if (cb) cb.checked = c;
+  renderNotes();
+}
 
 // Open + button → add new section
 function openAddNoteSection() {
@@ -4113,7 +4164,16 @@ function populateNoteSelects(pId, dId, vId, mId) {
   if (pId) sel.value = pId;
 }
 function filterNoteVisits(pId) {} // no-op, kept for compatibility
-function toggleNoteHidden(id, cur) {} // no-op, simplified
+async function toggleNoteHidden(id, cur) {
+  var newHidden = !cur;
+  var r = await sb.from('notes').update({ hidden: newHidden }).eq('id', id);
+  if (r.error) { toast('Error: ' + r.error.message); return; }
+  // Update local cache
+  var n = notesData.find(function(x) { return x.id === id; });
+  if (n) n.hidden = newHidden;
+  toast(newHidden ? 'Note hidden' : 'Note visible');
+  renderNotes();
+}
 
 
 // ── IMPORTANT INFO ──
