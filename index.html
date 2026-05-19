@@ -3446,9 +3446,11 @@ async function loadTodos() {
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
     const allRows = rows || [];
-    // Filter to only this family's todos by matching person_id to loaded people
+    toast('Raw rows: ' + allRows.length + ' | People: ' + data.people.length);
     const familyPersonIds = new Set(data.people.map(p => p.id));
+    toast('Person IDs: ' + [...familyPersonIds].map(i=>i.substring(0,8)).join(', '));
     todosData = allRows.filter(t => !t.person_id || familyPersonIds.has(t.person_id));
+    toast('Filtered: ' + todosData.length);
     renderTodoPersonPills();
     renderTodos();
   } catch(err) {
