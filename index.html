@@ -1154,7 +1154,7 @@ async function loadPeople() {
 }
 async function loadDoctors() {
   try {
-    const {data:rows, error} = await sb.from('doctors').select('*').order('name');
+    const {data:rows, error} = await sb.from('doctors').select('*').eq('family_group_id', currentFamilyGroupId).order('name');
     if (error) console.error('loadDoctors error:', error);
     data.doctors = rows || [];
     renderDoctors(data.doctors);
@@ -1162,7 +1162,7 @@ async function loadDoctors() {
 }
 async function loadMeds() {
   try {
-    const {data:rows, error} = await sb.from('medications').select('*, people(name), prescriber:doctors!medications_prescribed_by_fkey(name)').order('name');
+    const {data:rows, error} = await sb.from('medications').select('*, people(name), prescriber:doctors!medications_prescribed_by_fkey(name)').eq('family_group_id', currentFamilyGroupId).order('name');
     if (error) console.error('loadMeds error:', error);
     data.medications = (rows || []).map(m => ({...m, doctors: m.prescriber}));
     renderMeds(data.medications);
@@ -1170,7 +1170,7 @@ async function loadMeds() {
 }
 async function loadVisits() {
   try {
-    const {data:rows, error} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
+    const {data:rows, error} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').eq('family_group_id', currentFamilyGroupId).order('visit_date',{ascending:false});
     if (error) console.error('loadVisits error:', error);
     data.visits = rows || [];
     if(typeof renderVisitsPersonPills==='function')renderVisitsPersonPills();
@@ -3011,8 +3011,8 @@ async function exportAll() {
 
   // Fetch fresh full data with all relations
   const [peopleRes, doctorsRes, medsRes, visitsRes] = await Promise.all([
-    sb.from('people').select('*').order('name'),
-    sb.from('doctors').select('*').order('name'),
+    sb.from('people').select('*').eq('family_group_id', currentFamilyGroupId).order('name'),
+    sb.from('doctors').select('*').eq('family_group_id', currentFamilyGroupId).order('name'),
     sb.from('medications').select('*, people(name), doctors(name)').order('name'),
     sb.from('visits').select('*, people(name), doctors(name)').order('visit_date', {ascending: false})
   ]);
@@ -3132,6 +3132,7 @@ async function loadDocs() {
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   const { data: rows, error } = await sb.from('documents')
     .select('*, people(name), doctors(name), visits(title)')
+    .eq('family_group_id', currentFamilyGroupId)
     .order('created_at', { ascending: false });
   if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
   data.documents = rows || [];
@@ -3441,6 +3442,7 @@ async function loadTodos() {
   try {
     const { data: rows, error } = await sb.from('todos')
       .select('*, people(name), doctors(name), visits(title)')
+      .eq('family_group_id', currentFamilyGroupId)
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
     todosData = rows || [];
@@ -3816,6 +3818,7 @@ async function loadNotes() {
   if (!data.people.length) await loadAll();
   var res = await sb.from('notes')
     .select('id, content, person_id, hidden, created_at, people(name)')
+    .eq('family_group_id', currentFamilyGroupId)
     .order('created_at', { ascending: true });
   if (res.error) {
     if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.</div>';
