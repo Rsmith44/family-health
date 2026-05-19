@@ -989,7 +989,11 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  Promise.all([loadAll(), loadTodos()]).then(() => { renderPeople(data.people); });
+  toast('FG: ' + (currentFamilyGroupId ? currentFamilyGroupId.substring(0,8) : 'NULL'));
+  Promise.all([loadAll(), loadTodos()]).then(() => {
+    toast('Todos loaded: ' + todosData.length + ' rows');
+    renderPeople(data.people);
+  });
   loadDoctorTypes();
 }
 
