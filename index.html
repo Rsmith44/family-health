@@ -1339,23 +1339,6 @@ async function openPerson(id) {
 
     html += `</div></div>`;
 
-    // Notes section (still accessible, below menu)
-    const myNotes = notesData.filter(n=>n.person_id===id && !n.hidden && !n.content.startsWith('[EVENT:'));
-    if (myNotes.length) {
-      html += `<div style="padding:14px 14px 0;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Notes (${myNotes.length})</div>`;
-      myNotes.slice(0,3).forEach(n => {
-        html += `<div onclick="editNote('${n.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:7px;cursor:pointer;">
-          <div style="font-size:13px;color:var(--text);line-height:1.5;">${n.content.slice(0,120)}${n.content.length>120?'…':''}</div>
-          <div style="font-size:10px;color:var(--text-3);margin-top:4px;">${n.created_at ? new Date(n.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
-        </div>`;
-      });
-      if (myNotes.length > 3) {
-        html += `<div onclick="setNotesPersonFilter('${id}');showTab('notes',document.getElementById('nav-notes-btn'))" style="text-align:center;padding:6px 0;font-size:13px;color:var(--green);font-weight:500;cursor:pointer;">View all ${myNotes.length} notes →</div>`;
-      }
-      html += `</div>`;
-    }
-
     html += `<div style="height:20px;"></div>`;
 
     document.getElementById('person-detail').innerHTML = html;
