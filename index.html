@@ -3446,11 +3446,8 @@ async function loadTodos() {
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
     const allRows = rows || [];
-    toast('Raw rows: ' + allRows.length + ' | People: ' + data.people.length);
     const familyPersonIds = new Set(data.people.map(p => p.id));
-    toast('Person IDs: ' + [...familyPersonIds].map(i=>i.substring(0,8)).join(', '));
     todosData = allRows.filter(t => !t.person_id || familyPersonIds.has(t.person_id));
-    toast('Filtered: ' + todosData.length);
     renderTodoPersonPills();
     renderTodos();
   } catch(err) {
@@ -3497,6 +3494,7 @@ function renderTodos() {
 
   // Build rows - active only by default (no completed shown)
   let rows = todosData.filter(t => !t.completed);
+  toast('renderTodos: todosData=' + todosData.length + ' active=' + rows.length + ' sample=' + (todosData[0] ? String(todosData[0].completed) + '/' + typeof todosData[0].completed : 'none'));
   if (todoPersonFilter) rows = rows.filter(t => t.person_id == todoPersonFilter);
 
   // Sort by due_date within each group
