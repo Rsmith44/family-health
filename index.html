@@ -122,8 +122,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
 .bottom-nav { display: flex; background: rgba(247,245,240,0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border); padding: 10px 0 env(safe-area-inset-bottom, 20px); flex-shrink: 0; }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; border: none; background: none; transition: transform 0.1s; }
-.nav-item svg { transition: filter 0.15s, opacity 0.15s; filter: grayscale(1); opacity: 0.35; }
-.nav-item.active svg { filter: none; opacity: 1; }
+.nav-item svg { transition: filter 0.15s, opacity 0.15s; filter: none; opacity: 1; }
+.nav-item.active svg { filter: grayscale(1); opacity: 0.45; }
 .nav-item:active { transform: scale(0.88); }
 .nav-label { font-size: 10px; font-weight: 500; color: var(--text-3); transition: color 0.15s; font-family: 'DM Sans', sans-serif; }
 .nav-item svg { color: var(--text-3); transition: color 0.15s; }
@@ -447,9 +447,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div></div>
-      <button class="icon-btn" onclick="openAddNoteSection()" style="margin-right:4px;" title="Add section">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
+      <div style="width:36px"></div>
     </div>
     <div id="notes-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
@@ -1729,6 +1727,8 @@ async function openAddModal() {
     populateTodoSelects(null, null, null);
   }
   if (modal==='modal-note') {
+    // On notes tab, FAB opens section picker instead
+    if (currentTab === 'notes') { openNoteSectionPicker(); return; }
     document.getElementById('modal-note-title').textContent='Add Note';
     document.getElementById('note-id').value='';
     document.getElementById('note-content').value='';
@@ -2886,6 +2886,109 @@ function copyInfoCardText(personId) {
 }
 
 
+
+// ── NOTES: SECTION PICKER (FAB on notes tab) ──
+function openNoteSectionPicker() {
+  var sections = getSections();
+  if (!sections.length) {
+    // No sections yet — go straight to create one
+    openAddNoteSection();
+    return;
+  }
+
+  // Build a bottom-sheet style picker
+  var existing = document.getElementById('notes-section-picker');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'notes-section-picker';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;';
+
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:16px 0 calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow-y:auto;';
+
+  var html = '<div style="width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>'
+    + '<div style="font-size:16px;font-weight:700;color:var(--text);padding:0 16px 12px;">Add note to…</div>'
+    + '<div style="border-top:1px solid var(--border);">';
+
+  sections.forEach(function(sec, sIdx) {
+    html += '<div data-sec-idx="' + sIdx + '" onclick="notesPickerSelectSection(window._notesSections[this.dataset.secIdx])" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">'
+      + '<div style="font-size:14px;font-weight:500;color:var(--text);flex:1;">' + sec.name + '</div>'
+      + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>'
+      + '</div>';
+  });
+  window._notesSections = sections.map(function(s){ return s.name; });
+
+  html += '</div>'
+    + '<div onclick="openAddNoteSection()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;">'
+    + '<div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg width="12" height="12" fill="none" stroke="var(--green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+    + '</div>'
+    + '<div style="font-size:14px;font-weight:500;color:var(--green);">New section…</div>'
+    + '</div>';
+
+  sheet.innerHTML = html;
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function notesPickerSelectSection(nameOrEl) {
+  var sectionName = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var picker = document.getElementById('notes-section-picker');
+  if (picker) picker.remove();
+  openQuickNoteInSection(sectionName);
+}
+
+// ── NOTES: QUICK NOTE INLINE IN SECTION ──
+function openQuickNoteInSection(sectionName) {
+  // Make sure the section is expanded first
+  notesSectionCollapsed[sectionName] = false;
+  renderNotes();
+
+  // Find or create an inline note input at the top of the section content
+  // We'll do it via modal but pre-fill section and auto-focus
+  document.getElementById('modal-note-title').textContent = 'Add Note';
+  document.getElementById('note-id').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-section').value = sectionName;
+  document.getElementById('delete-note-btn').style.display = 'none';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) {
+    return '<option value="' + p.id + '">' + p.name + '</option>';
+  }).join('');
+  if (notesPersonFilter) sel.value = notesPersonFilter;
+  openModal('modal-note');
+  // Auto-focus the textarea
+  setTimeout(function() {
+    var ta = document.getElementById('note-content');
+    if (ta) ta.focus();
+  }, 300);
+}
+
+// ── NOTES: LONG PRESS HANDLER ──
+var _notesLongPressTimer = null;
+
+function notesLongPressStart(sectionName) {
+  _notesLongPressTimer = setTimeout(function() {
+    _notesLongPressTimer = null;
+    // Haptic feedback if available
+    if (navigator.vibrate) navigator.vibrate(40);
+    editNoteSection(sectionName);
+  }, 600);
+}
+
+function notesLongPressEnd() {
+  if (_notesLongPressTimer) {
+    clearTimeout(_notesLongPressTimer);
+    _notesLongPressTimer = null;
+  }
+}
+
+
 // ── EXPORT ──
 function openExportModal() {
   // Populate selects
@@ -3703,20 +3806,27 @@ function renderNotesPersonPills() {
   var el = document.getElementById('notes-person-pills');
   if (!el) return;
   var f = notesPersonFilter;
-  // All button styled as box like mockup
-  var allBg = !f ? 'var(--green-bg)' : 'var(--surface)';
-  var allBorder = !f ? '2px solid var(--green)' : '1px solid var(--border)';
+  // Active (selected) = grey/muted. Inactive = full colour.
+  var allActive = !f;
+  var allBg = allActive ? 'var(--surface)' : 'var(--green-bg)';
+  var allBorder = allActive ? '2px solid var(--border)' : '2px solid var(--green)';
+  var allIconColor = allActive ? 'var(--text-3)' : 'var(--green)';
+  var allLabelColor = allActive ? 'var(--text-3)' : 'var(--green)';
   var html = '<button onclick="setNotesPersonFilter(null)" style="width:46px;height:46px;border-radius:12px;background:' + allBg + ';border:' + allBorder + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;flex-shrink:0;">'
-    + '<svg width="16" height="16" fill="none" stroke="' + (!f ? 'var(--green)' : 'var(--text-3)') + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
-    + '<span style="font-size:9px;font-weight:700;color:' + (!f ? 'var(--green)' : 'var(--text-3)') + ';">All</span>'
+    + '<svg width="16" height="16" fill="none" stroke="' + allIconColor + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
+    + '<span style="font-size:9px;font-weight:700;color:' + allLabelColor + ';">All</span>'
     + '</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--surface)';
-    var border = isActive ? '2px solid ' + avatarColor(p.name) : '1px solid var(--border)';
+    var color = avatarColor(p.name);
+    // Active (this person selected) = grey. Inactive = coloured.
+    var bg = isActive ? 'var(--surface)' : color;
+    var border = isActive ? '2px solid var(--border)' : '2px solid ' + color;
+    var textColor = isActive ? 'var(--text-3)' : color;
+    var initColor = isActive ? 'var(--text-3)' : '#fff';
     html += '<div onclick="setNotesPersonFilter(\'' + p.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;">'
-      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">' + initials(p.name) + '</div>'
-      + '<div style="font-size:9px;color:' + (isActive ? avatarColor(p.name) : 'var(--text-3)') + ';font-weight:' + (isActive ? '600' : '400') + ';">' + p.name.split(' ')[0] + '</div>'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:' + initColor + ';">' + initials(p.name) + '</div>'
+      + '<div style="font-size:9px;color:' + textColor + ';font-weight:600;">' + p.name.split(' ')[0] + '</div>'
       + '</div>';
   });
   el.innerHTML = html;
@@ -3756,6 +3866,12 @@ function renderNotes() {
       sections.push({ name: s, personId: null, noteId: null });
     }
   });
+  // Filter sections by person: if a section has a personId set, only show it for that person
+  if (notesPersonFilter) {
+    sections = sections.filter(function(sec) {
+      return !sec.personId || sec.personId === notesPersonFilter;
+    });
+  }
 
   if (!sections.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add a section</span></div>';
@@ -3822,12 +3938,17 @@ function renderNotes() {
     // Section header row — coloured background
     var col = getSectionColour(idx);
     var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
-    html += '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="' + sepStyle + 'display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';margin-bottom:' + (collapsed ? '0' : '0') + ';">'
+    html += '<div style="' + sepStyle + 'display:flex;align-items:center;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';">'
+      + '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" oncontextmenu="event.preventDefault();editNoteSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" ontouchstart="notesLongPressStart(\'' + sec.name.replace(/'/g,"\\'") + '\')" ontouchend="notesLongPressEnd()" ontouchmove="notesLongPressEnd()" style="flex:1;display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">'
       + '<div style="flex:1;">'
-      + '<div style="font-size:14px;font-weight:700;color:' + col.text + ';">' + sec.name + '</div>'
+      + '<div style="font-size:18px;font-weight:700;color:' + col.text + ';">' + sec.name + '</div>'
       + '</div>'
       + '<div style="font-size:12px;color:' + col.text + ';opacity:0.7;margin-right:6px;">' + visibleNotes.length + ' note' + (visibleNotes.length !== 1 ? 's' : '') + '</div>'
       + '<div style="color:' + col.text + ';opacity:0.8;">' + chevron + '</div>'
+      + '</div>'
+      + '<button onclick="event.stopPropagation();openQuickNoteInSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="background:none;border:none;border-left:1px solid ' + col.border + ';padding:0 12px;cursor:pointer;height:100%;display:flex;align-items:center;align-self:stretch;" title="Add note">'
+      + '<svg width="16" height="16" fill="none" stroke="' + col.text + '" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+      + '</button>'
       + '</div>';
 
     // Section content (notes) — white cards inside coloured section
@@ -3845,14 +3966,7 @@ function renderNotes() {
             + '</div>';
         });
       }
-      // Add note row
-      html += '<div onclick="openAddNoteToSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 13px 6px 16px;cursor:pointer;">'
-        + '<div style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-        + '<svg width="8" height="8" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
-        + '</div>'
-        + '<div style="font-size:13px;color:var(--text-3);">Add note...</div>'
-        + '</div>'
-        + '</div>';
+      html += '</div>';
     }
   });
   html += '</div>';
@@ -3924,7 +4038,12 @@ async function saveNoteSection() {
   }
   closeModal('modal-note-section');
   toast(editing ? 'Section renamed ✓' : 'Section created ✓');
+  // Stay on notes tab
+  showTab('notes', document.getElementById('nav-notes-btn'));
   await loadNotes();
+  // Auto-expand the new/renamed section
+  notesSectionCollapsed[name] = false;
+  renderNotes();
 }
 
 async function deleteNoteSection() {
