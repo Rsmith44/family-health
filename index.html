@@ -36,6 +36,10 @@
   --safe-bottom: env(safe-area-inset-bottom, 20px);
   --nav-h: calc(60px + env(safe-area-inset-bottom, 34px));
 }
+/* ── LARGE FONT MODE ── */
+body.large-font #main-app,
+body.large-font #login-screen,
+body.large-font #onboarding-screen { zoom: 1.2; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); position: fixed; width: 100%; height: 100%; overflow: hidden; }
 #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
@@ -120,9 +124,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; border: none; background: none; transition: transform 0.1s; }
 .nav-item:active { transform: scale(0.88); }
 .nav-label { font-size: 10px; font-weight: 500; color: var(--text-3); transition: color 0.15s; font-family: 'DM Sans', sans-serif; }
-.nav-item svg { color: var(--text-3); transition: color 0.15s; }
+.nav-item svg { transition: filter 0.15s, opacity 0.15s; filter: none; opacity: 1; }
 .nav-item.active .nav-label { color: var(--green); }
-.nav-item.active svg { color: var(--green); }
+.nav-item.active svg { filter: grayscale(1); opacity: 0.45; }
 
 .fab { position: fixed; right: 20px; bottom: calc(var(--nav-h) + 16px); width: 54px; height: 54px; border-radius: 50%; background: var(--green); color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 26px; box-shadow: 0 4px 16px rgba(42,96,73,0.35); transition: transform 0.15s; z-index: 50; }
 .fab:active { transform: scale(0.92); }
@@ -251,8 +255,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="screen" id="screen-doctors">
     <div class="header">
-      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Doctors</div><div class="header-sub" id="doctors-sub">Your care team</div></div>
+      <button class="header-back" id="back-from-doctors" onclick="openHamburger()">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-left" style="flex:1;padding-left:4px;"><div class="header-title">Doctors</div><div class="header-sub" id="doctors-sub">Your care team</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -277,8 +283,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="screen" id="screen-medications">
     <div class="header">
-      <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
+      <button class="header-back" id="back-from-meds" onclick="openHamburger()">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-left" style="flex:1;padding-left:4px;"><div class="header-title">Medications</div><div class="header-sub" id="meds-sub">All prescriptions</div></div>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -368,6 +376,35 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     </div>
   </div>
 
+  <!-- ══ PERSON EVENTS SCREEN ══ -->
+  <div class="screen" id="screen-person-events">
+    <div class="header">
+      <button class="header-back" id="back-from-events" onclick="goBack('person')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-title" id="person-events-title">Medical Events</div>
+      <button class="icon-btn" onclick="showAddEventFromPage(currentPerson&&currentPerson.id)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div id="add-event-page-area"></div>
+    <div class="scroll-full" id="person-events-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ══ PERSON INFO CARD SCREEN ══ -->
+  <div class="screen" id="screen-person-infocard">
+    <div class="header">
+      <button class="header-back" id="back-from-infocard" onclick="goBack('person')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>
+      <div class="header-title" id="person-infocard-title">Info Card</div>
+      <button class="icon-btn" onclick="editCurrentPerson()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </button>
+    </div>
+    <div class="scroll-full" id="person-infocard-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
   <!-- ══ DOCUMENTS SCREEN ══ -->
   <div class="screen" id="screen-documents">
     <div class="header">
@@ -397,7 +434,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
     </div>
     <!-- Person filter pills -->
-    <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="todo-person-pills"></div>
+    <div id="todo-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
     <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
       <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
         <input type="checkbox" id="show-completed-todos" onchange="toggleShowCompleted(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
@@ -411,9 +448,15 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   <div class="screen" id="screen-notes">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div><div class="header-sub" id="notes-sub">All notes</div></div>
+      <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Notes</div></div>
     </div>
-    <div style="padding:0 16px 10px;overflow-x:auto;display:flex;gap:7px;" id="notes-person-pills"></div>
+    <div id="notes-person-pills" style="padding:6px 14px 8px;overflow-x:auto;display:flex;gap:8px;flex-shrink:0;"></div>
+    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
+        <input type="checkbox" id="show-hidden-notes" onchange="toggleHiddenNotes(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
+        Show hidden
+      </label>
+    </div>
     <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
       <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
         <input type="checkbox" id="show-hidden-notes" onchange="toggleHiddenNotes(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
@@ -475,6 +518,24 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 <button class="fab" id="fab" onclick="openAddModal()">+</button>
 
 <!-- VISIT MODAL -->
+<!-- ADD NOTE SECTION MODAL -->
+<div class="modal-overlay" id="modal-note-section">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-note-section-title">New Section</div>
+      <button class="modal-close" onclick="closeModal('modal-note-section')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="note-section-editing">
+      <div class="field"><label>Section Name *</label><input type="text" id="note-section-name" placeholder="e.g. Dr Patel, Reminders, School..."></div>
+      <div class="field"><label>Person (optional)</label><select id="note-section-person"><option value="">Everyone</option></select></div>
+      <button class="btn-primary" onclick="saveNoteSection()">Save Section</button>
+      <button class="btn-danger" id="delete-note-section-btn" style="display:none" onclick="deleteNoteSection()">Delete Section</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-visit">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -626,11 +687,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="modal-header"><div class="modal-title" id="modal-note-title">Add Note</div><button class="modal-close" onclick="closeModal('modal-note')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="note-id">
+      <input type="hidden" id="note-section">
       <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
-      <div class="field"><label>Person *</label><select id="note-person"><option value="">Select person...</option></select></div>
-      <div class="field"><label>Doctor (optional)</label><select id="note-doctor"><option value="">Select doctor...</option></select></div>
-      <div class="field"><label>Visit (optional)</label><select id="note-visit"><option value="">Select visit...</option></select></div>
-      <div class="field"><label>Medication (optional)</label><select id="note-medication"><option value="">Select medication...</option></select></div>
+      <div class="field"><label>Person</label><select id="note-person"><option value="">Everyone</option></select></div>
+
       <button class="btn-primary" onclick="saveNote()">Save Note</button>
       <button class="btn-danger" id="delete-note-btn" style="display:none" onclick="deleteNote()">Delete Note</button>
     </div>
@@ -771,13 +831,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
   </div>
   <div style="flex:1;overflow-y:auto;padding:8px 0;">
     <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Navigate</div>
-    <button class="ham-item" onclick="navToDoctors()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span>Doctors</span></button>
     <button class="ham-item" onclick="navToVisits()"><div class="ham-icon" style="background:var(--teal-bg)"><svg width="18" height="18" fill="none" stroke="var(--teal)" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span>Visits</span></button>
-    <button class="ham-item" onclick="navToMeds()"><div class="ham-icon" style="background:var(--amber-bg)"><svg width="18" height="18" fill="none" stroke="var(--amber)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10.5 20H4a2 2 0 01-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v3"/><circle cx="17" cy="17" r="5"/><path d="M17 15v4M15 17h4"/></svg></div><span>Medications</span></button>
     <button class="ham-item" onclick="navToDocs()"><div class="ham-icon" style="background:var(--blue-bg)"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span>Documents</span></button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
     <div style="padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Account</div>
-    <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openSettingsModal()"><div class="ham-icon" style="background:var(--surface)"><svg width="18" height="18" fill="none" stroke="var(--text-2)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Settings</span></button>
     <button class="ham-item" onclick="closeHamburger();openExportModal()"><div class="ham-icon" style="background:var(--green-bg)"><svg width="18" height="18" fill="none" stroke="var(--green)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span>Export Data</span></button>
     <button class="ham-item" onclick="closeHamburger();openInviteModal()"><div class="ham-icon" style="background:var(--purple-bg)"><svg width="18" height="18" fill="none" stroke="var(--purple)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><span>Invite Someone</span></button>
@@ -819,7 +876,17 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;font-size:11px;">Family Group</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Display</div>
+      <div style="background:var(--surface);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">Larger Text</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px;">For easier reading</div>
+        </div>
+        <button id="font-size-toggle" onclick="toggleFontSize()" style="width:50px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background 0.2s;font-size:0;">
+          <div id="font-size-knob" style="width:22px;height:22px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);position:absolute;top:3px;transition:left 0.2s;"></div>
+        </button>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">Family Group</div>
       <div class="field">
         <label>Family Group Name</label>
         <input type="text" id="settings-group-name" placeholder="e.g. Smith Family">
@@ -1126,204 +1193,10 @@ async function loadVisits() {
   } catch(err) { console.error('loadVisits exception:', err); data.visits = []; }
 }
 
-function renderPeople(rows) {
-  const el = document.getElementById('people-list');
-  document.getElementById('home-sub').textContent = `${rows.length} member${rows.length!==1?'s':''}`;
-  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👨‍👩‍👧‍👦</div>No family members yet</div>'; return; }
-  el.innerHTML = '<div class="section-label">Family Members</div>' + rows.map(p => {
-    const meds = data.medications.filter(m=>m.person_id===p.id && m.status==='Active');
-    const upcoming = data.visits.filter(v=>v.person_id===p.id && v.visit_date && visitDate(v.visit_date)>=new Date());
-    return `<div class="person-card" onclick="openPerson('${p.id}')">
-      <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-      <div class="person-info"><div class="person-name">${p.name}</div></div>
-      <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-    </div>`;
-  }).join('');
-}
+
 function filterPeople(q) { renderPeople(q ? data.people.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())) : data.people); }
 
-async function openPerson(id) {
-  currentPerson = data.people.find(p=>p.id===id);
-  if (!currentPerson) return;
-  showScreen('person','forward');
-  try {
-  const {data:pdRows} = await sb.from('people_doctors').select('doctor_id').eq('person_id',id);
-  const docIds = (pdRows||[]).map(r=>r.doctor_id);
-  const myDocs = data.doctors.filter(d=>docIds.includes(d.id));
-  const myMeds = data.medications.filter(m=>m.person_id===id);
-  const myVisits = data.visits.filter(v=>v.person_id===id).sort((a,b)=>visitDate(b.visit_date)-visitDate(a.visit_date));
-  const p = currentPerson;
-  let html = `<div class="detail-hero">
-    <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
-    <div><div class="detail-name">${p.name}</div><div class="detail-sub">${p.dob ? `${fmtDate(p.dob)} · ${age(p.dob)} old` : 'No DOB recorded'}</div></div>
-  </div>`;
-  html += buildImportantInfoCard(p);
 
-  // Fetch surgeries/major events for this person (stored in notes with [EVENT:] prefix)
-  const { data: personEvents } = await sb.from('notes')
-    .select('id, content, created_at')
-    .eq('person_id', id)
-    .like('content', '[EVENT:%')
-    .order('content', { ascending: false });
-
-  // Surgeries/Major Events section
-  const eventsData = personEvents || [];
-  html += `<div class="collapsible-header" onclick="toggleSection('${id}','events')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Surgeries &amp; Major Events${eventsData.length ? ' (' + eventsData.length + ')' : ''}</div>
-      <svg id="arrow_${id}_events" class="collapsible-arrow collapsed" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_events" class="collapsible-content" style="display:none;">
-      <div style="padding-top:8px;">`;
-  if (eventsData.length) {
-    eventsData.forEach(ev => {
-      // Parse [EVENT:YYYY-MM-DD] prefix
-      const match = ev.content.match(/^\[EVENT:(\d{4}-\d{2}-\d{2})\](.*)/s);
-      const dateStr = match ? fmtDate(match[1]) : '';
-      const text = match ? match[2].trim() : ev.content;
-      html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;">
-        <div style="flex:1;">
-          ${dateStr ? `<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:3px;">${dateStr}</div>` : ''}
-          <div style="font-size:13px;color:var(--text);line-height:1.5;">${text}</div>
-        </div>
-        <button onclick="event.stopPropagation();deletePersonEvent('${ev.id}','${id}')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">
-          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>`;
-    });
-  }
-  html += `<div id="add-event-area-${id}">
-        <button onclick="showAddEventForm('${id}')" style="display:flex;align-items:center;gap:8px;width:100%;background:var(--surface);border:1px dashed var(--border);border-radius:var(--r-sm);padding:9px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:4px;">
-          <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          <span style="font-size:13px;color:var(--text-3);">Add event...</span>
-        </button>
-      </div>
-      </div>
-    </div>`;
-
-  if (p.notes) html += `
-    <div class="collapsible-header" onclick="toggleSection('${id}','notes')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Notes</div>
-      <svg id="arrow_${id}_notes" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_notes" class="collapsible-content" style="display:none;">
-      <div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left">${p.notes}</span></div></div>
-    </div>`;
-  if (myDocs.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','doctors')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Doctors (${myDocs.length})</div>
-      <svg id="arrow_${id}_doctors" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_doctors" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      myDocs.map(d=>`<div class="list-item" onclick="openDoctor('${d.id}','person')">
-        <div class="list-icon" style="background:var(--blue-bg)">🩺</div>
-        <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.type,d.address].filter(Boolean).join(' · ')}</div></div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myMeds.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','meds')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Medications (${myMeds.length})</div>
-      <svg id="arrow_${id}_meds" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_meds" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      myMeds.map(m=>`<div class="list-item" onclick="openMed('${m.id}','person')">
-        <div class="list-icon" style="background:var(--amber-bg)">💊</div>
-        <div class="list-info"><div class="list-title">${m.name}</div><div class="list-sub">${[m.dosage,m.frequency].filter(Boolean).join(' · ')}</div></div>
-        <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') + '</div></div>';
-  }
-  if (myVisits.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','visits')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Visits (${myVisits.length})</div>
-      <svg id="arrow_${id}_visits" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_visits" class="collapsible-content" style="display:none;">` +
-      myVisits.slice(0,5).map(v=>`<div class="visit-card" onclick="openVisit('${v.id}','person')">
-        <div class="visit-top"><div class="visit-title">${v.title}</div><div class="visit-date">${fmtDateTime(v.visit_date)}</div></div>
-        ${v.doctors?.name?`<div class="visit-meta">🩺 ${v.doctors.name}</div>`:''}
-      </div>`).join('') + '</div>';
-  }
-  // Custom sections
-  const person = data.people.find(p=>p.id===id);
-  currentSections = person?.custom_sections || [];
-  if (currentSections.length) {
-    currentSections.forEach((sec, i) => {
-      html += `<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">
-        <span>${sec.name}</span>
-        <button onclick="openEditSection('${id}',${i})" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:500;cursor:pointer;">Edit</button>
-      </div>
-      <div class="prop-card"><div class="prop-row"><span class="prop-value" style="text-align:left;white-space:pre-wrap">${sec.content||'—'}</span></div></div>`;
-    });
-  }
-
-  if (!myDocs.length && !myMeds.length && !myVisits.length && !currentSections.length) html += `<div class="empty-state" style="margin-top:20px"><div class="empty-icon">📋</div>No records yet</div>`;
-
-  // Add section button
-  // Load documents for this person
-  const { data: personDocs } = await sb.from('documents').select('*, doctors(name), visits(title)').eq('person_id', id).order('created_at', {ascending: false});
-  if (personDocs?.length) {
-    html += `<div class="collapsible-header" onclick="toggleSection('${id}','docs')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Documents (${personDocs.length})</div>
-      <svg id="arrow_${id}_docs" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
-    <div id="section_${id}_docs" class="collapsible-content" style="display:none;"><div class="list-card">` +
-      personDocs.map(d => {
-        const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') ? '🖼️' : '📝';
-        return `<div class="list-item" onclick="openDocument('${d.id}')">
-          <div class="list-icon" style="background:var(--blue-bg);font-size:20px">${icon}</div>
-          <div class="list-info"><div class="list-title">${d.name}</div><div class="list-sub">${[d.doctors?.name, d.visits?.title, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div></div>
-          <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-        </div>`;
-      }).join('') + '</div>';
-  }
-
-  // Person todos
-  const { data: personTodos } = await sb.from('todos').select('*, doctors(name), visits(title)').eq('person_id', id).order('due_date', {ascending: true, nullsFirst: false});
-  if (personTodos?.length) {
-    const activeTodos = personTodos.filter(t => !t.completed);
-    const doneTodos = personTodos.filter(t => t.completed);
-    if (activeTodos.length) {
-      html += `<div class="collapsible-header" onclick="toggleSection('${id}','todos')" style="margin:14px 0 0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);">Follow-ups (${activeTodos.length})</div>
-        <svg id="arrow_${id}_todos" class="collapsible-arrow" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div id="section_${id}_todos" class="collapsible-content" style="display:none;">`;
-      activeTodos.forEach(t => {
-        const isOverdue = t.due_date && new Date(t.due_date) < new Date();
-        html += `<div class="visit-card" style="margin-bottom:8px;" onclick="editTodo('${t.id}')">
-          <div style="display:flex;align-items:flex-start;gap:12px;">
-            <div onclick="event.stopPropagation();toggleTodo('${t.id}',false)" style="width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;"></div>
-            <div style="flex:1;">
-              <div style="font-size:14px;font-weight:600;">${t.title}</div>
-              ${t.due_date ? `<div style="font-size:12px;color:${isOverdue?'#C0392B':'var(--text-3)'};">${isOverdue?'⚠ Overdue · ':'📅 '}${fmtDate(t.due_date)}</div>` : ''}
-              ${t.doctors?.name ? `<span class="chip chip-blue" style="margin-top:4px;display:inline-block;">🩺 ${t.doctors.name}</span>` : ''}
-            </div>
-          </div>
-        </div>`;
-      });
-      html += '</div>';
-    }
-    if (activeTodos.length) html += '</div>';
-    if (doneTodos.length) html += `<div style="font-size:12px;color:var(--text-3);margin:4px 4px 8px;">✓ ${doneTodos.length} completed follow-up${doneTodos.length!==1?'s':''}</div>`;
-  }
-
-  html += `<div style="padding:8px 0 4px;display:flex;gap:8px;">
-    <button onclick="openAddSection('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--text-2);cursor:pointer;">
-      <span style="font-size:18px">+</span> Add Section
-    </button>
-    <button onclick="addDocumentForPerson('${id}')" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;background:var(--blue-bg);border:none;border-radius:var(--r);padding:14px;font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;">
-      <span style="font-size:18px">📎</span> Add Doc
-    </button>
-  </div>
-  <div style="height:16px"></div>`;
-
-  document.getElementById('person-detail').innerHTML = html;
-  ['events','notes','doctors','meds','visits','docs','todos'].forEach(k=>{collapsedSections[id+'_'+k]=true;var a=document.getElementById('arrow_'+id+'_'+k);if(a)a.classList.add('collapsed');});
-  } catch(err) {
-    document.getElementById('person-detail').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
-    console.error('openPerson error:',err);
-  }
-}
 
 function renderDoctors(rows) {
   const el = document.getElementById('doctors-list');
@@ -1444,30 +1317,7 @@ function openMed(id, from='medications') {
     <div class="prop-card">${fields.map(([l,v])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
 }
 
-function renderVisits(rows, filter) {
-  const el = document.getElementById('visits-list');
-  const today = new Date();
-  let filtered = filter==='upcoming' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)>=today)
-    : filter==='past' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)<today) : rows;
-  filtered = [...filtered].sort((a,b)=>filter==='upcoming'?visitDate(a.visit_date)-visitDate(b.visit_date):visitDate(b.visit_date||0)-visitDate(a.visit_date||0));
-  document.getElementById('visits-sub').textContent = `${filtered.length} visit${filtered.length!==1?'s':''}`;
-  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>No visits found</div>'; return; }
-  el.innerHTML = filtered.map(v=>{
-    const isUpcoming = v.visit_date&&visitDate(v.visit_date)>=today;
-    return `<div class="visit-card" onclick="openVisit('${v.id}')">
-      <div class="visit-top">
-        <div><div class="visit-title">${v.title}</div>${isUpcoming?'<span class="chip chip-green" style="margin-top:5px;display:inline-block">Upcoming</span>':''}</div>
-        <div class="visit-date">${fmtDateTime(v.visit_date)}</div>
-      </div>
-      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-        ${v.people?.name?`<span class="chip chip-teal">👤 ${v.people.name}</span>`:''}
-        ${v.doctors?.name?`<span class="chip chip-blue">🩺 ${v.doctors.name}</span>`:''}
-      </div>
-      ${v.notes?`<div class="visit-meta" style="margin-top:6px">${v.notes.slice(0,100)}${v.notes.length>100?"...":""}</div>`:""}
-      ${v.visit_date?`<button class="cal-btn" style="margin-top:8px;font-size:12px;padding:8px 12px" onclick="event.stopPropagation();addToCalendarFromVisit('${v.id}')">📅 Add to Calendar</button>`:""}
-    </div>`;
-  }).join('');
-}
+
 function setVisitFilter(f,btn){visitFilter=f;var fil=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(fil,f);}
 
 async function openVisit(id, from='visits') {
@@ -1686,6 +1536,20 @@ async function openAddModal() {
     populateTodoSelects(null, null, null);
   }
   if (modal==='modal-note') {
+    if (currentTab === 'notes') {
+      document.getElementById('modal-note-title').textContent='Add Note';
+      document.getElementById('note-id').value='';
+      document.getElementById('note-content').value='';
+      document.getElementById('note-section').value='General';
+      document.getElementById('delete-note-btn').style.display='none';
+      if (!data.people.length) await loadAll();
+      var noteSel = document.getElementById('note-person');
+      noteSel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+      if (typeof notesPersonFilter !== 'undefined' && notesPersonFilter) noteSel.value = notesPersonFilter;
+      openModal('modal-note');
+      setTimeout(function(){var ta=document.getElementById('note-content');if(ta)ta.focus();},300);
+      return;
+    }
     document.getElementById('modal-note-title').textContent='Add Note';
     document.getElementById('note-id').value='';
     document.getElementById('note-content').value='';
@@ -2367,6 +2231,473 @@ async function deletePersonEvent(noteId, personId) {
 }
 
 
+
+// ── FONT SIZE ──
+function applyFontSize() {
+  const large = localStorage.getItem('largeFontMode') === '1';
+  document.body.classList.toggle('large-font', large);
+  const toggle = document.getElementById('font-size-toggle');
+  const knob = document.getElementById('font-size-knob');
+  if (toggle) toggle.style.background = large ? 'var(--green)' : '#CBD5E0';
+  if (knob) knob.style.left = large ? '25px' : '3px';
+}
+function toggleFontSize() {
+  const large = localStorage.getItem('largeFontMode') === '1';
+  localStorage.setItem('largeFontMode', large ? '0' : '1');
+  applyFontSize();
+}
+
+
+// ── RENDER PEOPLE (status chips) ──
+function renderPeople(rows) {
+  const el = document.getElementById('people-list');
+  document.getElementById('home-sub').textContent = `${rows.length} member${rows.length!==1?'s':''}`;
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👨‍👩‍👧‍👦</div>No family members yet</div>'; return; }
+  const now = new Date();
+  el.innerHTML = rows.map(p => {
+    const upcoming = data.visits.filter(v => v.person_id === p.id && v.visit_date && visitDate(v.visit_date) >= now)
+      .sort((a,b) => visitDate(a.visit_date) - visitDate(b.visit_date));
+    const activeTodos = todosData.filter(t => t.person_id === p.id && !t.completed);
+    const parts = [];
+    if (upcoming.length) {
+      const d = visitDate(upcoming[0].visit_date);
+      const dayDiff = Math.round((d - now) / (1000*60*60*24));
+      const dateLabel = dayDiff === 0 ? 'Today' : dayDiff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+      parts.push(`<span style="font-size:12px;color:var(--text-2);">Next visit ${dateLabel}</span>`);
+    } else {
+      parts.push(`<span style="font-size:12px;color:var(--text-3);">No upcoming visits</span>`);
+    }
+    const now2 = new Date(); now2.setHours(0,0,0,0);
+    const overdue = activeTodos.filter(t => t.due_date && new Date(t.due_date) < now2);
+    const todoCount = activeTodos.length;
+    let todoText, todoColor, todoWeight;
+    if (todoCount === 0) { todoText = 'To Do list complete'; todoColor = 'var(--text-3)'; todoWeight = '400'; }
+    else if (overdue.length > 0) { todoText = overdue.length + ' overdue To Do item' + (overdue.length !== 1 ? 's' : ''); todoColor = 'var(--rose)'; todoWeight = '600'; }
+    else { todoText = todoCount + ' active To Do item' + (todoCount !== 1 ? 's' : ''); todoColor = 'var(--text-2)'; todoWeight = '400'; }
+    parts.push(`<span style="font-size:12px;color:${todoColor};font-weight:${todoWeight};">${todoText}</span>`);
+    const statusHtml = parts.join('<span style="color:var(--border);margin:0 5px;">·</span>');
+    return `<div class="person-card" onclick="openPerson('${p.id}')">
+      <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
+      <div class="person-info">
+        <div class="person-name">${p.name}</div>
+        <div style="margin-top:2px;">${statusHtml}</div>
+      </div>
+      <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+  }).join('');
+}
+
+// ── OPEN PERSON (menu layout) ──
+async function openPerson(id) {
+  currentPerson = data.people.find(p=>p.id===id);
+  if (!currentPerson) return;
+  showScreen('person','forward');
+  const el = document.getElementById('person-detail');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  try {
+    const p = currentPerson;
+    const {data:pdRows} = await sb.from('people_doctors').select('doctor_id').eq('person_id',id);
+    const docIds = (pdRows||[]).map(r=>r.doctor_id);
+    const myDocs = data.doctors.filter(d=>docIds.includes(d.id));
+    const myMeds = data.medications.filter(m=>m.person_id===id);
+    const activeMeds = myMeds.filter(m=>m.status==='Active');
+    const {data:evRows} = await sb.from('notes').select('id').eq('person_id',id).like('content','[EVENT:%');
+    const evCount = (evRows||[]).length;
+    const color = avatarColor(p.name);
+    const ini = initials(p.name);
+
+    let html = `<div style="background:${color};padding:20px 16px 18px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0;">${ini}</div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#fff;">${p.name}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">${p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : 'No DOB recorded'}</div>
+        </div>
+        <div style="margin-left:auto;">
+          <button onclick="togglePersonPinMode('${id}')" id="pin-toggle-btn-${id}" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>
+        </div>
+      </div>
+    </div>`;
+
+    // Pinned fields
+    const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+    const pinnedFields = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
+    const allFields = [
+      {key:'allergies',label:'🚨 Allergies',value:p.allergies,bg:'#F5E8EB',border:'#E8C4C4',textColor:'#7A2030',labelColor:'#9B3A4A'},
+      {key:'diagnoses',label:'🩺 Conditions',value:p.diagnoses,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
+      {key:'blood_type',label:'🩸 Blood Type',value:p.blood_type,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
+      {key:'medicare_number',label:'📋 Medicare',value:p.medicare_number,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
+      {key:'health_fund',label:'🏥 Health Fund',value:p.health_fund?p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:''):null,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
+      {key:'emergency_contact',label:'📞 Emergency',value:p.emergency_contact?p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:''):null,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
+    ];
+    const strips = allFields.filter(f => pinnedFields.includes(f.key) && f.value);
+    if (strips.length) {
+      const cols = strips.length === 1 ? '1fr' : '1fr 1fr';
+      html += '<div class="pinned-strips" style="display:grid;grid-template-columns:'+cols+';gap:7px;padding:12px 14px 0;">'
+        + strips.map(f => '<div style="background:'+f.bg+';border-radius:8px;padding:7px 10px;border:1px solid '+f.border+';">'
+          + '<div style="font-size:9px;font-weight:700;color:'+f.labelColor+';text-transform:uppercase;letter-spacing:.06em;">'+f.label+'</div>'
+          + '<div style="font-size:12px;font-weight:500;color:'+f.textColor+';margin-top:2px;line-height:1.4;">'+f.value+'</div>'
+          + '</div>').join('') + '</div>';
+    }
+
+    // Section menu
+    html += `<div style="padding:14px 14px 0;">
+      <div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">`;
+    html += `<div onclick="openPersonDoctors('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👨‍⚕️</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Doctors</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${myDocs.length||''}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+    const medLabel = activeMeds.length ? activeMeds.length+' active' : (myMeds.length ? myMeds.length+' total' : '');
+    html += `<div onclick="openPersonMeds('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💊</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medications</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${medLabel}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+    html += `<div onclick="openPersonEvents('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--rose-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏥</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medical Events</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Surgeries, diagnoses, illnesses</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${evCount||''}</div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+    html += `<div onclick="openPersonInfoCard('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🪪</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Info Card</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Emergency contacts, Medicare, allergies</div></div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+    html += `</div></div><div style="height:20px;"></div>`;
+    document.getElementById('person-detail').innerHTML = html;
+  } catch(err) {
+    document.getElementById('person-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
+  }
+}
+
+// ── PERSON SUB-PAGES ──
+function openPersonDoctors(personId) {
+  const person = data.people.find(p => p.id === personId);
+  sb.from('people_doctors').select('doctor_id').eq('person_id', personId).then(({data: rows}) => {
+    const linkedIds = (rows||[]).map(r => r.doctor_id);
+    const myDocs = data.doctors.filter(d => linkedIds.includes(d.id));
+    showScreen('doctors', 'forward'); currentTab = 'doctors';
+    const el = document.getElementById('doctors-list');
+    const sub = document.getElementById('doctors-sub');
+    if (sub) sub.textContent = (person ? person.name + ' · ' : '') + myDocs.length + ' doctor' + (myDocs.length !== 1 ? 's' : '');
+    const backBtn = document.getElementById('back-from-doctors');
+    if (backBtn) backBtn.onclick = () => goBack('person');
+    if (!myDocs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🩺</div>No doctors linked</div>'; return; }
+    const grouped = {};
+    myDocs.forEach(d => { const t = d.type||'Other'; if (!grouped[t]) grouped[t]=[]; grouped[t].push(d); });
+    el.innerHTML = Object.entries(grouped).map(([type, docs]) =>
+      '<div class="section-label">'+type+'</div><div class="list-card">'+
+      docs.map(d => '<div class="list-item" onclick="openDoctor(\''+d.id+'\',\'person\')">'+
+        '<div class="list-icon" style="background:var(--blue-bg)">🩺</div>'+
+        '<div class="list-info"><div class="list-title">'+d.name+'</div><div class="list-sub">'+(d.address||d.phone||'No details')+'</div></div>'+
+        '<svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>'+
+        '</div>').join('')+'</div>'
+    ).join('');
+  });
+}
+
+function openPersonMeds(personId) {
+  const person = data.people.find(p => p.id === personId);
+  const myMeds = data.medications.filter(m => m.person_id === personId);
+  showScreen('medications', 'forward'); currentTab = 'medications';
+  const backBtn = document.getElementById('back-from-meds');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  const sub = document.getElementById('meds-sub');
+  if (sub) sub.textContent = (person ? person.name + ' · ' : '') + myMeds.length + ' medication' + (myMeds.length !== 1 ? 's' : '');
+  renderMeds(myMeds);
+}
+
+function openPersonEvents(personId) {
+  const person = data.people.find(p => p.id === personId);
+  showScreen('person-events', 'forward');
+  const el = document.getElementById('person-events-content');
+  if (!el) return;
+  const backBtn = document.getElementById('back-from-events');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  document.getElementById('person-events-title').textContent = person ? person.name : 'Medical Events';
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  sb.from('notes').select('id, content, created_at').eq('person_id', personId).like('content', '[EVENT:%').order('content', {ascending: false}).then(({data: rows}) => {
+    const events = rows || [];
+    if (!events.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏥</div>No medical events yet</div>'; return; }
+    el.innerHTML = '<div style="padding:12px 16px;">' + events.map(ev => {
+      const match = ev.content.match(/^\[EVENT:(\d{4}-\d{2}-\d{2})\](.*)/s);
+      const dateStr = match ? fmtDate(match[1]) : '';
+      const text = match ? match[2].trim() : ev.content;
+      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;">'
+        + '<div style="flex:1;">'+(dateStr?'<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:3px;">'+dateStr+'</div>':'')
+        + '<div style="font-size:13px;color:var(--text);line-height:1.5;">'+text+'</div></div>'
+        + '<button onclick="event.stopPropagation();deletePersonEventFromPage(\''+ev.id+'\',\''+personId+'\')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">'
+        + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
+    }).join('') + '</div>';
+  });
+}
+
+async function deletePersonEventFromPage(noteId, personId) {
+  if (!confirm('Delete this event?')) return;
+  await sb.from('notes').delete().eq('id', noteId);
+  toast('Deleted'); openPersonEvents(personId);
+}
+
+function showAddEventFromPage(personId) {
+  const area = document.getElementById('add-event-page-area');
+  if (!area) return;
+  area.innerHTML = '<div style="background:var(--card);border:1px solid var(--green);border-radius:var(--r-sm);padding:14px;margin:12px 16px 0;">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Date</div>'
+    + '<input type="date" id="event-page-date" style="width:100%;margin-bottom:10px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:var(--bg);color:var(--text);outline:none;">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Event</div>'
+    + '<textarea id="event-page-text" placeholder="e.g. Appendectomy, ear infection..." style="width:100%;min-height:72px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:var(--bg);color:var(--text);outline:none;resize:none;"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:10px;">'
+    + '<button onclick="saveEventFromPage(\''+personId+'\')" style="flex:1;background:var(--green);color:white;border:none;border-radius:var(--r-sm);padding:10px;font-size:13px;font-weight:600;cursor:pointer;">Save</button>'
+    + '<button onclick="cancelEventFromPage()" style="background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 16px;font-size:13px;cursor:pointer;">Cancel</button>'
+    + '</div></div>';
+}
+function cancelEventFromPage() { const a = document.getElementById('add-event-page-area'); if(a) a.innerHTML=''; }
+async function saveEventFromPage(personId) {
+  const dateEl = document.getElementById('event-page-date');
+  const textEl = document.getElementById('event-page-text');
+  if (!dateEl||!textEl) return;
+  const textVal = textEl.value.trim();
+  if (!textVal) { toast('Please enter an event description'); return; }
+  const c = '[EVENT:'+(dateEl.value||'0000-00-00')+'] '+textVal;
+  const {error} = await sb.from('notes').insert({content:c,person_id:personId,family_group_id:currentFamilyGroupId,hidden:false});
+  if (error) { toast('Error: '+error.message); return; }
+  toast('Event saved ✓'); openPersonEvents(personId);
+}
+
+function openPersonInfoCard(personId) {
+  const person = data.people.find(p => p.id === personId);
+  if (!person) return;
+  showScreen('person-infocard', 'forward');
+  const el = document.getElementById('person-infocard-content');
+  const backBtn = document.getElementById('back-from-infocard');
+  if (backBtn) backBtn.onclick = () => goBack('person');
+  document.getElementById('person-infocard-title').textContent = person.name;
+  const rows = [
+    ['🚨 Allergies', person.allergies, true],
+    ['🩺 Conditions', person.diagnoses, false],
+    ['🩸 Blood Type', person.blood_type, false],
+    ['📋 Medicare', person.medicare_number, false],
+    ['🏥 Health Fund', person.health_fund ? person.health_fund+(person.health_fund_number?' · '+person.health_fund_number:'') : null, false],
+    ['📞 Emergency Contact', person.emergency_contact ? person.emergency_contact+(person.emergency_phone?' · '+person.emergency_phone:'') : null, false],
+  ].filter(r => r[1]);
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🪪</div>No info added yet</div>'; return; }
+  el.innerHTML = '<div style="padding:16px;">'
+    + '<div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">'
+    + rows.map((r,i) => '<div style="padding:13px 16px;'+(i>0?'border-top:1px solid var(--border);':'')+'display:flex;align-items:flex-start;gap:12px;">'
+      + '<div style="flex:1;"><div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">'+r[0]+'</div>'
+      + '<div style="font-size:14px;font-weight:500;color:'+(r[2]?'#C0392B':'var(--text)')+';line-height:1.4;">'+r[1]+'</div></div></div>'
+    ).join('') + '</div>'
+    + '<div style="margin-top:20px;display:flex;gap:10px;">'
+    + '<button onclick="showShareCard(currentPerson.id)" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);padding:13px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">'
+    + '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share Card</button>'
+    + '<button onclick="copyInfoCardText(currentPerson.id)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 16px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">'
+    + '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy</button>'
+    + '</div></div>';
+}
+
+// ── PIN SYSTEM ──
+async function togglePersonPinMode(personId) {
+  const pinSection = document.getElementById('pin-section-' + personId);
+  const btn = document.getElementById('pin-toggle-btn-' + personId);
+  if (pinSection) { pinSection.remove(); if (btn) btn.textContent = 'Edit'; return; }
+  if (btn) btn.textContent = 'Done';
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+  const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+  const pinned = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
+  const allFields = [
+    {key:'allergies',label:'🚨 Allergies',value:p.allergies},
+    {key:'diagnoses',label:'🩺 Conditions',value:p.diagnoses},
+    {key:'blood_type',label:'🩸 Blood Type',value:p.blood_type},
+    {key:'medicare_number',label:'📋 Medicare',value:p.medicare_number},
+    {key:'health_fund',label:'🏥 Health Fund',value:p.health_fund},
+    {key:'emergency_contact',label:'📞 Emergency Contact',value:p.emergency_contact},
+  ].filter(f => f.value);
+  if (!allFields.length) return;
+  const section = document.createElement('div');
+  section.id = 'pin-section-' + personId;
+  section.style.cssText = 'padding:10px 14px 0;';
+  section.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Pin to top</div>'
+    + '<div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;">'
+    + allFields.map((f, i) => {
+      const isPinned = pinned.includes(f.key);
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;'+(i>0?'border-top:1px solid var(--border);':'')+'"><div style="flex:1;"><div style="font-size:12px;font-weight:600;color:var(--text);">'+f.label+'</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">'+f.value+'</div></div>'
+        + '<button onclick="togglePinField(\''+personId+'\',\''+f.key+'\')" id="pin-btn-'+personId+'-'+f.key+'" style="background:'+(isPinned?'var(--green)':'var(--surface)')+';border:1px solid '+(isPinned?'var(--green)':'var(--border)')+';border-radius:8px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:'+(isPinned?'#fff':'var(--text-3)')+';"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L8 8H3l4 4-1.5 7L12 16l6.5 3L17 12l4-4h-5z"/></svg>'+(isPinned?'Pinned':'Pin')+'</button></div>';
+    }).join('') + '</div>';
+  const detailEl = document.getElementById('person-detail');
+  const menuDiv = detailEl.querySelector('div[style*="padding:14px 14px 0"]');
+  if (menuDiv) menuDiv.parentNode.insertBefore(section, menuDiv);
+  else detailEl.appendChild(section);
+}
+
+async function togglePinField(personId, fieldKey) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+  const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
+  let pinned = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
+  if (pinned.includes(fieldKey)) pinned = pinned.filter(f => f !== fieldKey);
+  else pinned.push(fieldKey);
+  const sections = (p.custom_sections||[]).filter(s => s.name !== '__pinned__');
+  sections.push({name:'__pinned__',content:pinned.join(',')});
+  const {error} = await sb.from('people').update({custom_sections:sections}).eq('id',personId);
+  if (error) { toast('Error: '+error.message); return; }
+  p.custom_sections = sections;
+  const btn = document.getElementById('pin-btn-'+personId+'-'+fieldKey);
+  if (btn) {
+    const isPinned = pinned.includes(fieldKey);
+    btn.style.background = isPinned ? 'var(--green)' : 'var(--surface)';
+    btn.style.border = '1px solid '+(isPinned?'var(--green)':'var(--border)');
+    btn.style.color = isPinned ? '#fff' : 'var(--text-3)';
+    btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2L8 8H3l4 4-1.5 7L12 16l6.5 3L17 12l4-4h-5z"/></svg>'+(isPinned?'Pinned':'Pin');
+  }
+  // Refresh strips
+  const detailEl = document.getElementById('person-detail');
+  const existingStrips = detailEl.querySelector('.pinned-strips');
+  if (existingStrips) existingStrips.remove();
+  // Re-render openPerson to update strips
+  openPerson(personId).then(() => {
+    // Restore pin panel
+    if (document.getElementById('pin-toggle-btn-'+personId)) {
+      togglePersonPinMode(personId);
+    }
+  });
+}
+
+function refreshPinnedStrips(personId, pinned, p) {}
+
+// ── SHARE CARD ──
+function showShareCard(personId) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+  const color = avatarColor(p.name);
+  const ini = initials(p.name);
+  const fields = [
+    {icon:'🚨',label:'Allergies',value:p.allergies,urgent:true},
+    {icon:'🩺',label:'Conditions',value:p.diagnoses,urgent:false},
+    {icon:'🩸',label:'Blood Type',value:p.blood_type,urgent:false},
+    {icon:'📋',label:'Medicare',value:p.medicare_number,urgent:false},
+    {icon:'🏥',label:'Health Fund',value:p.health_fund?p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:''):null,urgent:false},
+    {icon:'📞',label:'Emergency',value:p.emergency_contact?p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:''):null,urgent:false},
+  ].filter(f => f.value);
+  const dobStr = p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'share-card-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = '<div style="background:#FDFAF6;border-radius:20px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">'
+    + '<div style="background:'+color+';padding:22px 20px 18px;display:flex;align-items:center;gap:14px;">'
+    + '<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;">'+ini+'</div>'
+    + '<div><div style="font-size:20px;font-weight:700;color:#fff;">'+p.name+'</div>'+(dobStr?'<div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;">'+dobStr+'</div>':'')+'</div></div>'
+    + '<div style="padding:4px 0;">'+(fields.length?fields.map((f,i)=>'<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 18px;'+(i>0?'border-top:1px solid #EEEAE3;':'')+'"><div style="font-size:16px;margin-top:1px;">'+f.icon+'</div><div><div style="font-size:10px;font-weight:700;color:#A8A09A;text-transform:uppercase;letter-spacing:.06em;">'+f.label+'</div><div style="font-size:14px;font-weight:500;color:'+(f.urgent?'#C0392B':'#1C1917')+';margin-top:1px;line-height:1.4;">'+f.value+'</div></div></div>').join(''):'<div style="padding:16px 18px;font-size:13px;color:#A8A09A;">No info added yet</div>')+'</div>'
+    + '<div style="padding:10px 18px 14px;border-top:1px solid #EEEAE3;"><div style="font-size:10px;color:#C8BFB5;text-align:center;">Family Health · '+new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})+'</div></div></div>'
+    + '<div style="margin-top:14px;text-align:center;"><div style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;margin-bottom:4px;">Take a screenshot to share</div><div style="color:rgba(255,255,255,0.5);font-size:12px;">then tap Share in your photo app</div></div>'
+    + '<div style="display:flex;gap:10px;margin-top:16px;width:100%;max-width:360px;">'
+    + '<button onclick="closShareCard()" style="flex:1;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Close</button>'
+    + '<button onclick="copyInfoCardText(currentPerson.id);toast(\'Copied ✓\')" style="flex:1;background:#fff;color:#1C1917;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Copy Text</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closShareCard(); });
+}
+function closShareCard() { const el = document.getElementById('share-card-overlay'); if(el) el.remove(); }
+
+function copyInfoCardText(personId) {
+  const p = data.people.find(x => x.id === personId);
+  if (!p) return;
+  const lines = ['═══════════════════════','  '+p.name.toUpperCase()];
+  if (p.dob) lines.push('  '+fmtDate(p.dob)+' · '+age(p.dob)+' old');
+  lines.push('═══════════════════════');
+  [['🚨 Allergies',p.allergies],['🩺 Conditions',p.diagnoses],['🩸 Blood Type',p.blood_type],['📋 Medicare',p.medicare_number],
+   ['🏥 Health Fund',p.health_fund?p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:''):null],
+   ['📞 Emergency',p.emergency_contact?p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:''):null]]
+  .filter(f=>f[1]).forEach(f=>{lines.push(f[0]+':');lines.push('  '+f[1]);lines.push('');});
+  lines.push('───────────────────────','Shared from Family Health',new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}));
+  const text = lines.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>toast('Copied ✓')).catch(()=>prompt('Copy this text:',text));
+  else prompt('Copy this text:',text);
+}
+
+// ── COMPACT VISITS ──
+function renderVisits(rows, filter) {
+  const el = document.getElementById('visits-list');
+  const today = new Date(); today.setHours(0,0,0,0);
+  let filtered = filter==='upcoming' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)>=today)
+    : filter==='past' ? rows.filter(v=>v.visit_date&&visitDate(v.visit_date)<today) : rows;
+  filtered = [...filtered].sort((a,b)=>filter==='upcoming'?visitDate(a.visit_date)-visitDate(b.visit_date):visitDate(b.visit_date||0)-visitDate(a.visit_date||0));
+  document.getElementById('visits-sub').textContent = `${filtered.length} visit${filtered.length!==1?'s':''}`;
+  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>No visits found</div>'; return; }
+  el.innerHTML = '<div style="padding:10px 14px;">' + filtered.map(v=>{
+    const isPast = v.visit_date && visitDate(v.visit_date) < today;
+    const bg = isPast ? 'background:#FDF2F2;border-color:#F0CCCC;' : 'background:var(--card);border-color:var(--border);';
+    const meta = [];
+    if (v.people?.name) meta.push('<span style="font-size:12px;color:var(--text-2);font-weight:500;">'+v.people.name+'</span>');
+    if (v.doctors?.name) meta.push('<span style="font-size:12px;color:var(--text-3);">· 🩺 '+v.doctors.name+'</span>');
+    return '<div data-vid="'+v.id+'" onclick="openVisit(this.dataset.vid)" style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:var(--r-sm);border:1px solid;'+bg+'margin-bottom:6px;cursor:pointer;">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.3;">'+v.title+'</div>'
+      + (meta.length?'<div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap;">'+meta.join('')+'</div>':'')
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">'
+      + '<div style="font-size:11px;color:var(--text-3);white-space:nowrap;">'+fmtDateTime(v.visit_date)+'</div>'
+      + (v.visit_date?'<button data-vid2="'+v.id+'" onclick="event.stopPropagation();addToCalendarFromVisit(this.dataset.vid2)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:10px;color:var(--text-3);cursor:pointer;white-space:nowrap;">📅 Cal</button>':'')
+      + '</div>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+// ── NOTES: SECTION PICKER & QUICK NOTE ──
+function openNoteSectionPicker() {
+  var sections = getSections();
+  if (!sections.length) { openAddNoteSection(); return; }
+  var existing = document.getElementById('notes-section-picker');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'notes-section-picker';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;';
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:16px 0 calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow-y:auto;';
+  var html = '<div style="width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>'
+    + '<div style="font-size:16px;font-weight:700;color:var(--text);padding:0 16px 12px;">Add note to…</div>'
+    + '<div style="border-top:1px solid var(--border);">';
+  sections.forEach(function(sec, sIdx) {
+    html += '<div data-sec-idx="'+sIdx+'" onclick="notesPickerSelectSection(window._notesSections[this.dataset.secIdx])" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;"><div style="font-size:14px;font-weight:500;color:var(--text);flex:1;">'+sec.name+'</div><svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
+  });
+  window._notesSections = sections.map(function(s){ return s.name; });
+  html += '</div><div onclick="var p=document.getElementById(\'notes-section-picker\');if(p)p.remove();openAddNoteSection();" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;"><div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="12" height="12" fill="none" stroke="var(--green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div><div style="font-size:14px;font-weight:500;color:var(--green);">New section…</div></div>';
+  sheet.innerHTML = html;
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+}
+function notesPickerSelectSection(nameOrEl) {
+  var sectionName = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var picker = document.getElementById('notes-section-picker');
+  if (picker) picker.remove();
+  openQuickNoteInSection(sectionName);
+}
+function openQuickNoteInSection(sectionName) {
+  notesSectionCollapsed[sectionName] = false; renderNotes();
+  document.getElementById('modal-note-title').textContent = 'Add Note';
+  document.getElementById('note-id').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-section').value = sectionName;
+  document.getElementById('delete-note-btn').style.display = 'none';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+  if (notesPersonFilter) sel.value = notesPersonFilter;
+  openModal('modal-note');
+  setTimeout(function(){ var ta=document.getElementById('note-content'); if(ta)ta.focus(); }, 300);
+}
+var _notesLongPressTimer = null;
+function notesLongPressStart(sectionName) { _notesLongPressTimer = setTimeout(function(){ _notesLongPressTimer=null; if(navigator.vibrate)navigator.vibrate(40); editNoteSection(sectionName); },600); }
+function notesLongPressEnd() { if(_notesLongPressTimer){clearTimeout(_notesLongPressTimer);_notesLongPressTimer=null;} }
+
+// ── TODOS: PERSON PILLS & VISIT PILLS ──
+
+
+
 // ── EXPORT ──
 function openExportModal() {
   // Populate selects
@@ -2801,6 +3132,7 @@ async function openSettingsModal() {
   // Load current group name
   const { data: fg } = await sb.from('family_groups').select('name').eq('id', currentFamilyGroupId).single();
   document.getElementById('settings-group-name').value = fg?.name || '';
+  applyFontSize();
   openModal('modal-settings');
 }
 
@@ -3076,7 +3408,7 @@ async function saveTodo() {
     await sb.from('todos').insert(payload);
   if (error) { toast('Error: ' + error.message); return; }
   closeModal('modal-todo');
-  toast(id ? 'Updated ✓' : 'Follow-up added ✓');
+  toast(id ? 'Updated ✓' : 'To Do added ✓');
   await loadTodos();
 }
 
@@ -3555,7 +3887,7 @@ function quickAdd(type){var m={visit:'visits',medication:'medications',todo:'tod
 // ── SWIPE TO GO BACK ──
 (function(){
   var tx=0,ty=0,tt=0;
-  var bm={'screen-home':'dashboard','screen-doctors':'dashboard','screen-visits':'dashboard','screen-medications':'dashboard','screen-documents':'dashboard','screen-notes':'dashboard','screen-todos':'dashboard','screen-person':'home','screen-doctor-detail':'doctors','screen-med-detail':'medications','screen-visit-detail':'visits'};
+  var bm={'screen-person':'home','screen-doctor-detail':'doctors','screen-med-detail':'medications','screen-visit-detail':'visits'};
   document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;tt=Date.now();},{passive:true});
   document.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty,dt=Date.now()-tt;if(tx>30||dx<60||Math.abs(dy)>Math.abs(dx)*0.8||dt>400)return;var cur=document.querySelector('.screen.active');if(cur&&bm[cur.id])goBack(bm[cur.id]);},{passive:true});
 })();
