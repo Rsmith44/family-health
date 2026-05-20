@@ -338,7 +338,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       </div>
     </div>
     <div class="scroll-full" id="visit-detail-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
-    <button id="start-appt-btn" onclick="openAppointmentMode(currentVisit.id, 'visit')" style="position:absolute;bottom:calc(24px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:var(--green);color:white;border:none;border-radius:50px;padding:12px 22px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 4px 16px rgba(42,96,73,0.35);z-index:10;">
+    <button id="start-appt-btn" onclick="openAppointmentMode(currentVisit.id, 'visit')" style="position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%);background:var(--green);color:white;border:none;border-radius:50px;padding:12px 22px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 4px 16px rgba(42,96,73,0.35);z-index:10;">
       <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       Start Appointment
     </button>
@@ -462,7 +462,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
-  <nav class="bottom-nav">
+</div>
+
+<nav class="bottom-nav">
     <button class="nav-item active" id="nav-family-btn" onclick="showTab('home',this)">
       <div class="nav-inner">
         <svg width="24" height="22" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -517,7 +519,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       </div>
     </button>
   </nav>
-</div>
 
 <button class="fab" id="fab" onclick="openAddModal()">+</button>
 
@@ -689,6 +690,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="modal-body">
       <input type="hidden" id="note-id">
       <input type="hidden" id="note-section">
+      <div class="field" id="note-section-field"><label>Section</label><select id="note-section-select"><option value="General">General</option></select></div>
       <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
       <div class="field"><label>Person</label><select id="note-person"><option value="">Everyone</option></select></div>
 
@@ -1542,12 +1544,19 @@ async function openAddModal() {
       document.getElementById('modal-note-title').textContent='Add Note';
       document.getElementById('note-id').value='';
       document.getElementById('note-content').value='';
-      document.getElementById('note-section').value='General';
       document.getElementById('delete-note-btn').style.display='none';
       if (!data.people.length) await loadAll();
       var noteSel = document.getElementById('note-person');
       noteSel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
       if (typeof notesPersonFilter !== 'undefined' && notesPersonFilter) noteSel.value = notesPersonFilter;
+      var sections = getSections();
+      var secSel = document.getElementById('note-section-select');
+      var currentSec = document.getElementById('note-section').value || 'General';
+      secSel.innerHTML = sections.map(function(s){return '<option value="'+s.name+'">'+ s.name+'</option>';}).join('') || '<option value="General">General</option>';
+      if (!sections.find(function(s){return s.name===currentSec;})) secSel.innerHTML += '<option value="General">General</option>';
+      secSel.value = currentSec;
+      secSel.onchange = function(){ document.getElementById('note-section').value = this.value; };
+      document.getElementById('note-section').value = secSel.value;
       openModal('modal-note');
       setTimeout(function(){var ta=document.getElementById('note-content');if(ta)ta.focus();},300);
       return;
@@ -2697,7 +2706,7 @@ function openQuickNoteInSection(sectionName) {
   var sel = document.getElementById('note-person');
   sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
   if (notesPersonFilter) sel.value = notesPersonFilter;
-  openModal('modal-note');
+  var sections2 = getSections(); var secSel2 = document.getElementById('note-section-select'); secSel2.innerHTML = sections2.map(function(s){return '<option value="'+s.name+'>"'+s.name+'</option>';}).join('') || '<option value="General">General</option>'; secSel2.value = sectionName; secSel2.onchange = function(){ document.getElementById('note-section').value = this.value; }; openModal('modal-note');
   setTimeout(function(){ var ta=document.getElementById('note-content'); if(ta)ta.focus(); }, 300);
 }
 var _notesLongPressTimer = null;
