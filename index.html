@@ -1187,7 +1187,7 @@ async function loadMeds() {
 }
 async function loadVisits() {
   try {
-    const {data:rows, error} = await sb.from('visits').select('*,people(name),doctors(name),pre_notes,post_notes,total_cost,out_of_pocket').order('visit_date',{ascending:false});
+    const {data:rows, error} = await sb.from('visits').select('*, people(name), doctors(name), pre_notes, post_notes, total_cost, out_of_pocket').order('visit_date',{ascending:false});
     if (error) console.error('loadVisits error:', error);
     data.visits = rows || [];
     if(typeof renderVisitsPersonPills==='function')renderVisitsPersonPills();
@@ -2917,8 +2917,8 @@ async function exportAll() {
   const [peopleRes, doctorsRes, medsRes, visitsRes] = await Promise.all([
     sb.from('people').select('*').order('name'),
     sb.from('doctors').select('*').order('name'),
-    sb.from('medications').select('*,people(name),doctors(name)').order('name'),
-    sb.from('visits').select('*,people(name),doctors(name)').order('visit_date', {ascending: false})
+    sb.from('medications').select('*, people(name), doctors(name)').order('name'),
+    sb.from('visits').select('*, people(name), doctors(name)').order('visit_date', {ascending: false})
   ]);
 
   const allRows = [];
@@ -2980,7 +2980,7 @@ async function exportVisits() {
   btn.textContent = 'Preparing...'; btn.disabled = true;
 
   let query = sb.from('visits')
-    .select('*,people(name),doctors(name)')
+    .select('*, people(name), doctors(name)')
     .eq('person_id', personId)
     .order('visit_date', {ascending: false});
 
@@ -3036,7 +3036,7 @@ async function loadDocs() {
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   data.documents = [];
   const { data: rows, error } = await sb.from('documents')
-    .select('*,people(name),doctors(name)')
+    .select('*')
     .order('created_at', { ascending: false });
   if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
   data.documents = rows || [];
@@ -3073,7 +3073,8 @@ function renderDocs(rows) {
   }
   const grouped = {};
   rows.forEach(d => {
-    const key = d.people?.name || 'General';
+    const person = data.people.find(p => p.id === d.person_id);
+    const key = person?.name || 'General';
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(d);
   });
@@ -3083,11 +3084,12 @@ function renderDocs(rows) {
       const icon = d.file_type?.includes('pdf') ? '📄' : d.file_type?.includes('image') || d.file_type?.includes('jpg') || d.file_type?.includes('png') || d.file_type?.includes('heic') ? '🖼️' : '📝';
       const size = d.file_size ? (d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+'MB' : Math.round(d.file_size/1024)+'KB') : '';
       const isHidden = d.hidden;
+      const doctorName = data.doctors.find(doc => doc.id === d.doctor_id)?.name;
       return `<div class="list-item" style="${isHidden ? 'opacity:0.45;' : ''}">
         <div class="list-icon" style="background:var(--blue-bg);font-size:20px;cursor:pointer" onclick="openDocument('${d.id}')">${icon}</div>
         <div class="list-info" style="cursor:pointer" onclick="openDocument('${d.id}')">
           <div class="list-title">${d.name}${isHidden ? ' <span style="font-size:10px;background:var(--surface);color:var(--text-3);padding:2px 6px;border-radius:10px;margin-left:4px">hidden</span>' : ''}</div>
-          <div class="list-sub">${[d.doctors?.name, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
+          <div class="list-sub">${[doctorName, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
         </div>
         <button onclick="toggleDocVisibility('${d.id}', ${isHidden})" style="background:${isHidden ? 'var(--green-bg)' : 'var(--surface)'};border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;color:${isHidden ? 'var(--green)' : 'var(--text-3)'};cursor:pointer;white-space:nowrap;margin-left:4px;">
           ${isHidden ? 'Show' : 'Hide'}
@@ -3289,7 +3291,7 @@ function openPersonDocuments(personId) {
   }
   // Load and filter docs for this person
   sb.from('documents')
-    .select('*,people(name),doctors(name)')
+    .select('*')
     .eq('person_id', personId)
     .order('created_at', { ascending: false })
     .then(({ data: rows }) => {
@@ -3374,7 +3376,7 @@ async function loadTodos() {
   if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   try {
     const { data: rows, error } = await sb.from('todos')
-      .select('*,people(name),doctors(name),visits(title)')
+      .select('*, people(name), doctors(name), visits(title)')
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
     const allRows = rows || [];
@@ -3394,7 +3396,7 @@ async function loadTodos() {
 async function refreshTodosBackground() {
   try {
     const { data: rows } = await sb.from('todos')
-      .select('*,people(name),doctors(name),visits(title)')
+      .select('*, people(name), doctors(name), visits(title)')
       .order('due_date', { ascending: true, nullsFirst: false });
     if (rows) {
       const familyPersonIds = new Set(data.people.map(p => p.id));
@@ -3927,7 +3929,7 @@ async function loadDashboard(){
   document.getElementById('dashboard-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   try {
     await loadAll();
-    var { data: tRows, error: tErr } = await sb.from('todos').select('*,people(name),doctors(name),visits(title)').order('due_date',{ascending:true,nullsFirst:false});
+    var { data: tRows, error: tErr } = await sb.from('todos').select('*, people(name), doctors(name), visits(title)').order('due_date',{ascending:true,nullsFirst:false});
     todosData = tRows || [];
     renderDashboard();
     renderTodoPersonPills();
