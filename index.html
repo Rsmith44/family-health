@@ -2315,7 +2315,7 @@ async function openPerson(id) {
           <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">${p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : 'No DOB recorded'}</div>
         </div>
         <div style="margin-left:auto;">
-          <button onclick="togglePersonPinMode('${id}')" id="pin-toggle-btn-${id}" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>
+          <button onclick="togglePersonPinMode('${id}')" id="pin-toggle-btn-${id}" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Pin/Unpin</button>
         </div>
       </div>
     </div>`;
@@ -2513,7 +2513,7 @@ function openPersonInfoCard(personId) {
 async function togglePersonPinMode(personId) {
   const pinSection = document.getElementById('pin-section-' + personId);
   const btn = document.getElementById('pin-toggle-btn-' + personId);
-  if (pinSection) { pinSection.remove(); if (btn) btn.textContent = 'Edit'; return; }
+  if (pinSection) { pinSection.remove(); if (btn) btn.textContent = 'Pin/Unpin'; return; }
   if (btn) btn.textContent = 'Done';
   const p = data.people.find(x => x.id === personId);
   if (!p) return;
