@@ -457,12 +457,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
         Show hidden
       </label>
     </div>
-    <div style="padding:0 16px 8px;display:flex;align-items:center;justify-content:flex-end;">
-      <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;">
-        <input type="checkbox" id="show-hidden-notes" onchange="toggleHiddenNotes(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
-        Show hidden
-      </label>
-    </div>
     <div class="scroll" id="notes-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
 
@@ -2361,9 +2355,18 @@ async function openPerson(id) {
       <div style="font-size:13px;color:var(--text-3);font-weight:500;">${evCount||''}</div>
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
-    html += `<div onclick="openPersonInfoCard('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">
+    html += `<div onclick="openPersonInfoCard('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="width:34px;height:34px;border-radius:10px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🪪</div>
       <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Info Card</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Emergency contacts, Medicare, allergies</div></div>
+      <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+    // Count documents for this person
+    const {data:docRows} = await sb.from('documents').select('id').eq('person_id', id);
+    const docCount = (docRows||[]).length;
+    html += `<div onclick="openPersonDocuments('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📄</div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Documents</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">Files, results & records</div></div>
+      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${docCount||''}</div>
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
     html += `</div></div><div style="height:20px;"></div>`;
@@ -3250,6 +3253,40 @@ function openUploadForVisit(visitId, personId) {
 }
 
 // ── HAMBURGER MENU ──
+function navToDocs() { closeHamburger(); showTab('documents', null); loadDocs(); }
+function navToTodos() { document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active')); document.getElementById('nav-todo-btn')?.classList.add('active'); showTab('todos', document.getElementById('nav-todo-btn')); }
+function navToVisits() { document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active')); document.getElementById('nav-visits-btn')?.classList.add('active'); showTab('visits', document.getElementById('nav-visits-btn')); }
+
+function openPersonDocuments(personId) {
+  const person = data.people.find(p => p.id === personId);
+  showScreen('documents', 'forward');
+  currentTab = 'documents';
+  // Override header sub and back button
+  const sub = document.getElementById('docs-sub');
+  if (sub) sub.textContent = person ? person.name + ' · documents' : 'Documents';
+  // Swap hamburger btn for a back button
+  const header = document.querySelector('#screen-documents .header');
+  if (header) {
+    const hamBtn = header.querySelector('.hamburger-btn');
+    if (hamBtn) {
+      hamBtn.outerHTML = `<button class="header-back" id="back-from-docs-person" onclick="goBack('person')">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back
+      </button>`;
+    }
+  }
+  // Load and filter docs for this person
+  sb.from('documents')
+    .select('*, people(name), doctors(name), visits(title)')
+    .eq('person_id', personId)
+    .order('created_at', { ascending: false })
+    .then(({ data: rows }) => {
+      data.documents = rows || [];
+      renderDocs(data.documents);
+      // Wire up the FAB to upload for this person
+      document.getElementById('fab').onclick = () => addDocumentForPerson(personId);
+    });
+}
+
 function openHamburger() {
   const overlay = document.getElementById('hamburger-overlay');
   const menu = document.getElementById('hamburger-menu');
