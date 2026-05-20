@@ -3221,365 +3221,94 @@ function renderTodoPersonPills() {
   var el = document.getElementById('todo-person-pills');
   if (!el || !data.people.length) return;
   var f = todoPersonFilter;
-  var evBg = !f ? 'var(--green)' : 'var(--card)';
-  var evCol = !f ? 'white' : 'var(--text-3)';
-  var evBdr = !f ? 'var(--green)' : 'var(--border)';
-  var html = '<button onclick="setTodoPersonFilter(null)" style="background:' + evBg + ';color:' + evCol + ';border:1px solid ' + evBdr + ';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
+  var allActive = !f;
+  var allBg = allActive ? 'var(--surface)' : 'var(--green-bg)';
+  var allBorder = allActive ? '2px solid var(--border)' : '2px solid var(--green)';
+  var allIconColor = allActive ? 'var(--text-3)' : 'var(--green)';
+  var html = '<button onclick="setTodoPersonFilter(null)" style="width:46px;height:46px;border-radius:12px;background:' + allBg + ';border:' + allBorder + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;flex-shrink:0;font-family:inherit;">'
+    + '<svg width="16" height="16" fill="none" stroke="' + allIconColor + '" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>'
+    + '<span style="font-size:9px;font-weight:700;color:' + allIconColor + ';">All</span>'
+    + '</button>';
   data.people.forEach(function(p) {
     var isActive = f == p.id;
-    var bg = isActive ? avatarColor(p.name) : 'var(--card)';
-    var col = isActive ? 'white' : 'var(--text)';
-    var bdr = isActive ? avatarColor(p.name) : 'var(--border)';
-    var dotBg = isActive ? 'rgba(255,255,255,0.3)' : avatarColor(p.name);
-    html += '<button onclick="setTodoPersonFilter(\'' + p.id + '\')" style="display:flex;align-items:center;gap:5px;background:' + bg + ';color:' + col + ';border:1px solid ' + bdr + ';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:' + dotBg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + initials(p.name) + '</span>' + p.name.split(' ')[0] + '</button>';
+    var color = avatarColor(p.name);
+    var bg = isActive ? 'var(--surface)' : color;
+    var border = isActive ? '2px solid var(--border)' : '2px solid ' + color;
+    var textColor = isActive ? 'var(--text-3)' : color;
+    var initColor = isActive ? 'var(--text-3)' : '#fff';
+    html += '<div onclick="setTodoPersonFilter(\'' + p.id + '\')" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;">'
+      + '<div style="width:42px;height:42px;border-radius:50%;background:' + bg + ';border:' + border + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:' + initColor + ';">' + initials(p.name) + '</div>'
+      + '<div style="font-size:9px;color:' + textColor + ';font-weight:600;">' + p.name.split(' ')[0] + '</div>'
+      + '</div>';
   });
   el.innerHTML = html;
 }
-
-function renderTodos() {
-  const el = document.getElementById('todos-list');
-  if (!el) return;
-
-  let rows = todosData;
-
-  // Filter by person
-  if (todoPersonFilter) rows = rows.filter(t => t.person_id == todoPersonFilter);
-
-  // Filter by status
-  if (todoFilter === 'active') rows = rows.filter(t => !t.completed);
-  else if (todoFilter === 'completed') rows = rows.filter(t => t.completed);
-  // 'all' - toggle button controls whether completed are shown
-  else if (!showCompleted) rows = rows.filter(t => !t.completed);
-
-  // Sort: by person name first, then by due_date
-  rows = [...rows].sort((a, b) => {
-    const pa = data.people.find(p => p.id === a.person_id)?.name || '';
-    const pb = data.people.find(p => p.id === b.person_id)?.name || '';
-    if (pa !== pb) return pa.localeCompare(pb);
-    if (!a.due_date && !b.due_date) return 0;
-    if (!a.due_date) return 1;
-    if (!b.due_date) return -1;
-    return a.due_date.localeCompare(b.due_date);
-  });
-
-  const total = todosData.filter(t => !todoPersonFilter || t.person_id == todoPersonFilter).length;
-  const completed = todosData.filter(t => (!todoPersonFilter || t.person_id == todoPersonFilter) && t.completed).length;
-  const sub = document.getElementById('todos-sub');
-  if (sub) sub.textContent = total + ' item' + (total !== 1 ? 's' : '') + (completed ? ' · ' + completed + ' completed' : '');
-
-
-
-  if (!rows.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>' +
-      (todoFilter === 'completed' ? 'No completed items' :
-       todoFilter === 'active' ? 'No active items — all done!' :
-       'No to do items yet<br><span style="font-size:12px">Tap + to add one</span>') + '</div>';
-    return;
-  }
-
-  // Group by person
-  const grouped = {};
-  rows.forEach(t => {
-    const key = t.people?.name || 'Unassigned';
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(t);
-  });
-
-  el.innerHTML = Object.entries(grouped).map(([personName, items]) => {
-    const person = data.people.find(p => p.name === personName);
-    const color = person ? avatarColor(person.name) : 'var(--text-3)';
-    return '<div class="section-label" style="display:flex;align-items:center;gap:6px;">' +
-      '<span style="width:18px;height:18px;border-radius:50%;background:' + color + ';display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">' + (person ? initials(person.name) : '?') + '</span>' +
-      personName + '</div>' +
-      items.map(t => {
-        const isOverdue = t.due_date && !t.completed && new Date(t.due_date) < new Date();
-        const isDueToday = t.due_date && !t.completed && new Date(t.due_date).toDateString() === new Date().toDateString();
-        return '<div class="visit-card" style="' + (t.completed ? 'opacity:0.5;' : '') + 'margin-bottom:8px;" onclick="editTodo(\'' + t.id + '\')">' +
-          '<div style="display:flex;align-items:flex-start;gap:12px;">' +
-          '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" title="' + (t.completed ? 'Mark as active' : 'Mark as complete') + '" style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (t.completed ? 'var(--green)' : 'var(--border)') + ';background:' + (t.completed ? 'var(--green)' : 'white') + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all 0.15s;">' +
-          (t.completed ? '<svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : '') +
-          '</div>' +
-          '<div style="flex:1;min-width:0;">' +
-          '<div style="font-size:15px;font-weight:600;' + (t.completed ? 'text-decoration:line-through;color:var(--text-3);' : '') + '">' + t.title + '</div>' +
-          (t.due_date ? '<div style="font-size:12px;margin-top:3px;color:' + (isOverdue ? '#C0392B' : isDueToday ? 'var(--amber)' : 'var(--text-3)') + ';">' +
-            (isOverdue ? '⚠ Overdue · ' : isDueToday ? '📅 Due today · ' : '📅 ') + fmtDate(t.due_date) + '</div>' : '') +
-          '<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">' +
-          (t.doctors?.name ? '<span class="chip chip-blue">🩺 ' + t.doctors.name + '</span>' : '') +
-          (t.visits?.title ? '<span class="chip chip-teal">📋 ' + t.visits.title + '</span>' : '') +
-          '</div>' +
-          (t.notes ? '<div style="font-size:12px;color:var(--text-3);margin-top:4px;">' + t.notes.slice(0, 80) + (t.notes.length > 80 ? '...' : '') + '</div>' : '') +
-          '</div></div></div>';
-      }).join('');
-  }).join('');
-}
-
-function setTodoPersonFilter(personId) {
-  todoPersonFilter = personId || null;
-  renderTodoPersonPills();
-  renderTodos();
-}
-
-function setTodoFilter(f,btn){todoFilter=f;renderTodos();}
-function toggleShowCompleted(checked){showCompleted=!!checked;todoFilter=checked?'all':'active';renderTodos();}
-
-async function toggleTodo(id, currentlyCompleted) {
-  const { error } = await sb.from('todos').update({
-    completed: !currentlyCompleted,
-    completed_at: !currentlyCompleted ? new Date().toISOString() : null
-  }).eq('id', id);
-  if (error) { toast('Error updating'); return; }
-  const t = todosData.find(x => x.id === id);
-  if (t) { t.completed = !currentlyCompleted; t.completed_at = !currentlyCompleted ? new Date().toISOString() : null; }
-  renderTodos();
-  toast(!currentlyCompleted ? 'Marked complete ✓' : 'Marked active');
-}
-
-function populateTodoSelects(personId, doctorId, visitId) {
-  const personSel = document.getElementById('todo-person');
-  const doctorSel = document.getElementById('todo-doctor');
-  const visitSel = document.getElementById('todo-visit');
-  personSel.innerHTML = '<option value="">Select person...</option>' + data.people.map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
-  doctorSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d => '<option value="' + d.id + '">' + d.name + '</option>').join('');
-  visitSel.innerHTML = '<option value="">Select visit...</option>' + data.visits.slice(0,50).map(v => '<option value="' + v.id + '">' + v.title + ' - ' + fmtDate(v.visit_date) + '</option>').join('');
-  if (personId) { personSel.value = personId; filterTodoVisits(personId); }
-  if (doctorId) doctorSel.value = doctorId;
-  if (visitId) visitSel.value = visitId;
-  // When person changes, filter visits
-  personSel.onchange = () => filterTodoVisits(personSel.value);
-}
-
-function filterTodoVisits(personId) {
-  const visitSel = document.getElementById('todo-visit');
-  const filtered = personId ? data.visits.filter(v => v.person_id === personId) : data.visits;
-  const cur = visitSel.value;
-  visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(v => '<option value="' + v.id + '">' + v.title + ' - ' + fmtDate(v.visit_date) + '</option>').join('');
-  if (cur) visitSel.value = cur;
-}
-
-function openTodoModal(personId, doctorId, visitId) {
-  document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
-  document.getElementById('todo-id').value = '';
-  document.getElementById('todo-title').value = '';
-  document.getElementById('todo-notes').value = '';
-  document.getElementById('todo-due-date').value = '';
-  document.getElementById('delete-todo-btn').style.display = 'none';
-  populateTodoSelects(personId, doctorId, visitId);
-  openModal('modal-todo');
-}
-
-function openFollowupFromVisit() {
-  const personId = document.getElementById('visit-person').value;
-  const doctorId = document.getElementById('visit-doctor').value;
-  const visitId = document.getElementById('visit-id').value;
-  closeModal('modal-visit');
-  setTimeout(() => openTodoModal(personId, doctorId, visitId), 350);
-}
-
-function editTodo(id) {
-  const t = todosData.find(x => x.id === id);
-  if (!t) return;
-  document.getElementById('modal-todo-title').textContent = 'Edit Follow-up';
-  document.getElementById('todo-id').value = t.id;
-  document.getElementById('todo-title').value = t.title || '';
-  document.getElementById('todo-notes').value = t.notes || '';
-  document.getElementById('todo-due-date').value = t.due_date || '';
-  document.getElementById('delete-todo-btn').style.display = 'block';
-  populateTodoSelects(t.person_id, t.doctor_id, t.visit_id);
-  openModal('modal-todo');
-}
-
-async function saveTodo() {
-  const id = document.getElementById('todo-id').value;
-  const title = document.getElementById('todo-title').value.trim();
-  const personId = document.getElementById('todo-person').value;
-  if (!title) { toast('Please enter a title'); return; }
-  if (!personId) { toast('Please select a person'); return; }
-  const payload = {
-    title,
-    notes: document.getElementById('todo-notes').value || null,
-    person_id: personId,
-    doctor_id: document.getElementById('todo-doctor').value || null,
-    visit_id: document.getElementById('todo-visit').value || null,
-    due_date: document.getElementById('todo-due-date').value || null,
-  };
-  if (!id) payload.family_group_id = currentFamilyGroupId;
-  const { error } = id ?
-    await sb.from('todos').update(payload).eq('id', id) :
-    await sb.from('todos').insert(payload);
-  if (error) { toast('Error: ' + error.message); return; }
-  closeModal('modal-todo');
-  toast(id ? 'Updated ✓' : 'To Do added ✓');
-  await loadTodos();
-}
-
-async function deleteTodo() {
-  const id = document.getElementById('todo-id').value;
-  if (!confirm('Delete this item?')) return;
-  await sb.from('todos').delete().eq('id', id);
-  closeModal('modal-todo');
-  toast('Deleted');
-  await loadTodos();
-}
-
-function addTodoToCalendar() {
-  const title = document.getElementById('todo-title').value.trim();
-  const date = document.getElementById('todo-due-date').value;
-  if (!title) { toast('Add a title first'); return; }
-  if (!date) { toast('Add a due date first'); return; }
-  const dt = new Date(date + 'T09:00:00');
-  const end = new Date(date + 'T09:30:00');
-  const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const person = data.people.find(p => p.id === document.getElementById('todo-person').value);
-  const doctor = data.doctors.find(d => d.id === document.getElementById('todo-doctor').value);
-  const details = [person ? 'For: ' + person.name : '', doctor ? 'Doctor: ' + doctor.name : '', document.getElementById('todo-notes').value].filter(Boolean).join('\n');
-  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent('Follow-up: ' + title) + '&dates=' + fmt(dt) + '/' + fmt(end) + '&details=' + encodeURIComponent(details);
-  location.href = url;
-}
-
-
-
-// ── COLLAPSIBLE SECTIONS ──
-
-function toggleSection(personId, key) {
-  const sectionKey = personId + '_' + key;
-  collapsedSections[sectionKey] = !collapsedSections[sectionKey];
-  const el = document.getElementById('section_' + sectionKey);
-  const arrow = document.getElementById('arrow_' + sectionKey);
-  if (el) {
-    el.style.display = collapsedSections[sectionKey] ? 'none' : 'block';
-  }
-  if (arrow) arrow.classList.toggle('collapsed', collapsedSections[sectionKey]);
-}
-
-let dashVisitsCollapsed = false;
-function toggleDashboardVisits() {
-  dashVisitsCollapsed = !dashVisitsCollapsed;
-  const el = document.getElementById('dash-visits-content');
-  const arrow = document.getElementById('dash-visits-arrow');
-  if (el) el.style.display = dashVisitsCollapsed ? 'none' : 'block';
-  if (arrow) arrow.classList.toggle('collapsed', dashVisitsCollapsed);
-}
-
-
-// ── NAV HELPERS ──
-function navToDoctors(){closeHamburger();currentTab='doctors';showScreen('doctors','forward');if(!data.doctors.length)loadDoctors();}
-function navToVisits(){closeHamburger();currentTab='visits';showScreen('visits','forward');if(!data.visits.length)loadVisits();else{renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}}
-function navToMeds(){closeHamburger();currentTab='medications';showScreen('medications','forward');if(!data.medications.length)loadMeds();}
-function navToDocs(){closeHamburger();currentTab='documents';showScreen('documents','forward');loadDocs();}
-function navToTodos(){var b=document.getElementById('nav-todo-btn');showTab('todos',b);}
-function navToNotes(){var b=document.getElementById('nav-notes-btn');showTab('notes',b);}
-function openVisitFromDashboard(id){navToVisits();setTimeout(function(){openVisit(id);},350);}
-
-// ── VISIT FILTER ──
-window.visitsPersonFilter=null;
-function togglePastVisits(showPast){visitFilter=showPast?'all':'upcoming';var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
-function renderVisitsPersonPills(){
-  var el=document.getElementById('visits-person-pills');
-  if(!el||!data.people.length)return;
-  var f=window.visitsPersonFilter;
-  var html='<button onclick="setVisitsFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p){
-    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
-    html+='<button onclick="setVisitsFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
-  });
-  el.innerHTML=html;
-}
-function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;renderVisitsPersonPills();var f=window.visitsPersonFilter?data.visits.filter(v=>v.person_id==window.visitsPersonFilter):data.visits;renderVisits(f,visitFilter);}
-
-// ── NOTES ──
-var notesData=[],notesPersonFilter=null,showHiddenNotes=false;
-async function loadNotes() {
-  var el = document.getElementById('notes-list');
-  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-  if (!data.people.length) await loadAll();
-  var res = await sb.from('notes')
-    .select('id, content, person_id, hidden, created_at, people(name)')
-    .eq('family_group_id', currentFamilyGroupId)
-    .order('created_at', { ascending: true });
-  if (res.error) {
-    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.</div>';
-    return;
-  }
-  notesData = res.data || [];
-  renderNotesPersonPills();
-  renderNotes();
-}
-function renderNotesPersonPills(){
-  var el=document.getElementById('notes-person-pills');if(!el)return;
-  var f=notesPersonFilter;
-  var html='<button onclick="setNotesPersonFilter(null)" style="background:'+(!f?'var(--green)':'var(--card)')+';color:'+(!f?'white':'var(--text-3)')+';border:1px solid '+(!f?'var(--green)':'var(--border)')+';border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;">Everyone</button>';
-  data.people.forEach(function(p){
-    var isActive=f==p.id,bg=isActive?avatarColor(p.name):'var(--card)',col=isActive?'white':'var(--text)',bdr=isActive?avatarColor(p.name):'var(--border)',dot=isActive?'rgba(255,255,255,0.3)':avatarColor(p.name);
-    html+='<button onclick="setNotesPersonFilter(\''+p.id+'\')" style="display:flex;align-items:center;gap:5px;background:'+bg+';color:'+col+';border:1px solid '+bdr+';border-radius:20px;padding:5px 10px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;font-family:inherit;flex-shrink:0;"><span style="width:18px;height:18px;border-radius:50%;background:'+dot+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;">'+initials(p.name)+'</span>'+p.name.split(' ')[0]+'</button>';
-  });
-  el.innerHTML=html;
-}
-function renderNotes(){
-  var el=document.getElementById('notes-list');if(!el)return;
-  var all=notesPersonFilter?notesData.filter(n=>n.person_id==notesPersonFilter):notesData;
-  var rows=showHiddenNotes?all:all.filter(n=>!n.hidden);
-  var hc=all.filter(n=>n.hidden).length;
-  var sub=document.getElementById('notes-sub');
-  if(sub)sub.textContent=all.length+' note'+(all.length!==1?'s':'')+(hc?' · '+hc+' hidden':'');
-  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>'+(hc&&!showHiddenNotes?'No visible notes':'No notes yet<br><span style="font-size:12px">Tap + to add one</span>')+'</div>';return;}
-  var grouped={};
-  rows.forEach(n=>{var k=new Date(n.created_at).toLocaleDateString('en-AU',{month:'long',year:'numeric'});if(!grouped[k])grouped[k]=[];grouped[k].push(n);});
-  el.innerHTML=Object.entries(grouped).map(e=>'<div class="section-label">'+e[0]+'</div>'+e[1].map(n=>{
-    var person=n.people?n.people.name:null,pcolor=person?avatarColor(person):'var(--text-3)',nid=n.id;
-    var chips='';
-    if(n.doctors&&n.doctors.name)chips+='<span class="chip chip-blue">🩺 '+n.doctors.name+'</span> ';
-    if(n.visits&&n.visits.title)chips+='<span class="chip chip-teal">📋 '+n.visits.title+'</span> ';
-    if(n.medications&&n.medications.name)chips+='<span class="chip chip-amber">💊 '+n.medications.name+'</span> ';
-    return '<div class="visit-card" style="margin-bottom:8px;'+(n.hidden?'opacity:0.45;':'')+'">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-      +'<div style="font-size:11px;color:var(--text-3);">'+fmtDateTime(n.created_at)+(n.hidden?' <span style="font-size:9px;background:var(--surface);color:var(--text-3);padding:1px 5px;border-radius:8px;">hidden</span>':'')+'</div>'
-      +'<button onclick="toggleNoteHidden(\''+nid+'\','+n.hidden+')" style="background:'+(n.hidden?'var(--green-bg)':'var(--surface)')+';border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:'+(n.hidden?'var(--green)':'var(--text-3)')+';cursor:pointer;">'+(n.hidden?'Show':'Hide')+'</button>'
-      +'</div>'
-      +'<div style="font-size:14px;color:var(--text);line-height:1.5;margin-top:4px;cursor:pointer;" onclick="editNote(\''+nid+'\')">'+(n.content||'').replace(/\n/g,'<br>')+'</div>'
-      +(chips?'<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">'+chips+'</div>':'')
-      +(person?'<div style="margin-top:5px;display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:50%;background:'+pcolor+';display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:white;">'+initials(person)+'</span><span style="font-size:11px;font-weight:600;color:'+pcolor+';">'+person+'</span></div>':'')
-      +'</div>';
-  }).join('')).join('');
-}
-function setNotesPersonFilter(p){notesPersonFilter=p||null;renderNotesPersonPills();renderNotes();}
-function toggleHiddenNotes(c){showHiddenNotes=c;renderNotes();}
-async function toggleNoteHidden(id,cur){var r=await sb.from('notes').update({hidden:!cur}).eq('id',id);if(r.error){toast('Error');return;}var n=notesData.find(x=>x.id===id);if(n)n.hidden=!cur;renderNotes();toast(cur?'Note visible ✓':'Note hidden');}
-function populateNoteSelects(pId,dId,vId,mId){
-  var ps=document.getElementById('note-person'),ds=document.getElementById('note-doctor'),vs=document.getElementById('note-visit'),ms=document.getElementById('note-medication');
-  if(!ps)return;
-  ps.innerHTML='<option value="">Select person...</option>'+data.people.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  ds.innerHTML='<option value="">Select doctor...</option>'+data.doctors.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
-  ms.innerHTML='<option value="">Select medication...</option>'+data.medications.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
-  if(pId){ps.value=pId;filterNoteVisits(pId);}else{vs.innerHTML='<option value="">Select visit...</option>';}
-  if(dId)ds.value=dId; if(vId)vs.value=vId; if(mId)ms.value=mId;
-  ps.onchange=function(){filterNoteVisits(ps.value);};
-}
-function filterNoteVisits(pId){var vs=document.getElementById('note-visit');if(!vs)return;var cur=vs.value,f=pId?data.visits.filter(v=>v.person_id===pId):data.visits;vs.innerHTML='<option value="">Select visit...</option>'+f.slice(0,50).map(v=>'<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>').join('');if(cur)vs.value=cur;}
-async function saveNote(){
-  var id=document.getElementById('note-id').value,nc=document.getElementById('note-content').value.trim();
-  if(!nc){toast('Please enter a note');return;}
-  var pId=document.getElementById('note-person').value||null;
-  if(!pId){toast('Please select a person');return;}
-  var payload={content:nc,person_id:pId,doctor_id:document.getElementById('note-doctor').value||null,visit_id:document.getElementById('note-visit').value||null,medication_id:document.getElementById('note-medication').value||null};
-  if(!id)payload.family_group_id=currentFamilyGroupId;
-  var r=id?await sb.from('notes').update(Object.assign({updated_at:new Date().toISOString()},payload)).eq('id',id):await sb.from('notes').insert(payload);
-  if(r.error){toast('Error: '+r.error.message);return;}
-  closeModal('modal-note');toast(id?'Note updated ✓':'Note saved ✓');await loadNotes();
-}
-async function deleteNote(){if(!confirm('Delete this note?'))return;await sb.from('notes').delete().eq('id',document.getElementById('note-id').value);closeModal('modal-note');toast('Deleted');await loadNotes();}
-function editNote(id){var n=notesData.find(x=>x.id===id);if(!n)return;document.getElementById('modal-note-title').textContent='Edit Note';document.getElementById('note-id').value=n.id;document.getElementById('note-content').value=n.content||'';document.getElementById('delete-note-btn').style.display='block';populateNoteSelects(n.person_id,n.doctor_id,n.visit_id,n.medication_id);openModal('modal-note');}
-
-
-// ── TODOS ──
-var todosData = [];
-var todoPersonFilter = null;
-var todoFilter = 'active';
-var showCompleted = false;
 var todosSectionCollapsed = {};
 
 
 
 
+
+function renderTodos() {
+  const el = document.getElementById('todos-list');
+  if (!el) return;
+  const now = new Date(); now.setHours(0,0,0,0);
+  let rows = showCompleted ? todosData : todosData.filter(t => !t.completed);
+  if (todoPersonFilter) rows = rows.filter(t => t.person_id == todoPersonFilter);
+  rows = [...rows].sort((a, b) => {
+    if (!a.due_date && !b.due_date) return 0;
+    if (!a.due_date) return 1;
+    if (!b.due_date) return -1;
+    return a.due_date.localeCompare(b.due_date);
+  });
+  const sub = document.getElementById('todos-sub');
+  const overdueCount = rows.filter(t => !t.completed && t.due_date && new Date(t.due_date) < now).length;
+  if (sub) sub.textContent = rows.filter(t=>!t.completed).length + ' active' + (overdueCount ? ' · ' + overdueCount + ' overdue' : '');
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div>' + (showCompleted ? 'No to do items yet' : 'All done!<br><span style="font-size:12px">No active to do items</span>') + '</div>';
+    return;
+  }
+  if (todoPersonFilter) {
+    el.innerHTML = '<div style="padding:10px 14px;">' + rows.map(t => todoItemHtml(t, now)).join('') + '</div>';
+    return;
+  }
+  const grouped = {};
+  rows.forEach(t => { const key = t.person_id || '__none__'; if (!grouped[key]) grouped[key] = []; grouped[key].push(t); });
+  const order = Object.keys(grouped).sort((a, b) => {
+    const pa = data.people.find(p => p.id === a)?.name || 'zzz';
+    const pb = data.people.find(p => p.id === b)?.name || 'zzz';
+    return pa.localeCompare(pb);
+  });
+  var html = '<div style="padding:10px 14px;">';
+  order.forEach(function(key, idx) {
+    var items = grouped[key];
+    var person = data.people.find(p => p.id === key);
+    var personName = person ? person.name : 'Unassigned';
+    var personIdx = data.people.findIndex(p => p.id === key);
+    var colIdx = personIdx >= 0 ? personIdx : idx;
+    var col = SECTION_COLOURS[colIdx % SECTION_COLOURS.length];
+    var collapsed = todosSectionCollapsed[key] !== false;
+    var chevron = collapsed
+      ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+      : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
+    var overdue = items.filter(t => !t.completed && t.due_date && new Date(t.due_date) < now).length;
+    var overdueTag = overdue ? '<span style="font-size:11px;font-weight:600;color:#C0392B;background:#FDE8EB;border-radius:20px;padding:2px 8px;margin-left:6px;">' + overdue + ' overdue</span>' : '';
+    var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
+    html += '<div style="' + sepStyle + 'display:flex;align-items:center;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';">';
+    html += '<div onclick="toggleTodosSection(\'' + key + '\')" style="flex:1;display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;">';
+    html += '<div style="flex:1;"><div style="font-size:16px;font-weight:700;color:' + col.text + ';">' + personName + overdueTag + '</div></div>';
+    html += '<div style="font-size:12px;color:' + col.text + ';opacity:0.7;margin-right:8px;">' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</div>';
+    html += '<div style="color:' + col.text + ';opacity:0.8;">' + chevron + '</div>';
+    html += '</div></div>';
+    if (!collapsed) {
+      html += '<div style="margin-top:2px;margin-bottom:4px;">';
+      items.forEach(t => { html += todoItemHtml(t, now); });
+      html += '</div>';
+    }
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
 
 function toggleTodosSection(key) {
   todosSectionCollapsed[key] = todosSectionCollapsed[key] === false ? true : false;
@@ -3705,6 +3434,83 @@ function getSections() {
 
 
 
+
+function renderNotes() {
+  var el = document.getElementById('notes-list');
+  if (!el) return;
+  var allNotes = notesData.filter(function(n) {
+    if (!n.content) return false;
+    if (n.content.match(/^\[EVENT:/)) return false;
+    if (n.content.match(/^\[SECTION:[^\]]+\]$/)) return false;
+    if (notesPersonFilter && n.person_id != notesPersonFilter) return false;
+    if (n.hidden && !showHiddenNotes) return false;
+    return true;
+  });
+  if (!allNotes.length && !getSections().length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add a note</span></div>';
+    return;
+  }
+  var grouped = {};
+  allNotes.forEach(function(n) {
+    var parsed = parseNoteSection(n.content);
+    if (!grouped[parsed.section]) grouped[parsed.section] = [];
+    grouped[parsed.section].push({ note: n, text: parsed.text });
+  });
+  var sections = getSections();
+  Object.keys(grouped).forEach(function(s) {
+    if (!sections.find(function(x) { return x.name === s; })) sections.push({ name: s, personId: null, noteId: null });
+  });
+  if (notesPersonFilter) {
+    sections = sections.filter(function(sec) { return !sec.personId || sec.personId === notesPersonFilter; });
+  }
+  if (!sections.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No notes yet<br><span style="font-size:12px">Tap + to add a note</span></div>';
+    return;
+  }
+  var html = '<div style="padding:10px 14px;">';
+  sections.forEach(function(sec, idx) {
+    var notes = grouped[sec.name] || [];
+    var collapsed = notesSectionCollapsed[sec.name] !== false;
+    var chevron = collapsed
+      ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+      : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>';
+    var col = SECTION_COLOURS[idx % SECTION_COLOURS.length];
+    var sepStyle = idx > 0 ? 'margin-top:8px;' : '';
+    html += '<div style="' + sepStyle + 'display:flex;align-items:center;background:' + col.bg + ';border-radius:var(--r-sm);border:1px solid ' + col.border + ';">'
+      + '<div onclick="toggleNotesSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" oncontextmenu="event.preventDefault();editNoteSection(\'' + sec.name.replace(/'/g,"\\'") + '\')" ontouchstart="notesLongPressStart(\'' + sec.name.replace(/'/g,"\\'") + '\')" ontouchend="notesLongPressEnd()" ontouchmove="notesLongPressEnd()" style="flex:1;display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">'
+      + '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:' + col.text + ';">' + sec.name + '</div></div>'
+      + '<div style="font-size:12px;color:' + col.text + ';opacity:0.7;margin-right:8px;">' + notes.length + ' note' + (notes.length !== 1 ? 's' : '') + '</div>'
+      + '<div style="color:' + col.text + ';opacity:0.8;">' + chevron + '</div>'
+      + '</div>'
+      + '</div>';
+    if (!collapsed) {
+      html += '<div style="margin-top:2px;margin-bottom:4px;">';
+      if (notes.length) {
+        notes.forEach(function(item) {
+          var n = item.note;
+          html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px 10px 16px;background:' + (n.hidden ? 'var(--surface)' : 'var(--card)') + ';border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;' + (n.hidden ? 'opacity:0.6;' : '') + '">'
+            + '<div style="width:5px;height:5px;border-radius:50%;background:' + col.dot + ';flex-shrink:0;margin-top:6px;"></div>'
+            + '<div onclick="editNote(\'' + n.id + '\')" style="flex:1;cursor:pointer;">'
+            + '<div style="font-size:13px;color:var(--text);line-height:1.5;">' + item.text.replace(/\n/g,'<br>') + '</div>'
+            + (n.people && n.people.name && !notesPersonFilter ? '<div style="font-size:10px;color:var(--text-3);margin-top:3px;">' + n.people.name + '</div>' : '')
+            + '</div>'
+            + '<button onclick="event.stopPropagation();toggleNoteHidden(\'' + n.id + '\',' + (n.hidden ? 'true' : 'false') + ')" style="background:none;border:none;cursor:pointer;padding:2px 0 0 6px;flex-shrink:0;opacity:' + (n.hidden ? '1' : '0.3') + ';">'
+            + '<svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24">' + (n.hidden ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>') + '</svg>'
+            + '</button></div>';
+        });
+      }
+      html += '</div>';
+    }
+  });
+  html += '<div onclick="openAddNoteSection()" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;margin-top:8px;border:1.5px dashed var(--border);border-radius:var(--r-sm);background:var(--card);">'
+    + '<div style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg width="12" height="12" fill="none" stroke="var(--green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+    + '</div>'
+    + '<div style="font-size:14px;font-weight:500;color:var(--green);">New Section</div>'
+    + '</div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
 
 function toggleNotesSection(sectionName) {
   notesSectionCollapsed[sectionName] = notesSectionCollapsed[sectionName] === false ? true : false;
