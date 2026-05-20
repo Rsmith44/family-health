@@ -216,14 +216,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div id="main-app" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
 
-  <div class="screen active" id="screen-dashboard">
+  <div class="screen" id="screen-dashboard">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div style="flex:1;padding-left:8px;"><div class="header-title" id="dashboard-greeting">Good morning</div><div class="header-sub" id="dashboard-date"></div></div>
     </div>
     <div class="scroll" id="dashboard-content"><div class="loading-wrap"><div class="spinner"></div></div></div>
   </div>
-  <div class="screen" id="screen-home">
+  <div class="screen active" id="screen-home">
     <div class="header">
       <button class="hamburger-btn" onclick="openHamburger()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="header-left" style="flex:1;padding-left:8px;"><div class="header-title">Family</div><div class="header-sub" id="home-sub">Loading...</div></div>
@@ -861,7 +861,8 @@ function showLoginError(msg) {
 
 async function afterSignIn() {
   // Check if user has a family group
-  const { data: membership } = await sb.from('family_group_members').select('family_group_id').limit(1).single();
+  const { data: { user: fgUser } } = await sb.auth.getUser();
+  const { data: membership } = await sb.from('family_group_members').select('family_group_id').eq('user_id', fgUser.id).limit(1).single();
   if (membership) {
     currentFamilyGroupId = membership.family_group_id;
     // Check for pending invites for this user's email
@@ -929,7 +930,7 @@ function showApp() {
   document.getElementById('main-app').style.flexDirection = 'column';
   document.getElementById('main-app').style.flex = '1';
   document.getElementById('main-app').style.overflow = 'hidden';
-  loadDashboard();
+  loadAll().then(() => loadTodos()).then(() => { renderPeople(data.people); });
   loadDoctorTypes();
 }
 
@@ -945,6 +946,7 @@ sb.auth.getSession().then(({ data: { session } }) => {
   else showLogin();
 });
 
+applyFontSize();
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT') { currentFamilyGroupId = null; showLogin(); }
 });
@@ -1061,14 +1063,19 @@ function showTab(tab, btn) {
   if (btn) btn.classList.add('active');
   currentTab = tab;
   showScreen(tab,'none');
-  if (tab==='dashboard') { loadDashboard(); }
+  if (tab==='home') { if (!data.people.length) loadPeople(); else renderPeople(data.people); }
+  if (tab==='todos') {
+    if (todosData.length) { renderTodoPersonPills(); renderTodos(); refreshTodosBackground(); }
+    else loadTodos();
+  }
+  if (tab==='notes') {
+    if (notesData.length) { renderNotesPersonPills(); renderNotes(); refreshNotesBackground(); }
+    else loadNotes();
+  }
+  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
   if (tab==='doctors' && !data.doctors.length) loadDoctors();
   if (tab==='medications' && !data.medications.length) loadMeds();
-  if (tab==='visits') { if (!data.visits.length) loadVisits(); else { renderVisitsPersonPills(); renderVisits(data.visits, visitFilter); } }
   if (tab==='documents') loadDocs();
-  if (tab==='todos') loadTodos();
-  if (tab==='notes') loadNotes();
-  if (tab==='home') { if (!data.people.length) loadPeople(); else renderPeople(data.people); }
 }
 
 function toast(msg, dur=2500) {
@@ -2821,10 +2828,7 @@ async function saveGroupName() {
 
 
 // ── TO DO ──
-let todosData = [];
-let todoPersonFilter = null;
-let todoFilter = 'active';
-let showCompleted = false;
+// todosData vars defined below
 
 async function loadTodos() {
   const el = document.getElementById('todos-list');
@@ -2834,7 +2838,10 @@ async function loadTodos() {
       .select('*, people(name), doctors(name), visits(title)')
       .order('due_date', { ascending: true, nullsFirst: false });
     if (error) { console.error('loadTodos error:', error); }
-    todosData = rows || [];
+    const allRows = rows || [];
+    if (!data.people.length) await loadPeople();
+    const familyPersonIds = new Set(data.people.map(p => p.id));
+    todosData = allRows.filter(t => t.person_id && familyPersonIds.has(t.person_id));
     renderTodoPersonPills();
     renderTodos();
   } catch(err) {
@@ -2843,6 +2850,39 @@ async function loadTodos() {
     renderTodoPersonPills();
     renderTodos();
   }
+}
+
+async function refreshTodosBackground() {
+  try {
+    const { data: rows } = await sb.from('todos')
+      .select('*, people(name), doctors(name), visits(title)')
+      .order('due_date', { ascending: true, nullsFirst: false });
+    if (rows) {
+      const familyPersonIds = new Set(data.people.map(p => p.id));
+      const fresh = rows.filter(t => t.person_id && familyPersonIds.has(t.person_id));
+      if (JSON.stringify(fresh.map(t=>t.id+t.completed)) !== JSON.stringify(todosData.map(t=>t.id+t.completed))) {
+        todosData = fresh;
+        if (currentTab === 'todos') { renderTodoPersonPills(); renderTodos(); }
+        renderPeople(data.people);
+      }
+    }
+  } catch(e) {}
+}
+
+async function refreshNotesBackground() {
+  try {
+    const res = await sb.from('notes')
+      .select('id, content, person_id, hidden, created_at, people(name)')
+      .eq('family_group_id', currentFamilyGroupId)
+      .order('created_at', { ascending: true });
+    if (res.data) {
+      const fresh = res.data;
+      if (JSON.stringify(fresh.map(n=>n.id+n.content+n.hidden)) !== JSON.stringify(notesData.map(n=>n.id+n.content+n.hidden))) {
+        notesData = fresh;
+        if (currentTab === 'notes') { renderNotesPersonPills(); renderNotes(); }
+      }
+    }
+  } catch(e) {}
 }
 
 function renderTodoPersonPills() {
@@ -3116,13 +3156,21 @@ function setVisitsFilter(personId){window.visitsPersonFilter=personId||null;rend
 
 // ── NOTES ──
 var notesData=[],notesPersonFilter=null,showHiddenNotes=false;
-async function loadNotes(){
-  var el=document.getElementById('notes-list');
-  if(el)el.innerHTML='<div class="loading-wrap"><div class="spinner"></div></div>';
-  if(!data.people.length)await loadAll();
-  var res=await sb.from('notes').select('*, people(name), doctors(name), visits(title), medications(name)').order('created_at',{ascending:false});
-  if(res.error){if(el)el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.<br><span style="font-size:12px">Run notes.sql in Supabase</span></div>';return;}
-  notesData=res.data||[];renderNotesPersonPills();renderNotes();
+async function loadNotes() {
+  var el = document.getElementById('notes-list');
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  if (!data.people.length) await loadAll();
+  var res = await sb.from('notes')
+    .select('id, content, person_id, hidden, created_at, people(name)')
+    .eq('family_group_id', currentFamilyGroupId)
+    .order('created_at', { ascending: true });
+  if (res.error) {
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.</div>';
+    return;
+  }
+  notesData = res.data || [];
+  renderNotesPersonPills();
+  renderNotes();
 }
 function renderNotesPersonPills(){
   var el=document.getElementById('notes-person-pills');if(!el)return;
@@ -3188,6 +3236,238 @@ async function saveNote(){
 }
 async function deleteNote(){if(!confirm('Delete this note?'))return;await sb.from('notes').delete().eq('id',document.getElementById('note-id').value);closeModal('modal-note');toast('Deleted');await loadNotes();}
 function editNote(id){var n=notesData.find(x=>x.id===id);if(!n)return;document.getElementById('modal-note-title').textContent='Edit Note';document.getElementById('note-id').value=n.id;document.getElementById('note-content').value=n.content||'';document.getElementById('delete-note-btn').style.display='block';populateNoteSelects(n.person_id,n.doctor_id,n.visit_id,n.medication_id);openModal('modal-note');}
+
+
+// ── TODOS ──
+var todosData = [];
+var todoPersonFilter = null;
+var todoFilter = 'active';
+var showCompleted = false;
+var todosSectionCollapsed = {};
+
+
+
+
+
+function toggleTodosSection(key) {
+  todosSectionCollapsed[key] = todosSectionCollapsed[key] === false ? true : false;
+  renderTodos();
+}
+
+function todoItemHtml(t, now) {
+  const isOverdue = t.due_date && !t.completed && new Date(t.due_date) < now;
+  const isDueToday = t.due_date && !t.completed && !isOverdue && new Date(t.due_date).toDateString() === new Date().toDateString();
+  const dateColor = isOverdue ? '#C0392B' : isDueToday ? 'var(--amber)' : 'var(--text-3)';
+  const dateLabel = isOverdue ? '⚠ Overdue' : isDueToday ? 'Due today' : fmtDate(t.due_date);
+  const doneStyle = t.completed ? 'opacity:0.5;' : '';
+  const titleStyle = t.completed ? 'text-decoration:line-through;color:var(--text-3);' : '';
+  const circleStyle = t.completed ? 'border:2px solid var(--green);background:var(--green);' : 'border:2px solid var(--border);background:white;';
+  const tick = t.completed ? '<svg width="10" height="10" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : '';
+  return '<div onclick="editTodo(\'' + t.id + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 13px 10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;cursor:pointer;' + doneStyle + '">'
+    + '<div onclick="event.stopPropagation();toggleTodo(\'' + t.id + '\',' + t.completed + ')" style="width:20px;height:20px;border-radius:50%;' + circleStyle + 'display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;">' + tick + '</div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:14px;font-weight:500;line-height:1.4;' + titleStyle + '">' + t.title + '</div>'
+    + (t.notes ? '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">' + t.notes.slice(0,80) + (t.notes.length > 80 ? '…' : '') + '</div>' : '')
+    + '</div>'
+    + (t.due_date ? '<div style="font-size:11px;font-weight:500;color:' + dateColor + ';text-align:right;white-space:nowrap;flex-shrink:0;">' + dateLabel + '</div>' : '')
+    + '</div>';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── NOTES (section-based) ──
+var notesData = [], notesPersonFilter = null, showHiddenNotes = false;
+var notesSectionCollapsed = {};
+
+// Global colour palette — used by notes AND todos
+var SECTION_COLOURS = [
+  {bg:'#E6F0EC',border:'#C0D8CA',text:'#1A4D35',dot:'#2A6049'},
+  {bg:'#E8EFF8',border:'#C0CFDF',text:'#1A3A6B',dot:'#2C5282'},
+  {bg:'#F5E8EB',border:'#E0BDC4',text:'#7A2030',dot:'#9B3A4A'},
+  {bg:'#EEE8F7',border:'#D4C4E8',text:'#3D2070',dot:'#5B3A8E'},
+  {bg:'#F5EBE0',border:'#DEBFAA',text:'#7A3A10',dot:'#B56B2A'},
+  {bg:'#E4F2F2',border:'#B8D8D8',text:'#0F4040',dot:'#1A6B6B'},
+  {bg:'#FDF0E8',border:'#E8C8B0',text:'#7A3020',dot:'#C04030'},
+  {bg:'#EDF2E0',border:'#C8D8A8',text:'#2A4010',dot:'#4A7020'},
+  {bg:'#E8F4FD',border:'#B8D8EE',text:'#0A3050',dot:'#1560A0'},
+  {bg:'#FEF0F5',border:'#F0C0D8',text:'#6A1040',dot:'#B02060'},
+  {bg:'#F0F8E8',border:'#C8E0A8',text:'#204010',dot:'#407020'},
+  {bg:'#FFF4E0',border:'#F0D098',text:'#604010',dot:'#A06020'},
+  {bg:'#EBF5F0',border:'#A8D8C0',text:'#0A3828',dot:'#1A6848'},
+  {bg:'#F8EEFF',border:'#DDBCF8',text:'#3A106A',dot:'#7030B8'},
+  {bg:'#FFF0E8',border:'#F8C8A8',text:'#602010',dot:'#B03820'},
+  {bg:'#E8F0FF',border:'#B0C8F8',text:'#102060',dot:'#2040B0'},
+  {bg:'#F5FDE8',border:'#C8EE98',text:'#284008',dot:'#508018'},
+  {bg:'#FDEEF8',border:'#F0B8E0',text:'#580848',dot:'#980878'},
+  {bg:'#E8FAFA',border:'#98DEDE',text:'#082830',dot:'#106878'},
+  {bg:'#FDF8E8',border:'#F0E098',text:'#504008',dot:'#988010'},
+  {bg:'#F0EEF8',border:'#C8C0E8',text:'#281850',dot:'#483888'},
+  {bg:'#EEFAF0',border:'#A8E8B8',text:'#083818',dot:'#187830'},
+  {bg:'#FEF4E8',border:'#F0C890',text:'#582808',dot:'#A05010'},
+  {bg:'#E8F8FC',border:'#A0D8E8',text:'#082038',dot:'#106890'},
+  {bg:'#FCF0F0',border:'#F0B8B8',text:'#601010',dot:'#A82020'},
+  {bg:'#F0F8F0',border:'#B8E0B8',text:'#103010',dot:'#206020'},
+  {bg:'#FCF4FE',border:'#E8C0F8',text:'#400858',dot:'#7818A8'},
+  {bg:'#FFF8E8',border:'#F8E098',text:'#503800',dot:'#907000'},
+  {bg:'#E8F4F8',border:'#A8D0E0',text:'#082838',dot:'#106880'},
+  {bg:'#FEE8EC',border:'#F8B8C0',text:'#600818',dot:'#A01830'},
+  {bg:'#EEFCF4',border:'#90E8B8',text:'#063020',dot:'#108840'},
+  {bg:'#F8F0E8',border:'#E8C898',text:'#402008',dot:'#784010'},
+  {bg:'#EEF4FC',border:'#B0C8F0',text:'#102048',dot:'#204890'},
+  {bg:'#FEF8F0',border:'#F8D8A8',text:'#583010',dot:'#A05820'},
+  {bg:'#F0FEEE',border:'#B8F0A8',text:'#184008',dot:'#308018'},
+  {bg:'#FCE8F8',border:'#F0A8E0',text:'#500840',dot:'#900870'},
+  {bg:'#E8ECFC',border:'#A8B8F0',text:'#101850',dot:'#203090'},
+  {bg:'#FEF0E8',border:'#F8C0A0',text:'#581808',dot:'#A02808'},
+  {bg:'#EEFCFC',border:'#98E8E8',text:'#062828',dot:'#108888'},
+  {bg:'#F4F4EE',border:'#D0D0B8',text:'#303018',dot:'#585830'},
+];
+function getSectionColour(idx) { return SECTION_COLOURS[idx % SECTION_COLOURS.length]; }
+
+function parseNoteSection(content) {
+  var m = content.match(/^\[S:([^\]]+)\] ([\s\S]*)$/);
+  if (m) return { section: m[1], text: m[2] };
+  return { section: 'General', text: content };
+}
+function buildNoteContent(section, text) {
+  if (!section || section === 'General') return text;
+  return '[S:' + section + '] ' + text;
+}
+
+function getSections() {
+  var sections = [], seen = new Set();
+  notesData.filter(n => n.content && n.content.match(/^\[SECTION:[^\]]+\]$/)).forEach(n => {
+    var m = n.content.match(/^\[SECTION:([^\]]+)\]$/);
+    if (m && !seen.has(m[1])) { sections.push({ name: m[1], personId: n.person_id, noteId: n.id }); seen.add(m[1]); }
+  });
+  notesData.filter(n => n.content && !n.content.match(/^\[SECTION:/) && !n.content.match(/^\[EVENT:/)).forEach(n => {
+    var parsed = parseNoteSection(n.content);
+    if (!seen.has(parsed.section)) { sections.push({ name: parsed.section, personId: null, noteId: null }); seen.add(parsed.section); }
+  });
+  if (!seen.has('General') && notesData.filter(n => !n.content.match(/^\[SECTION:/) && !n.content.match(/^\[EVENT:/)).length > 0) {
+    sections.unshift({ name: 'General', personId: null, noteId: null });
+  }
+  return sections;
+}
+
+
+
+
+
+function toggleNotesSection(sectionName) {
+  notesSectionCollapsed[sectionName] = notesSectionCollapsed[sectionName] === false ? true : false;
+  renderNotes();
+}
+
+
+
+function openAddNoteSection() {
+  document.getElementById('modal-note-section-title').textContent = 'New Section';
+  document.getElementById('note-section-name').value = '';
+  document.getElementById('note-section-editing').value = '';
+  document.getElementById('delete-note-section-btn').style.display = 'none';
+  var sel = document.getElementById('note-section-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  openModal('modal-note-section');
+  setTimeout(function() { document.getElementById('note-section-name').focus(); }, 300);
+}
+
+function editNoteSection(sectionName) {
+  document.getElementById('modal-note-section-title').textContent = 'Edit Section';
+  document.getElementById('note-section-name').value = sectionName;
+  document.getElementById('note-section-editing').value = sectionName;
+  document.getElementById('delete-note-section-btn').style.display = 'block';
+  var sel = document.getElementById('note-section-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  var marker = notesData.find(function(n) { return n.content === '[SECTION:' + sectionName + ']'; });
+  if (marker && marker.person_id) sel.value = marker.person_id;
+  openModal('modal-note-section');
+}
+
+async function saveNoteSection() {
+  var name = document.getElementById('note-section-name').value.trim();
+  if (!name) { toast('Please enter a section name'); return; }
+  var personId = document.getElementById('note-section-person').value || null;
+  var editing = document.getElementById('note-section-editing').value;
+  if (editing) {
+    var toUpdate = notesData.filter(function(n) { return n.content && n.content.startsWith('[S:' + editing + '] '); });
+    for (var i = 0; i < toUpdate.length; i++) {
+      var newContent = '[S:' + name + '] ' + toUpdate[i].content.substring(('[S:' + editing + '] ').length);
+      await sb.from('notes').update({ content: newContent }).eq('id', toUpdate[i].id);
+    }
+    var marker = notesData.find(function(n) { return n.content === '[SECTION:' + editing + ']'; });
+    if (marker) await sb.from('notes').update({ content: '[SECTION:' + name + ']', person_id: personId }).eq('id', marker.id);
+  } else {
+    await sb.from('notes').insert({ content: '[SECTION:' + name + ']', person_id: personId, family_group_id: currentFamilyGroupId, hidden: false });
+  }
+  closeModal('modal-note-section');
+  toast(editing ? 'Section renamed ✓' : 'Section created ✓');
+  showTab('notes', document.getElementById('nav-notes-btn'));
+  await loadNotes();
+  notesSectionCollapsed[name] = false;
+  renderNotes();
+}
+
+async function deleteNoteSection() {
+  var name = document.getElementById('note-section-editing').value;
+  if (!name) return;
+  if (!confirm('Delete "' + name + '" section? Notes inside will move to General.')) return;
+  var toUpdate = notesData.filter(function(n) { return n.content && n.content.startsWith('[S:' + name + '] '); });
+  for (var i = 0; i < toUpdate.length; i++) {
+    var newContent = toUpdate[i].content.substring(('[S:' + name + '] ').length);
+    await sb.from('notes').update({ content: newContent }).eq('id', toUpdate[i].id);
+  }
+  var marker = notesData.find(function(n) { return n.content === '[SECTION:' + name + ']'; });
+  if (marker) await sb.from('notes').delete().eq('id', marker.id);
+  closeModal('modal-note-section');
+  toast('Section deleted');
+  await loadNotes();
+}
+
+function openAddNoteToSection(sectionName) {
+  document.getElementById('modal-note-title').textContent = 'Add Note';
+  document.getElementById('note-id').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-section').value = sectionName;
+  document.getElementById('delete-note-btn').style.display = 'none';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  if (notesPersonFilter) sel.value = notesPersonFilter;
+  openModal('modal-note');
+  setTimeout(function() { document.getElementById('note-content').focus(); }, 300);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ── IMPORTANT INFO ──
 function buildImportantInfoCard(p){
