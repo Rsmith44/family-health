@@ -1702,7 +1702,7 @@ async function openAddModal() {
     populateDocSelects();
   }
   if (modal==='modal-todo') {
-    document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
+    document.getElementById('modal-todo-title').textContent = 'Add To Do';
     document.getElementById('todo-id').value = '';
     document.getElementById('todo-title').value = '';
     document.getElementById('todo-notes').value = '';
@@ -3547,11 +3547,16 @@ function renderTodos() {
 
   // Group by person (notes-tab style: coloured header, white items, collapsed)
   const grouped = {};
-  const order = [];
   rows.forEach(t => {
     const key = t.person_id || '__none__';
-    if (!grouped[key]) { grouped[key] = []; order.push(key); }
+    if (!grouped[key]) grouped[key] = [];
     grouped[key].push(t);
+  });
+  // Sort keys by person name for stable order regardless of completed/filter state
+  const order = Object.keys(grouped).sort((a, b) => {
+    const pa = data.people.find(p => p.id === a)?.name || 'zzz';
+    const pb = data.people.find(p => p.id === b)?.name || 'zzz';
+    return pa.localeCompare(pb);
   });
 
   // Use SECTION_COLOURS for person groups
@@ -3560,7 +3565,10 @@ function renderTodos() {
     var items = grouped[key];
     var person = data.people.find(p => p.id === key);
     var personName = person ? person.name : 'Unassigned';
-    var col = SECTION_COLOURS[idx % SECTION_COLOURS.length];
+    // Colour based on person's stable index in data.people, not render order
+    var personIdx = data.people.findIndex(p => p.id === key);
+    var colIdx = personIdx >= 0 ? personIdx : idx;
+    var col = SECTION_COLOURS[colIdx % SECTION_COLOURS.length];
     var collapsed = todosSectionCollapsed[key] !== false; // default collapsed
     var chevron = collapsed
       ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
@@ -3670,7 +3678,7 @@ function filterTodoVisits(personId) {
 }
 
 function openTodoModal(personId, doctorId, visitId) {
-  document.getElementById('modal-todo-title').textContent = 'Add Follow-up';
+  document.getElementById('modal-todo-title').textContent = 'Add To Do';
   document.getElementById('todo-id').value = '';
   document.getElementById('todo-title').value = '';
   document.getElementById('todo-notes').value = '';
@@ -3691,7 +3699,7 @@ function openFollowupFromVisit() {
 function editTodo(id) {
   const t = todosData.find(x => x.id === id);
   if (!t) return;
-  document.getElementById('modal-todo-title').textContent = 'Edit Follow-up';
+  document.getElementById('modal-todo-title').textContent = 'Edit To Do';
   document.getElementById('todo-id').value = t.id;
   document.getElementById('todo-title').value = t.title || '';
   document.getElementById('todo-notes').value = t.notes || '';
@@ -3721,7 +3729,7 @@ async function saveTodo() {
     await sb.from('todos').insert(payload);
   if (error) { toast('Error: ' + error.message); return; }
   closeModal('modal-todo');
-  toast(id ? 'Updated ✓' : 'Follow-up added ✓');
+  toast(id ? 'Updated ✓' : 'To Do added ✓');
   await loadTodos();
 }
 
