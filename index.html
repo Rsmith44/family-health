@@ -2366,20 +2366,20 @@ async function openPerson(id) {
     html += `<div onclick="openPersonDoctors('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👨‍⚕️</div>
       <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Doctors</div></div>
-      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${myDocs.length||''}</div>
+      
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
     const medLabel = activeMeds.length ? activeMeds.length+' active' : (myMeds.length ? myMeds.length+' total' : '');
     html += `<div onclick="openPersonMeds('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💊</div>
       <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medications</div></div>
-      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${medLabel}</div>
+      
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
     html += `<div onclick="openPersonEvents('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="width:34px;height:34px;border-radius:10px;background:var(--rose-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏥</div>
       <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Medical Events</div></div>
-      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${evCount||''}</div>
+      
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
     html += `<div onclick="openPersonInfoCard('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
@@ -2393,7 +2393,7 @@ async function openPerson(id) {
     html += `<div onclick="openPersonDocuments('${id}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">
       <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📄</div>
       <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Documents</div></div>
-      <div style="font-size:13px;color:var(--text-3);font-weight:500;">${docCount||''}</div>
+      
       <svg width="14" height="14" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
     html += `</div></div><div style="height:20px;"></div>`;
