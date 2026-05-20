@@ -582,9 +582,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
         Add to Google / iOS Calendar
       </button>
       <button class="btn-primary" onclick="saveVisit()">Save Visit</button>
-      <button id="add-followup-btn" style="display:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--teal-bg);color:var(--teal);border:none;border-radius:var(--r-sm);padding:14px;font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;" onclick="openFollowupFromVisit()">
-        ✚ Add Follow-up / To Do
-      </button>
       <button class="btn-danger" id="delete-visit-btn" style="display:none" onclick="deleteVisit()">Delete Visit</button>
     </div>
   </div>
@@ -1502,7 +1499,7 @@ async function openAddModal() {
   const modal = map[currentTab];
   if (!modal) return;
   clearForm(modal);
-  if (modal==='modal-visit') { document.getElementById('modal-visit-title').textContent='New Visit'; document.getElementById('delete-visit-btn').style.display='none'; document.getElementById('add-followup-btn').style.display='none'; populateSelects(); }
+  if (modal==='modal-visit') { document.getElementById('modal-visit-title').textContent='New Visit'; document.getElementById('delete-visit-btn').style.display='none'; populateSelects(); }
   if (modal==='modal-person') { document.getElementById('modal-person-title').textContent='New Person'; document.getElementById('delete-person-btn').style.display='none'; }
   if (modal==='modal-doctor') { document.getElementById('modal-doctor-title').textContent='New Doctor'; document.getElementById('delete-doctor-btn').style.display='none'; selectedPatients=[]; renderDoctorTypeSelect(); renderDoctorPatientsList(); }
   if (modal==='modal-med') { document.getElementById('modal-med-title').textContent='New Medication'; document.getElementById('delete-med-btn').style.display='none'; populateSelects(); }
@@ -1601,7 +1598,7 @@ async function saveVisit() {
   const {error}=id?await sb.from('visits').update(payload).eq('id',id):await sb.from('visits').insert(payload);
   if(error){toast('Error: '+error.message);console.error(error);return;}
   closeModal('modal-visit'); toast(id?'Visit updated ✓':'Visit added ✓');
-  await loadVisits(); if(currentPerson) await openPerson(currentPerson.id);
+  await loadVisits(); showTab('visits', document.getElementById('nav-visits-btn')); document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active')); document.getElementById('nav-visits-btn')?.classList.add('active');
 }
 async function deleteVisit() {
   const id=document.getElementById('visit-id').value; if(!id) return;
@@ -1623,7 +1620,6 @@ function editVisit(id) {
   document.getElementById('visit-total-cost').value=v.total_cost||'';
   document.getElementById('visit-oop-cost').value=v.out_of_pocket||'';
   document.getElementById('delete-visit-btn').style.display='block';
-  document.getElementById('add-followup-btn').style.display='flex';
   openModal('modal-visit');
 }
 
@@ -2024,13 +2020,13 @@ async function openAppointmentMode(visitId, from) {
 
   // FOLLOW-UPS
   html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">'
-    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Follow-ups</div>'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">To Do</div>'
     + '<div id="appt-todos-list" style="margin-bottom:8px;"></div>'
     + '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card);border-radius:var(--r-sm);border:1px dashed var(--border);cursor:pointer;" onclick="addApptTodo()">'
     + '<div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     + '<svg width="10" height="10" fill="none" stroke="#2A6049" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
     + '</div>'
-    + '<span style="font-size:13px;color:var(--text-3);">Add follow-up...</span>'
+    + '<span style="font-size:13px;color:var(--text-3);">Add To Do...</span>'
     + '</div>'
     + '</div>';
 
