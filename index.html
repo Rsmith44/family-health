@@ -3444,17 +3444,27 @@ async function loadTodos() {
     const { data: rows, error } = await sb.from('todos')
       .select('*, people(name), doctors(name), visits(title)')
       .order('due_date', { ascending: true, nullsFirst: false });
-    if (error) { console.error('loadTodos error:', error); }
     const allRows = rows || [];
     const familyPersonIds = new Set(data.people.map(p => p.id));
     todosData = allRows.filter(t => !t.person_id || familyPersonIds.has(t.person_id));
+    // DEBUG: show info in the list
+    if (el) el.innerHTML = '<div style="padding:16px;font-size:12px;line-height:1.8;background:#fff;margin:10px;border-radius:8px;border:1px solid #ccc;">'
+      + '<b>DEBUG loadTodos</b><br>'
+      + 'rows from DB: ' + allRows.length + '<br>'
+      + 'error: ' + (error ? error.message : 'none') + '<br>'
+      + 'data.people.length: ' + data.people.length + '<br>'
+      + 'familyPersonIds: ' + [...familyPersonIds].join(', ') + '<br>'
+      + 'todosData after filter: ' + todosData.length + '<br>'
+      + 'first todo person_id: ' + (allRows[0] ? allRows[0].person_id : 'none') + '<br>'
+      + 'first todo completed: ' + (allRows[0] ? allRows[0].completed : 'none') + '<br>'
+      + '</div>';
+    // Wait 5 seconds so user can read, then render
+    await new Promise(r => setTimeout(r, 5000));
     renderTodoPersonPills();
     renderTodos();
   } catch(err) {
-    console.error('loadTodos exception:', err);
+    if (el) el.innerHTML = '<div style="padding:16px;color:red;">EXCEPTION: ' + err.message + '</div>';
     todosData = [];
-    renderTodoPersonPills();
-    renderTodos();
   }
 }
 
