@@ -3519,6 +3519,85 @@ function toggleNotesSection(sectionName) {
 
 
 
+async function loadNotes() {
+  var el = document.getElementById('notes-list');
+  if (el) el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  if (!data.people.length) await loadAll();
+  var res = await sb.from('notes')
+    .select('id, content, person_id, hidden, created_at, people(name)')
+    .eq('family_group_id', currentFamilyGroupId)
+    .order('created_at', { ascending: true });
+  if (res.error) {
+    if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>Notes table not found.</div>';
+    return;
+  }
+  notesData = res.data || [];
+  renderNotesPersonPills();
+  renderNotes();
+}
+
+
+
+async function saveNote() {
+  var id = document.getElementById('note-id').value;
+  var text = document.getElementById('note-content').value.trim();
+  if (!text) { toast('Please enter a note'); return; }
+  var pId = document.getElementById('note-person').value || null;
+  var section = document.getElementById('note-section').value || 'General';
+  var noteContent = buildNoteContent(section, text);
+  var payload = { content: noteContent, person_id: pId };
+  if (!id) payload.family_group_id = currentFamilyGroupId;
+  var r = id
+    ? await sb.from('notes').update(Object.assign({ updated_at: new Date().toISOString() }, payload)).eq('id', id)
+    : await sb.from('notes').insert(payload);
+  if (r.error) { toast('Error: ' + r.error.message); return; }
+  closeModal('modal-note');
+  toast(id ? 'Note updated ✓' : 'Note saved ✓');
+  await loadNotes();
+}
+
+async function deleteNote() {
+  if (!confirm('Delete this note?')) return;
+  await sb.from('notes').delete().eq('id', document.getElementById('note-id').value);
+  closeModal('modal-note');
+  toast('Deleted');
+  await loadNotes();
+}
+
+function editNote(id) {
+  var n = notesData.find(function(x) { return x.id === id; });
+  if (!n) return;
+  var parsed = parseNoteSection(n.content);
+  document.getElementById('modal-note-title').textContent = 'Edit Note';
+  document.getElementById('note-id').value = n.id;
+  document.getElementById('note-content').value = parsed.text;
+  document.getElementById('note-section').value = parsed.section;
+  document.getElementById('delete-note-btn').style.display = 'block';
+  var sel = document.getElementById('note-person');
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  if (n.person_id) sel.value = n.person_id;
+  openModal('modal-note');
+}
+
+function populateNoteSelects(pId, dId, vId, mId) {
+  var sel = document.getElementById('note-person');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+  if (pId) sel.value = pId;
+}
+function filterNoteVisits(pId) {}
+
+async function toggleNoteHidden(id, cur) {
+  var newHidden = !cur;
+  var r = await sb.from('notes').update({ hidden: newHidden }).eq('id', id);
+  if (r.error) { toast('Error: ' + r.error.message); return; }
+  var n = notesData.find(function(x) { return x.id === id; });
+  if (n) n.hidden = newHidden;
+  toast(newHidden ? 'Note hidden' : 'Note visible');
+  renderNotes();
+}
+
+
 function openAddNoteSection() {
   document.getElementById('modal-note-section-title').textContent = 'New Section';
   document.getElementById('note-section-name').value = '';
