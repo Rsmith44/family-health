@@ -3034,8 +3034,9 @@ let selectedDocFile = null;
 async function loadDocs() {
   const el = document.getElementById('docs-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  data.documents = [];
   const { data: rows, error } = await sb.from('documents')
-    .select('*, people(name), doctors(name), visits(title)')
+    .select('*, people(name), doctors(name)')
     .order('created_at', { ascending: false });
   if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
   data.documents = rows || [];
@@ -3086,7 +3087,7 @@ function renderDocs(rows) {
         <div class="list-icon" style="background:var(--blue-bg);font-size:20px;cursor:pointer" onclick="openDocument('${d.id}')">${icon}</div>
         <div class="list-info" style="cursor:pointer" onclick="openDocument('${d.id}')">
           <div class="list-title">${d.name}${isHidden ? ' <span style="font-size:10px;background:var(--surface);color:var(--text-3);padding:2px 6px;border-radius:10px;margin-left:4px">hidden</span>' : ''}</div>
-          <div class="list-sub">${[d.doctors?.name, d.visits?.title, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
+          <div class="list-sub">${[d.doctors?.name, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
         </div>
         <button onclick="toggleDocVisibility('${d.id}', ${isHidden})" style="background:${isHidden ? 'var(--green-bg)' : 'var(--surface)'};border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;color:${isHidden ? 'var(--green)' : 'var(--text-3)'};cursor:pointer;white-space:nowrap;margin-left:4px;">
           ${isHidden ? 'Show' : 'Hide'}
@@ -3288,7 +3289,7 @@ function openPersonDocuments(personId) {
   }
   // Load and filter docs for this person
   sb.from('documents')
-    .select('*, people(name), doctors(name), visits(title)')
+    .select('*, people(name), doctors(name)')
     .eq('person_id', personId)
     .order('created_at', { ascending: false })
     .then(({ data: rows }) => {
