@@ -3037,7 +3037,7 @@ async function loadDocs() {
   data.documents = [];
   const { data: rows, error } = await sb.from('documents')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('uploaded_at', { ascending: false });
   if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div>Error loading documents</div>'; return; }
   data.documents = rows || [];
   renderDocs(data.documents);
@@ -3089,7 +3089,7 @@ function renderDocs(rows) {
         <div class="list-icon" style="background:var(--blue-bg);font-size:20px;cursor:pointer" onclick="openDocument('${d.id}')">${icon}</div>
         <div class="list-info" style="cursor:pointer" onclick="openDocument('${d.id}')">
           <div class="list-title">${d.name}${isHidden ? ' <span style="font-size:10px;background:var(--surface);color:var(--text-3);padding:2px 6px;border-radius:10px;margin-left:4px">hidden</span>' : ''}</div>
-          <div class="list-sub">${[doctorName, size, fmtDate(d.created_at)].filter(Boolean).join(' · ')}</div>
+          <div class="list-sub">${[doctorName, size, fmtDate(d.uploaded_at)].filter(Boolean).join(' · ')}</div>
         </div>
         <button onclick="toggleDocVisibility('${d.id}', ${isHidden})" style="background:${isHidden ? 'var(--green-bg)' : 'var(--surface)'};border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;color:${isHidden ? 'var(--green)' : 'var(--text-3)'};cursor:pointer;white-space:nowrap;margin-left:4px;">
           ${isHidden ? 'Show' : 'Hide'}
@@ -3187,7 +3187,8 @@ async function uploadDocument() {
     person_id: personId,
     doctor_id: doctorId,
     visit_id: visitId,
-    family_group_id: currentFamilyGroupId
+    family_group_id: currentFamilyGroupId,
+    uploaded_at: new Date().toISOString()
   });
 
   if (dbError) {
@@ -3230,7 +3231,7 @@ function addDocumentForPerson(personId) {
 
 
 async function autoLoadVisitDocs(visitId) {
-  const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("created_at", {ascending: false});
+  const { data: docs } = await sb.from("documents").select("*").eq("visit_id", visitId).order("uploaded_at", {ascending: false});
   const el = document.getElementById("visit-docs-" + visitId);
   if (!el) return;
   if (!docs || !docs.length) { el.innerHTML = ""; return; }
@@ -3244,7 +3245,7 @@ async function autoLoadVisitDocs(visitId) {
     return d.file_size > 1024*1024 ? (d.file_size/1024/1024).toFixed(1)+"MB" : Math.round(d.file_size/1024)+"KB";
   }
   var rows = docs.map(function(d) {
-    return "<div class=\"list-item\" onclick=\"openDocument('" + d.id + "')\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + [docSize(d), fmtDate(d.created_at)].filter(Boolean).join(" · ") + "</div></div><svg class=\"chevron\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" viewBox=\"0 0 24 24\"><path d=\"M9 18l6-6-6-6\"/></svg></div>";
+    return "<div class=\"list-item\" onclick=\"openDocument('" + d.id + "')\"><div class=\"list-icon\" style=\"background:var(--blue-bg);font-size:20px\">" + docIcon(d) + "</div><div class=\"list-info\"><div class=\"list-title\">" + d.name + "</div><div class=\"list-sub\">" + [docSize(d), fmtDate(d.uploaded_at)].filter(Boolean).join(" · ") + "</div></div><svg class=\"chevron\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" viewBox=\"0 0 24 24\"><path d=\"M9 18l6-6-6-6\"/></svg></div>";
   });
   el.innerHTML = "<div class=\"section-label\">Documents (" + docs.length + ")</div><div class=\"list-card\">" + rows.join("") + "</div>";
 }
@@ -3293,7 +3294,7 @@ function openPersonDocuments(personId) {
   sb.from('documents')
     .select('*')
     .eq('person_id', personId)
-    .order('created_at', { ascending: false })
+    .order('uploaded_at', { ascending: false })
     .then(({ data: rows }) => {
       data.documents = rows || [];
       renderDocs(data.documents);
