@@ -1111,7 +1111,9 @@ function showScreen(id, dir='forward') {
   if (dir==='forward') next.classList.add('slide-in');
   else if (dir==='back') next.classList.add('slide-back');
   const fabScreens = ['dashboard','home','doctors','medications','visits','documents','todos','notes'];
-  document.getElementById('fab').style.display = fabScreens.includes(id) ? 'flex' : 'none';
+  const fab = document.getElementById('fab');
+  fab.style.display = fabScreens.includes(id) ? 'flex' : 'none';
+  fab.onclick = openAddModal;
 }
 function goBack(to) { showScreen(to,'back'); }
 
@@ -3278,8 +3280,6 @@ function openPersonDocuments(personId) {
     .then(({ data: rows }) => {
       data.documents = rows || [];
       renderDocs(data.documents);
-      // Wire up the FAB to upload for this person
-      document.getElementById('fab').onclick = () => addDocumentForPerson(personId);
     });
 }
 
