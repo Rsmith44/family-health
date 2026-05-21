@@ -1352,7 +1352,7 @@ function medListItem(m) {
 }
 function filterMeds(q) { renderMeds(q ? data.medications.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())) : data.medications); }
 
-function openMed(id, from='medications') {
+async function openMed(id, from='medications') {
   currentMed = data.medications.find(m=>m.id===id);
   if (!currentMed) return;
   const backBtn = document.getElementById('back-from-med');
@@ -1361,13 +1361,38 @@ function openMed(id, from='medications') {
   showScreen('med-detail','forward');
   const m = currentMed;
   const fields = [['Dosage',m.dosage],['Frequency',m.frequency],['Reason',m.reason],['Status',`<span class="${m.status==='Active'?'status-active':'status-inactive'}">${m.status||'—'}</span>`],['Start Date',fmtDate(m.start_date)],['End Date',m.end_date?fmtDate(m.end_date):null],['Person',m.people?.name],['Prescribed By',m.doctors?.name],['Notes',m.notes]].filter(([,v])=>v);
+
+  // Fetch notes linked to this medication
+  const {data:noteRows} = await sb.from('notes').select('*').eq('medication_id',id).order('created_at',{ascending:false});
+  const medNotes = (noteRows||[]).filter(n=>n.content&&!n.content.match(/^\[SECTION:/));
+
+  const notesHtml = `<div style="margin:0 14px 10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#F8F0E8;border:1.5px solid #E8C89A;border-radius:12px 12px 0 0;padding:12px 14px;">
+      <span style="font-size:14px;font-weight:700;color:#5C3510;">Notes</span>
+    </div>
+    <div>` +
+    (medNotes.length ? medNotes.map(n=>{
+      const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
+      const parsed = parseNoteSection(n.content);
+      const displayText = parsed.text || n.content;
+      return `<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:10px 14px;">
+        <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${displayText.slice(0,200)}${displayText.length>200?'…':''}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:3px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
+      </div>`;
+    }).join('') : '<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No notes yet</div>') +
+    `<div style="height:6px;background:white;border:1.5px solid #E8C89A;border-top:none;border-radius:0 0 12px 12px;"></div>
+    </div>
+  </div>`;
+
   document.getElementById('med-detail-content').innerHTML = `
     <div class="detail-hero">
       <div class="list-icon" style="background:var(--amber-bg);width:62px;height:62px;font-size:28px;border-radius:16px">💊</div>
       <div><div class="detail-name">${m.name}</div><div class="detail-sub">${m.reason||'Medication'}</div></div>
     </div>
     <div class="section-label">Details</div>
-    <div class="prop-card">${fields.map(([l,v])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>`;
+    <div class="prop-card">${fields.map(([l,v])=>`<div class="prop-row"><span class="prop-label">${l}</span><span class="prop-value">${v}</span></div>`).join('')}</div>
+    ${notesHtml}
+    <div style="height:20px;"></div>`;
 }
 
 
@@ -2851,6 +2876,7 @@ function populateTodoSelects(personId, doctorId, visitId) {
   var personSel = document.getElementById('todo-person');
   var doctorSel = document.getElementById('todo-doctor');
   var visitSel = document.getElementById('todo-visit');
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
   if (personSel) {
     personSel.innerHTML = '<option value="">Select person...</option>' + data.people.map(function(p) { return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
     if (personId) personSel.value = personId;
@@ -2861,7 +2887,8 @@ function populateTodoSelects(personId, doctorId, visitId) {
     if (doctorId) doctorSel.value = doctorId;
   }
   if (visitSel) {
-    var vrows = personId ? data.visits.filter(function(v) { return v.person_id === personId; }) : data.visits;
+    var vrows = (personId ? data.visits.filter(function(v) { return v.person_id === personId; }) : data.visits)
+      .filter(function(v) { return !v.visit_date || visitDate(v.visit_date) >= cutoff; });
     visitSel.innerHTML = '<option value="">Select visit...</option>' + vrows.slice(0,50).map(function(v) { return '<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>'; }).join('');
     if (visitId) visitSel.value = visitId;
   }
@@ -2870,7 +2897,9 @@ function populateTodoSelects(personId, doctorId, visitId) {
 function filterTodoVisits(personId) {
   var visitSel = document.getElementById('todo-visit');
   if (!visitSel) return;
-  var filtered = personId ? data.visits.filter(function(v) { return v.person_id === personId; }) : data.visits;
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  var filtered = (personId ? data.visits.filter(function(v) { return v.person_id === personId; }) : data.visits)
+    .filter(function(v) { return !v.visit_date || visitDate(v.visit_date) >= cutoff; });
   var cur = visitSel.value;
   visitSel.innerHTML = '<option value="">Select visit...</option>' + filtered.slice(0,50).map(function(v) { return '<option value="'+v.id+'">'+v.title+' - '+fmtDate(v.visit_date)+'</option>'; }).join('');
   if (cur) visitSel.value = cur;
