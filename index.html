@@ -486,20 +486,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
         <span class="nav-label">To Do</span>
       </div>
     </button>
-    <button class="nav-item" id="nav-notes-btn" onclick="showTab('notes',this)">
-      <div class="nav-inner">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="2" width="14" height="18" rx="2" fill="#FDE8D0"/>
-          <rect x="3" y="2" width="14" height="18" rx="2" stroke="#E8A87C" stroke-width="1"/>
-          <line x1="6" y1="8" x2="13" y2="8" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="6" y1="11" x2="13" y2="11" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="6" y1="14" x2="11" y2="14" stroke="#E8A87C" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M14 16l5-5 2 2-5 5z" fill="#E8691A"/>
-          <path d="M14 16l-1.5 3.5 3.5-1.5z" fill="#C0510E"/>
-        </svg>
-        <span class="nav-label">Notes</span>
-      </div>
-    </button>
+
     <button class="nav-item" id="nav-visits-btn" onclick="showTab('visits',this)">
       <div class="nav-inner">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2333,32 +2320,25 @@ async function openPerson(id) {
           <div style="font-size:20px;font-weight:700;color:#fff;">${p.name}</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">${p.dob ? fmtDate(p.dob)+' · '+age(p.dob)+' old' : 'No DOB recorded'}</div>
         </div>
-        <div style="margin-left:auto;">
-          <button onclick="togglePersonPinMode('${id}')" id="pin-toggle-btn-${id}" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Pin/Unpin</button>
-        </div>
+<div style="margin-left:auto;"></div>
       </div>
     </div>`;
 
-    // Pinned fields
-    const pinnedEntry = (p.custom_sections||[]).find(s => s.name === '__pinned__');
-    const pinnedFields = pinnedEntry ? pinnedEntry.content.split(',').map(f=>f.trim()).filter(Boolean) : ['allergies','diagnoses'];
-    const allFields = [
-      {key:'allergies',label:'🚨 Allergies',value:p.allergies,bg:'#F5E8EB',border:'#E8C4C4',textColor:'#7A2030',labelColor:'#9B3A4A'},
-      {key:'diagnoses',label:'🩺 Conditions',value:p.diagnoses,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
-      {key:'blood_type',label:'🩸 Blood Type',value:p.blood_type,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
-      {key:'medicare_number',label:'📋 Medicare',value:p.medicare_number,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
-      {key:'health_fund',label:'🏥 Health Fund',value:p.health_fund?p.health_fund+(p.health_fund_number?' · '+p.health_fund_number:''):null,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
-      {key:'emergency_contact',label:'📞 Emergency',value:p.emergency_contact?p.emergency_contact+(p.emergency_phone?' · '+p.emergency_phone:''):null,bg:'var(--card)',border:'var(--border)',textColor:'var(--text)',labelColor:'var(--text-3)'},
-    ];
-    const strips = allFields.filter(f => pinnedFields.includes(f.key) && f.value);
-    if (strips.length) {
-      const cols = strips.length === 1 ? '1fr' : '1fr 1fr';
-      html += '<div class="pinned-strips" style="display:grid;grid-template-columns:'+cols+';gap:7px;padding:12px 14px 0;">'
-        + strips.map(f => '<div style="background:'+f.bg+';border-radius:8px;padding:7px 10px;border:1px solid '+f.border+';">'
-          + '<div style="font-size:9px;font-weight:700;color:'+f.labelColor+';text-transform:uppercase;letter-spacing:.06em;">'+f.label+'</div>'
-          + '<div style="font-size:12px;font-weight:500;color:'+f.textColor+';margin-top:2px;line-height:1.4;">'+f.value+'</div>'
-          + '</div>').join('') + '</div>';
-    }
+    // Quick action buttons
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 14px 0;">
+      <button onclick="openQuickNoteForPerson('${id}')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#FFF0E8;display:flex;align-items:center;justify-content:center;font-size:18px;">📝</div>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">Add Note</span>
+      </button>
+      <button onclick="openQuickTodoForPerson('${id}')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:34px;height:34px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">✅</div>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">Add To Do</span>
+      </button>
+      <button onclick="openQuickVisitForPerson('${id}')" style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:34px;height:34px;border-radius:10px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:18px;">📅</div>
+        <span style="font-size:11px;font-weight:600;color:var(--text);">Add Visit</span>
+      </button>
+    </div>`;
 
     // Section menu
     html += `<div style="padding:14px 14px 0;">
@@ -2401,6 +2381,47 @@ async function openPerson(id) {
   } catch(err) {
     document.getElementById('person-detail').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error: '+err.message+'</div>';
   }
+}
+
+// ── PERSON QUICK ACTIONS ──
+async function openQuickNoteForPerson(personId) {
+  if (!data.people.length) await loadAll();
+  document.getElementById('modal-note-title').textContent = 'Add Note';
+  document.getElementById('note-id').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-section').value = 'General';
+  document.getElementById('delete-note-btn').style.display = 'none';
+  const noteSel = document.getElementById('note-person');
+  noteSel.innerHTML = '<option value="">Everyone</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join('');
+  noteSel.value = personId;
+  const sections = getSections();
+  const secSel = document.getElementById('note-section-select');
+  secSel.innerHTML = sections.map(s => '<option value="'+s.name+'">'+s.name+'</option>').join('') || '<option value="General">General</option>';
+  secSel.value = 'General';
+  secSel.onchange = function() { document.getElementById('note-section').value = this.value; };
+  openModal('modal-note');
+  setTimeout(() => { const ta = document.getElementById('note-content'); if (ta) ta.focus(); }, 300);
+}
+
+async function openQuickTodoForPerson(personId) {
+  if (!data.people.length) await loadAll();
+  document.getElementById('todo-id').value = '';
+  document.getElementById('todo-content').value = '';
+  document.getElementById('todo-due').value = '';
+  document.getElementById('delete-todo-btn').style.display = 'none';
+  const sel = document.getElementById('todo-person');
+  if (sel) { sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join(''); sel.value = personId; }
+  openModal('modal-todo');
+}
+
+async function openQuickVisitForPerson(personId) {
+  if (!data.people.length) await loadAll();
+  clearForm('modal-visit');
+  document.getElementById('visit-id').value = '';
+  document.getElementById('delete-visit-btn').style.display = 'none';
+  const sel = document.getElementById('visit-person');
+  if (sel) { sel.innerHTML = '<option value="">Select person</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join(''); sel.value = personId; }
+  openModal('modal-visit');
 }
 
 // ── PERSON SUB-PAGES ──
@@ -3876,7 +3897,7 @@ async function saveNoteSection() {
   }
   closeModal('modal-note-section');
   toast(editing ? 'Section renamed ✓' : 'Section created ✓');
-  showTab('notes', document.getElementById('nav-notes-btn'));
+  showScreen('notes','forward');
   await loadNotes();
   notesSectionCollapsed[name] = false;
   renderNotes();
