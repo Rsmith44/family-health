@@ -858,6 +858,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 </div>
 
 
+<!-- NOTE DETAIL MODAL -->
+<div class="modal-overlay" id="modal-note-detail">
+  <div class="modal-sheet"><div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title">Note</div><button class="modal-close" onclick="closeModal('modal-note-detail')">✕</button></div>
+    <div class="modal-body" id="modal-note-detail-body"></div>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="modal-settings">
   <div class="modal-sheet">
@@ -1269,11 +1277,12 @@ async function openDoctor(id, from='doctors') {
         const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
         const parsed = parseNoteSection(n.content);
         const displayText = parsed.text || n.content;
-        return `<div style="display:flex;align-items:flex-start;gap:10px;background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:10px 14px;">
+        return `<div onclick="openNoteDetail('${n.id}')" style="display:flex;align-items:flex-start;gap:10px;background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${displayText.slice(0,120)}${displayText.length>120?'…':''}</div>
             <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
           </div>
+          <svg width="12" height="12" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px;"><path d="M9 18l6-6-6-6"/></svg>
         </div>`;
       }).join('') : '<div style="background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No notes yet</div>') +
     `<div style="height:6px;background:white;border:1.5px solid #C2D9A8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
@@ -1321,6 +1330,20 @@ function toggleDoctorContact(id) {
   const isHidden = el.style.display === 'none';
   el.style.display = isHidden ? 'block' : 'none';
   if (btn) btn.textContent = isHidden ? 'Less Info ⌃' : 'More Info ⌄';
+}
+
+async function openNoteDetail(noteId) {
+  const {data:n, error} = await sb.from('notes').select('*').eq('id', noteId).single();
+  if (error || !n) { toast('Could not load note'); return; }
+  const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
+  const doctor = n.doctor_id ? data.doctors.find(d=>d.id===n.doctor_id) : null;
+  const med = n.medication_id ? data.medications.find(m=>m.id===n.medication_id) : null;
+  const parsed = parseNoteSection(n.content);
+  const displayText = parsed.text || n.content;
+  const section = parsed.section && parsed.section !== 'General' ? parsed.section : null;
+  const meta = [person?.name, doctor?.name, med?.name, section, fmtDate(n.created_at)].filter(Boolean).join(' · ');
+  document.getElementById('modal-note-detail-body').innerHTML = `<div style="font-size:15px;font-weight:500;color:var(--text);line-height:1.7;white-space:pre-wrap;margin-bottom:12px;">${displayText}</div><div style="font-size:12px;color:var(--text-3);">${meta}</div>`;
+  openModal('modal-note-detail');
 }
 
 function toggleMedNotes(sectionId) {
@@ -1385,9 +1408,12 @@ async function openMed(id, from='medications') {
       const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
       const parsed = parseNoteSection(n.content);
       const displayText = parsed.text || n.content;
-      return `<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:10px 14px;">
-        <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${displayText.slice(0,200)}${displayText.length>200?'…':''}</div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:3px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
+      return `<div onclick="openNoteDetail('${n.id}')" style="display:flex;align-items:flex-start;gap:10px;background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${displayText.slice(0,200)}${displayText.length>200?'…':''}</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:3px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
+        </div>
+        <svg width="12" height="12" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px;"><path d="M9 18l6-6-6-6"/></svg>
       </div>`;
     }).join('') : '<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No notes yet</div>') +
     `<div style="height:6px;background:white;border:1.5px solid #E8C89A;border-top:none;border-radius:0 0 12px 12px;"></div>
