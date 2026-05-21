@@ -1323,6 +1323,15 @@ function toggleDoctorContact(id) {
   if (btn) btn.textContent = isHidden ? 'Less Info ⌃' : 'More Info ⌄';
 }
 
+function toggleMedNotes(sectionId) {
+  const c = document.getElementById(sectionId+'-content');
+  const arrow = document.getElementById(sectionId+'-arrow');
+  if (!c) return;
+  const isHidden = c.style.display === 'none';
+  c.style.display = isHidden ? 'block' : 'none';
+  if (arrow) arrow.innerHTML = isHidden ? '<path d="M18 15l-6-6-6 6"/>' : '<path d="M6 9l6 6 6-6"/>';
+}
+
 function toggleDoctorSection(sectionId) {
   const content = document.getElementById(sectionId+'-content');
   const arrow = document.getElementById(sectionId+'-arrow');
@@ -1367,10 +1376,11 @@ async function openMed(id, from='medications') {
   const medNotes = (noteRows||[]).filter(n=>n.content&&!n.content.match(/^\[SECTION:/));
 
   const notesHtml = `<div style="margin:0 14px 10px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#F8F0E8;border:1.5px solid #E8C89A;border-radius:12px 12px 0 0;padding:12px 14px;">
+    <div onclick="toggleMedNotes('med-notes-${id}')" style="display:flex;align-items:center;justify-content:space-between;background:#F8F0E8;border:1.5px solid #E8C89A;border-radius:12px 12px 0 0;padding:12px 14px;cursor:pointer;">
       <span style="font-size:14px;font-weight:700;color:#5C3510;">Notes</span>
+      <svg id="med-notes-${id}-arrow" width="14" height="14" fill="none" stroke="#E8C89A" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
     </div>
-    <div>` +
+    <div id="med-notes-${id}-content">` +
     (medNotes.length ? medNotes.map(n=>{
       const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
       const parsed = parseNoteSection(n.content);
@@ -1381,7 +1391,7 @@ async function openMed(id, from='medications') {
       </div>`;
     }).join('') : '<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No notes yet</div>') +
     `<div style="height:6px;background:white;border:1.5px solid #E8C89A;border-top:none;border-radius:0 0 12px 12px;"></div>
-    </div>
+    </div></div>
   </div>`;
 
   document.getElementById('med-detail-content').innerHTML = `
