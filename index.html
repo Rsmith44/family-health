@@ -2405,12 +2405,19 @@ async function openQuickNoteForPerson(personId) {
 
 async function openQuickTodoForPerson(personId) {
   if (!data.people.length) await loadAll();
+  document.getElementById('modal-todo-title').textContent = 'Add To Do';
   document.getElementById('todo-id').value = '';
-  document.getElementById('todo-content').value = '';
-  document.getElementById('todo-due').value = '';
+  document.getElementById('todo-title').value = '';
+  document.getElementById('todo-notes').value = '';
+  document.getElementById('todo-due-date').value = '';
   document.getElementById('delete-todo-btn').style.display = 'none';
   const sel = document.getElementById('todo-person');
-  if (sel) { sel.innerHTML = '<option value="">Everyone</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join(''); sel.value = personId; }
+  if (sel) {
+    sel.innerHTML = '<option value="">Select person...</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join('');
+    sel.value = personId;
+  }
+  const docSel = document.getElementById('todo-doctor');
+  if (docSel) { docSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d => '<option value="'+d.id+'">'+d.name+'</option>').join(''); }
   openModal('modal-todo');
 }
 
