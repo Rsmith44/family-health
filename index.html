@@ -1239,22 +1239,20 @@ async function openDoctor(id, from='doctors') {
     <div id="doctor-contact-${id}" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">${contactInnerHtml}</div>
   </div>`;
 
-  if (myVisits.length) {
-    html += `<div style="margin:0 14px 10px;">
+  html += `<div style="margin:0 14px 10px;">
       <div onclick="toggleDoctorSection('visits-${id}')" style="display:flex;align-items:center;justify-content:space-between;background:#EAF0F8;border:1.5px solid #B0C8E8;border-radius:12px 12px 0 0;padding:12px 14px;cursor:pointer;">
         <span style="font-size:14px;font-weight:700;color:#1A3254;">Visits</span>
         <svg id="visits-${id}-arrow" width="14" height="14" fill="none" stroke="#B0C8E8" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
       </div>
       <div id="visits-${id}-content">` +
-      myVisits.map(v=>`<div onclick="openVisit('${v.id}','doctor')" style="display:flex;align-items:center;gap:10px;background:white;border-left:1.5px solid #B0C8E8;border-right:1.5px solid #B0C8E8;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
+    (myVisits.length ? myVisits.map(v=>`<div onclick="openVisit('${v.id}','doctor')" style="display:flex;align-items:center;gap:10px;background:white;border-left:1.5px solid #B0C8E8;border-right:1.5px solid #B0C8E8;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
         <div style="flex:1;">
           <div style="font-size:13px;font-weight:600;color:var(--text);">${v.title}</div>
           <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${[v.people?.name,fmtDate(v.visit_date)].filter(Boolean).join(' · ')}</div>
         </div>
         <svg width="12" height="12" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') +
-      `<div style="height:6px;background:white;border:1.5px solid #B0C8E8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
-  }
+      </div>`).join('') : '<div style="background:white;border-left:1.5px solid #B0C8E8;border-right:1.5px solid #B0C8E8;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No visits yet</div>') +
+    `<div style="height:6px;background:white;border:1.5px solid #B0C8E8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
 
   const visitIds = myVisits.map(v=>v.id);
   let docNotes = [];
@@ -1262,14 +1260,13 @@ async function openDoctor(id, from='doctors') {
     const {data:noteRows} = await sb.from('notes').select('*').in('visit_id',visitIds).order('created_at',{ascending:false});
     docNotes = (noteRows||[]).filter(n=>n.content&&!n.content.match(/^\[SECTION:/));
   }
-  if (docNotes.length) {
-    html += `<div style="margin:0 14px 10px;">
+  html += `<div style="margin:0 14px 10px;">
       <div onclick="toggleDoctorSection('notes-${id}')" style="display:flex;align-items:center;justify-content:space-between;background:#EEF4E8;border:1.5px solid #C2D9A8;border-radius:12px 12px 0 0;padding:12px 14px;cursor:pointer;">
         <span style="font-size:14px;font-weight:700;color:#243F0A;">Notes</span>
         <svg id="notes-${id}-arrow" width="14" height="14" fill="none" stroke="#C2D9A8" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
       </div>
       <div id="notes-${id}-content">` +
-      docNotes.map(n=>{
+    (docNotes.length ? docNotes.map(n=>{
         const visit = myVisits.find(v=>v.id===n.visit_id);
         const person = visit ? data.people.find(p=>p.id===visit.person_id) : null;
         return `<div style="display:flex;align-items:flex-start;gap:10px;background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:10px 14px;">
@@ -1278,26 +1275,23 @@ async function openDoctor(id, from='doctors') {
             <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
           </div>
         </div>`;
-      }).join('') +
-      `<div style="height:6px;background:white;border:1.5px solid #C2D9A8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
-  }
+      }).join('') : '<div style="background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No notes yet</div>') +
+    `<div style="height:6px;background:white;border:1.5px solid #C2D9A8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
 
-  if (myMeds.length) {
-    html += `<div style="margin:0 14px 10px;">
+  html += `<div style="margin:0 14px 10px;">
       <div onclick="toggleDoctorSection('meds-${id}')" style="display:flex;align-items:center;justify-content:space-between;background:#F8F0E8;border:1.5px solid #E8C89A;border-radius:12px 12px 0 0;padding:12px 14px;cursor:pointer;">
         <span style="font-size:14px;font-weight:700;color:#5C3510;">Medications Prescribed</span>
         <svg id="meds-${id}-arrow" width="14" height="14" fill="none" stroke="#E8C89A" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
       </div>
       <div id="meds-${id}-content">` +
-      myMeds.map(m=>`<div onclick="openMed('${m.id}','doctor')" style="display:flex;align-items:center;gap:10px;background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
+    (myMeds.length ? myMeds.map(m=>`<div onclick="openMed('${m.id}','doctor')" style="display:flex;align-items:center;gap:10px;background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:10px 14px;cursor:pointer;">
         <div style="flex:1;">
           <div style="font-size:13px;font-weight:600;color:var(--text);">${m.name}</div>
           <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${[m.people?.name,m.dosage,m.status].filter(Boolean).join(' · ')}</div>
         </div>
         <svg width="12" height="12" fill="none" stroke="var(--text-3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`).join('') +
-      `<div style="height:6px;background:white;border:1.5px solid #E8C89A;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
-  }
+      </div>`).join('') : '<div style="background:white;border-left:1.5px solid #E8C89A;border-right:1.5px solid #E8C89A;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No medications prescribed yet</div>') +
+    `<div style="height:6px;background:white;border:1.5px solid #E8C89A;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
 
   const { data: docTodos } = await sb.from('todos').select('*, people(name),visits(title)').eq('doctor_id', id).eq('completed', false).order('due_date', {ascending: true, nullsFirst: false});
   if (docTodos?.length) {
