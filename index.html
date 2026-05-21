@@ -679,6 +679,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <div class="field" id="note-section-field"><label>Section</label><select id="note-section-select"><option value="General">General</option></select></div>
       <div class="field"><label>Note *</label><textarea id="note-content" placeholder="Type your note here..." style="min-height:120px;"></textarea></div>
       <div class="field"><label>Person</label><select id="note-person"><option value="">Everyone</option></select></div>
+      <div class="field"><label>Doctor *</label><select id="note-doctor"><option value="">Select doctor...</option></select></div>
+      <div class="field"><label>Medication (optional)</label><select id="note-medication"><option value="">None</option></select></div>
 
       <button class="btn-primary" onclick="saveNote()">Save Note</button>
       <button class="btn-danger" id="delete-note-btn" style="display:none" onclick="deleteNote()">Delete Note</button>
@@ -854,6 +856,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     </div>
   </div>
 </div>
+
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="modal-settings">
@@ -1254,12 +1257,8 @@ async function openDoctor(id, from='doctors') {
       </div>`).join('') : '<div style="background:white;border-left:1.5px solid #B0C8E8;border-right:1.5px solid #B0C8E8;border-bottom:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--text-3);font-style:italic;">No visits yet</div>') +
     `<div style="height:6px;background:white;border:1.5px solid #B0C8E8;border-top:none;border-radius:0 0 12px 12px;"></div></div></div>`;
 
-  const visitIds = myVisits.map(v=>v.id);
-  let docNotes = [];
-  if (visitIds.length) {
-    const {data:noteRows} = await sb.from('notes').select('*').in('visit_id',visitIds).order('created_at',{ascending:false});
-    docNotes = (noteRows||[]).filter(n=>n.content&&!n.content.match(/^\[SECTION:/));
-  }
+  const {data:noteRows} = await sb.from('notes').select('*').eq('doctor_id',id).order('created_at',{ascending:false});
+  let docNotes = (noteRows||[]).filter(n=>n.content&&!n.content.match(/^\[SECTION:/));
   html += `<div style="margin:0 14px 10px;">
       <div onclick="toggleDoctorSection('notes-${id}')" style="display:flex;align-items:center;justify-content:space-between;background:#EEF4E8;border:1.5px solid #C2D9A8;border-radius:12px 12px 0 0;padding:12px 14px;cursor:pointer;">
         <span style="font-size:14px;font-weight:700;color:#243F0A;">Notes</span>
@@ -1267,11 +1266,12 @@ async function openDoctor(id, from='doctors') {
       </div>
       <div id="notes-${id}-content">` +
     (docNotes.length ? docNotes.map(n=>{
-        const visit = myVisits.find(v=>v.id===n.visit_id);
-        const person = visit ? data.people.find(p=>p.id===visit.person_id) : null;
+        const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
+        const parsed = parseNoteSection(n.content);
+        const displayText = parsed.text || n.content;
         return `<div style="display:flex;align-items:flex-start;gap:10px;background:white;border-left:1.5px solid #C2D9A8;border-right:1.5px solid #C2D9A8;border-bottom:1px solid var(--border);padding:10px 14px;">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${n.content.slice(0,120)}${n.content.length>120?'…':''}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4;">${displayText.slice(0,120)}${displayText.length>120?'…':''}</div>
             <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${[person?.name,fmtDate(n.created_at)].filter(Boolean).join(' · ')}</div>
           </div>
         </div>`;
@@ -2335,22 +2335,14 @@ function renderPeople(rows) {
     else { todoText = todoCount + ' active To Do item' + (todoCount !== 1 ? 's' : ''); todoColor = 'var(--text-2)'; todoWeight = '400'; }
     parts.push(`<span style="font-size:12px;color:${todoColor};font-weight:${todoWeight};">${todoText}</span>`);
     const statusHtml = parts.join('<span style="color:var(--border);margin:0 5px;">·</span>');
-    const bg = avatarColor(p.name);
-    const tints = {
-      '#2A6049': { cardBg:'#EDF5F1', border:'#B8D8CB', nameColor:'#1A3D2E' },
-      '#3B6D11': { cardBg:'#EEF4E8', border:'#C2D9A8', nameColor:'#243F0A' },
-      '#2C5282': { cardBg:'#EAF0F8', border:'#B0C8E8', nameColor:'#1A3254' },
-      '#B56B2A': { cardBg:'#F8F0E8', border:'#E8C89A', nameColor:'#5C3510' },
-      '#7B3F8C': { cardBg:'#F4EDF8', border:'#D8B8E8', nameColor:'#3D1A4E' },
-      '#C0392B': { cardBg:'#FAEAEA', border:'#F0B8B8', nameColor:'#5C1A1A' },
-    };
-    const tint = tints[bg] || { cardBg:'#F0F0F0', border:'#D0D0D0', nameColor:'#1C1917' };
-    return `<div class="person-card" style="background:${tint.cardBg};border-color:${tint.border};" onclick="openPerson('${p.id}')">
-      <div class="avatar" style="background:${bg};border-radius:10px;">${initials(p.name)}</div>
+    const personIdx = rows.indexOf(p);
+    const col = SECTION_COLOURS[personIdx % SECTION_COLOURS.length];
+    return `<div class="person-card" style="background:${col.bg};border-color:${col.border};" onclick="openPerson('${p.id}')">
+      <div class="avatar" style="background:${col.dot};border-radius:10px;">${initials(p.name)}</div>
       <div class="person-info" style="flex:1;">
-        <div class="person-name" style="color:${tint.nameColor};font-size:17px;font-weight:700;">${p.name}</div>
+        <div class="person-name" style="color:${col.text};font-size:17px;font-weight:700;">${p.name}</div>
       </div>
-      <svg class="chevron" width="16" height="16" fill="none" stroke="${tint.border}" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      <svg class="chevron" width="16" height="16" fill="none" stroke="${col.border}" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
 }
@@ -2452,14 +2444,35 @@ async function openQuickNoteForPerson(personId) {
   document.getElementById('note-content').value = '';
   document.getElementById('note-section').value = 'General';
   document.getElementById('delete-note-btn').style.display = 'none';
+
   const noteSel = document.getElementById('note-person');
   noteSel.innerHTML = '<option value="">Everyone</option>' + data.people.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join('');
   noteSel.value = personId;
+
   const sections = getSections();
   const secSel = document.getElementById('note-section-select');
   secSel.innerHTML = sections.map(s => '<option value="'+s.name+'">'+s.name+'</option>').join('') || '<option value="General">General</option>';
   secSel.value = 'General';
   secSel.onchange = function() { document.getElementById('note-section').value = this.value; };
+
+  async function populateDoctorMed(pid) {
+    const docSel = document.getElementById('note-doctor');
+    const medSel = document.getElementById('note-medication');
+    if (pid) {
+      const {data:pdRows} = await sb.from('people_doctors').select('doctor_id').eq('person_id', pid);
+      const linkedIds = (pdRows||[]).map(r=>r.doctor_id);
+      const personDocs = data.doctors.filter(d=>linkedIds.includes(d.id));
+      docSel.innerHTML = '<option value="">Select doctor...</option>' + personDocs.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
+      const personMeds = data.medications.filter(m=>m.person_id===pid);
+      medSel.innerHTML = '<option value="">None</option>' + personMeds.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
+    } else {
+      docSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
+      medSel.innerHTML = '<option value="">None</option>';
+    }
+  }
+  await populateDoctorMed(personId);
+  noteSel.onchange = async function() { await populateDoctorMed(this.value); };
+
   openModal('modal-note');
   setTimeout(() => { const ta = document.getElementById('note-content'); if (ta) ta.focus(); }, 300);
 }
@@ -3872,7 +3885,10 @@ async function saveNote() {
   var pId = document.getElementById('note-person').value || null;
   var section = document.getElementById('note-section').value || 'General';
   var noteContent = buildNoteContent(section, text);
-  var payload = { content: noteContent, person_id: pId };
+  var doctorId = document.getElementById('note-doctor')?.value || null;
+  var medicationId = document.getElementById('note-medication')?.value || null;
+  if (!doctorId && !id) { toast('Please select a doctor'); return; }
+  var payload = { content: noteContent, person_id: pId, doctor_id: doctorId || null, medication_id: medicationId || null };
   if (!id) payload.family_group_id = currentFamilyGroupId;
   var r = id
     ? await sb.from('notes').update(Object.assign({ updated_at: new Date().toISOString() }, payload)).eq('id', id)
