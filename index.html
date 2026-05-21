@@ -2109,7 +2109,9 @@ async function openAppointmentMode(visitId, from) {
   const typeBg  = { pre:'#E8EFF8', post:'#E6F0EC', note:'#EEE8F7' };
   const typeCol = { pre:'#2C5282', post:'#1A4D35', note:'#5B3A8E' };
 
+  window._apptEventType = 'procedure';
   let html = '<div style="padding:16px 16px 8px;">';
+
 
   // BRIEFING
   html += '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Briefing</div>';
@@ -2171,6 +2173,22 @@ async function openAppointmentMode(visitId, from) {
     + '<textarea id="appt-capture-notes" placeholder="Start typing your notes\u2026" style="width:100%;min-height:140px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--text);font-family:\'DM Sans\',sans-serif;line-height:1.6;resize:vertical;outline:none;">' + existingPost + '</textarea>'
     + '</div>';
 
+  // MEDICAL EVENT CAPTURE
+  html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">'
+    + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Medical Event</div>'
+    + '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;">'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px;">'
+    + '<button onclick="setApptEventType(this,\'procedure\')" class="appt-evt-pill" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #B0C8E8;background:#EAF0F8;color:#1A3254;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">Procedure</button>'
+    + '<button onclick="setApptEventType(this,\'illness\')" class="appt-evt-pill" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E3DDD5;background:white;color:#A8A09A;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">Illness</button>'
+    + '<button onclick="setApptEventType(this,\'diagnosis\')" class="appt-evt-pill" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E3DDD5;background:white;color:#A8A09A;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">Diagnosis</button>'
+    + '</div>'
+    + '<input type="text" id="appt-event-name" placeholder="e.g. Tonsillectomy, Ear infection..." style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:var(--bg);color:var(--text);outline:none;font-family:\'DM Sans\',sans-serif;box-sizing:border-box;margin-bottom:8px;">'
+    + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2);cursor:pointer;">'
+    + '<input type="checkbox" id="appt-event-save-checkbox" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;"> Save to Medical Events for ' + (person ? person.name : 'this person')
+    + '</label>'
+    + '</div>'
+    + '</div>';
+
   // FOLLOW-UPS
   html += '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">'
     + '<div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">To Do</div>'
@@ -2186,6 +2204,16 @@ async function openAppointmentMode(visitId, from) {
   html += '</div>';
   el.innerHTML = html;
   renderApptTodos();
+}
+
+function setApptEventType(btn, type) {
+  window._apptEventType = type;
+  const styles = { procedure: { bg:'#EAF0F8', border:'#B0C8E8', color:'#1A3254' }, illness: { bg:'#FAEAEA', border:'#F0B8B8', color:'#7A2030' }, diagnosis: { bg:'#EEF4E8', border:'#C2D9A8', color:'#243F0A' } };
+  document.querySelectorAll('.appt-evt-pill').forEach(function(b) {
+    const t = b.getAttribute('onclick').match(/'([^']+)'\)/)[1];
+    if (t === type) { b.style.background = styles[t].bg; b.style.borderColor = styles[t].border; b.style.color = styles[t].color; }
+    else { b.style.background = 'white'; b.style.borderColor = '#E3DDD5'; b.style.color = '#A8A09A'; }
+  });
 }
 
 function toggleApptHistory() {
@@ -2303,6 +2331,17 @@ async function saveAppointmentNotes() {
   }
 
   toast('Saved \u2713');
+
+  // Save medical event if checkbox ticked
+  const evtName = (document.getElementById('appt-event-name')?.value || '').trim();
+  const evtSave = document.getElementById('appt-event-save-checkbox')?.checked;
+  if (evtName && evtSave) {
+    const visit = data.visits.find(v => v.id === currentApptVisitId);
+    const evtType = window._apptEventType || 'procedure';
+    const evtDate = visit?.visit_date ? visit.visit_date.substring(0,10) : new Date().toISOString().substring(0,10);
+    const evtContent = '[EVENT:'+evtDate+':'+evtType+'] '+evtName;
+    await sb.from('notes').insert({ content: evtContent, person_id: visit?.person_id||null, doctor_id: visit?.doctor_id||null, visit_id: currentApptVisitId, family_group_id: currentFamilyGroupId, hidden: false });
+  }
   await Promise.all([loadVisits(), loadTodos()]);
   showTab('dashboard', document.getElementById('nav-dashboard'));
 }
@@ -2644,29 +2683,48 @@ function openPersonEvents(personId) {
 function renderMedicalEvents(personId) {
   const el = document.getElementById('person-events-content');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-  sb.from('notes').select('id, content, created_at, doctor_id, visit_id').eq('person_id', personId).like('content', '[EVENT:%').order('created_at', {ascending: false}).then(({data: rows}) => {
-    const events = rows || [];
+  sb.from('notes').select('id, content, created_at, doctor_id, visit_id').eq('person_id', personId).like('content', '[EVENT:%').order('created_at', {ascending: false}).then(function(res) {
+    const events = res.data || [];
     const byType = { procedure: [], illness: [], diagnosis: [] };
-    events.forEach(ev => {
+    events.forEach(function(ev) {
       const match = ev.content.match(/^\[EVENT:([^:\]]+):?([^\]]*?)\](.*)/s);
       if (!match) return;
-      const date = match[1]; const type = match[2] || 'procedure'; const text = match[3].trim();
-      const doctor = ev.doctor_id ? data.doctors.find(d => d.id === ev.doctor_id) : null;
+      const date = match[1]; const type = (match[2] || 'procedure').trim(); const text = match[3].trim();
+      const doctor = ev.doctor_id ? data.doctors.find(function(d) { return d.id === ev.doctor_id; }) : null;
       if (!byType[type]) byType[type] = [];
-      byType[type].push({ id: ev.id, date, text, doctor });
+      byType[type].push({ id: ev.id, date: date, text: text, doctor: doctor });
     });
     const sections = [
       { key: 'procedure', label: 'Medical Procedures', bg: '#EAF0F8', border: '#B0C8E8', textColor: '#1A3254' },
       { key: 'illness',   label: 'Illness',            bg: '#FAEAEA', border: '#F0B8B8', textColor: '#7A2030' },
       { key: 'diagnosis', label: 'Diagnosis',           bg: '#EEF4E8', border: '#C2D9A8', textColor: '#243F0A' },
     ];
-    el.innerHTML = '<div style="padding:12px 14px 80px;">' + sections.map(s => {
+    var html = '<div style="padding:12px 14px 80px;">';
+    sections.forEach(function(s) {
       const items = byType[s.key] || [];
-      const itemsHtml = items.length
-        ? items.map(ev => '<div style="background:white;border-left:1.5px solid '+s.border+';border-right:1.5px solid '+s.border+';border-bottom:1px solid rgba(0,0,0,0.06);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--text);">'+ev.text+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+[ev.doctor?.name, ev.date ? fmtDate(ev.date) : ''].filter(Boolean).join(' · ')+'</div></div><button onclick="event.stopPropagation();editMedicalEvent(''+ev.id+'')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;opacity:0.5;"><svg width="13" height="13" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>').join('')
-        : '<div style="background:white;border-left:1.5px solid '+s.border+';border-right:1.5px solid '+s.border+';border-bottom:1px solid rgba(0,0,0,0.06);padding:11px 12px;font-size:12px;color:var(--text-3);font-style:italic;">None recorded</div>';
-      return '<div style="margin-bottom:10px;"><div onclick="toggleMedEventSection('mevsec-'+s.key+'')" style="display:flex;align-items:center;justify-content:space-between;background:'+s.bg+';border:1.5px solid '+s.border+';border-radius:12px 12px 0 0;padding:11px 12px;cursor:pointer;"><span style="font-size:13px;font-weight:700;color:'+s.textColor+';">'+s.label+'</span><svg id="mevsec-'+s.key+'-arrow" width="13" height="13" fill="none" stroke="'+s.border+'" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg></div><div id="mevsec-'+s.key+'-content">'+itemsHtml+'</div><div style="height:6px;background:white;border:1.5px solid '+s.border+';border-top:none;border-radius:0 0 12px 12px;"></div></div>';
-    }).join('') + '</div>';
+      var itemsHtml = '';
+      if (items.length) {
+        items.forEach(function(ev) {
+          const sub = [ev.doctor ? ev.doctor.name : null, ev.date ? fmtDate(ev.date) : null].filter(Boolean).join(' · ');
+          itemsHtml += '<div style="background:white;border-left:1.5px solid '+s.border+';border-right:1.5px solid '+s.border+';border-bottom:1px solid rgba(0,0,0,0.06);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;">'
+            + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--text);">'+ev.text+'</div>'
+            + '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+sub+'</div></div>'
+            + '<button onclick="editMedicalEvent('+JSON.stringify(ev.id)+')" style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;opacity:0.5;">'
+            + '<svg width="13" height="13" fill="none" stroke="var(--text-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+            + '</button></div>';
+        });
+      } else {
+        itemsHtml = '<div style="background:white;border-left:1.5px solid '+s.border+';border-right:1.5px solid '+s.border+';border-bottom:1px solid rgba(0,0,0,0.06);padding:11px 12px;font-size:12px;color:var(--text-3);font-style:italic;">None recorded</div>';
+      }
+      html += '<div style="margin-bottom:10px;">';
+      html += '<div onclick="toggleMedEventSection('+JSON.stringify('mevsec-'+s.key)+')" style="display:flex;align-items:center;justify-content:space-between;background:'+s.bg+';border:1.5px solid '+s.border+';border-radius:12px 12px 0 0;padding:11px 12px;cursor:pointer;">';
+      html += '<span style="font-size:13px;font-weight:700;color:'+s.textColor+';">'+s.label+'</span>';
+      html += '<svg id="mevsec-'+s.key+'-arrow" width="13" height="13" fill="none" stroke="'+s.border+'" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg></div>';
+      html += '<div id="mevsec-'+s.key+'-content">'+itemsHtml+'</div>';
+      html += '<div style="height:6px;background:white;border:1.5px solid '+s.border+';border-top:none;border-radius:0 0 12px 12px;"></div></div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
   });
 }
 
