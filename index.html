@@ -858,13 +858,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 </div>
 
 
-<!-- NOTE DETAIL MODAL -->
-<div class="modal-overlay" id="modal-note-detail">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Note</div><button class="modal-close" onclick="closeModal('modal-note-detail')">✕</button></div>
-    <div class="modal-body" id="modal-note-detail-body"></div>
-  </div>
-</div>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="modal-settings">
@@ -1335,15 +1328,29 @@ function toggleDoctorContact(id) {
 async function openNoteDetail(noteId) {
   const {data:n, error} = await sb.from('notes').select('*').eq('id', noteId).single();
   if (error || !n) { toast('Could not load note'); return; }
-  const person = n.person_id ? data.people.find(p=>p.id===n.person_id) : null;
-  const doctor = n.doctor_id ? data.doctors.find(d=>d.id===n.doctor_id) : null;
-  const med = n.medication_id ? data.medications.find(m=>m.id===n.medication_id) : null;
+  // Ensure the note is in notesData cache so editNote can find it
+  if (!notesData.find(x=>x.id===noteId)) notesData.push(n);
   const parsed = parseNoteSection(n.content);
-  const displayText = parsed.text || n.content;
-  const section = parsed.section && parsed.section !== 'General' ? parsed.section : null;
-  const meta = [person?.name, doctor?.name, med?.name, section, fmtDate(n.created_at)].filter(Boolean).join(' · ');
-  document.getElementById('modal-note-detail-body').innerHTML = `<div style="font-size:15px;font-weight:500;color:var(--text);line-height:1.7;white-space:pre-wrap;margin-bottom:12px;">${displayText}</div><div style="font-size:12px;color:var(--text-3);">${meta}</div>`;
-  openModal('modal-note-detail');
+  document.getElementById('modal-note-title').textContent = 'Edit Note';
+  document.getElementById('note-id').value = n.id;
+  document.getElementById('note-content').value = parsed.text;
+  document.getElementById('note-section').value = parsed.section || 'General';
+  document.getElementById('delete-note-btn').style.display = 'block';
+  const noteSel = document.getElementById('note-person');
+  noteSel.innerHTML = '<option value="">Everyone</option>' + data.people.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  if (n.person_id) noteSel.value = n.person_id;
+  const sections = getSections();
+  const secSel = document.getElementById('note-section-select');
+  secSel.innerHTML = sections.map(s=>'<option value="'+s.name+'">'+s.name+'</option>').join('') || '<option value="General">General</option>';
+  secSel.value = parsed.section || 'General';
+  secSel.onchange = function() { document.getElementById('note-section').value = this.value; };
+  const docSel = document.getElementById('note-doctor');
+  docSel.innerHTML = '<option value="">Select doctor...</option>' + data.doctors.map(d=>'<option value="'+d.id+'">'+d.name+'</option>').join('');
+  if (n.doctor_id) docSel.value = n.doctor_id;
+  const medSel = document.getElementById('note-medication');
+  medSel.innerHTML = '<option value="">None</option>' + data.medications.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
+  if (n.medication_id) medSel.value = n.medication_id;
+  openModal('modal-note');
 }
 
 function toggleMedNotes(sectionId) {
